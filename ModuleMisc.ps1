@@ -37,7 +37,7 @@ function RestrictTextBlank {
 .SYNOPSIS
     全角・半角文字を変換する
 .DESCRIPTION
-    文字列中の全角英数/全角括弧"（）［］｛｝"を半角、半角カタカナを全角に変換します
+    文字列中の全角英数/全角空白/全角括弧"（）［］｛｝"を半角、半角カタカナを全角に変換します
 .PARAMETER Text
     対象文字列
 .EXAMPLE
