@@ -15,19 +15,21 @@ function local:CopyItem([string] $SrcName, [string] $DstName, [bool] $isDir) {
             $fname = [System.IO.Path]::GetFileName($DstName)
             $ename = ""
         }
-        $sUniq = [System.IO.Path]::Combine($dname, $fname + "_" + $lUniq + $ename)
+        $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
         $lUniq++
     }
     # 進捗付きコピー
-    $index = 1
-    $count = 1
-    if ($isDir -eq $true) {
-        $index = 1
+    if ($isDir -eq $false) {
+        $index = 0
+        $count = 1
+    } else {
+        $index = 0
         $count = (Get-ChildItem $SrcName -Recurse).Length
     }
-    Copy-Item -LiteralPath $SrcName -Destination $sUniq -PassThru -Recurse | ForEach-Object {
+    Copy-Item -LiteralPath $SrcName -Destination $sUniq -PassThru -Recurse | 
+    ForEach-Object {
         Write-Progress "$fname" -PercentComplete (($index / $count)*100)
-        if ($index -le $count){
+        if ($index -lt $count){
             $index += 1
         }
     } | Out-Null
@@ -53,8 +55,6 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
     $dpath = [System.IO.Path]::Combine($dname, $fname + "_" + $cdate + $ename)
     CopyItem $spath $dpath $true
 }
-
-$args = @("C:\Users\31873\Desktop\新しいフォルダー\Book1.xlsx")
 
 try {
     if ($args.Length -eq 0) {
