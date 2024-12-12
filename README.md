@@ -35,6 +35,8 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 ファイル名が衝突した場合は``(1)``とか勝手に付けて衝突を回避します<BR>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
+バッチでセコセコやってた頃は``XCOPY``とか``ROBOCOPY``だったのにね<BR>
+
 ## MakePowerShellBatch
 
 ``MakePowerShellBatch.bat``はカレントの``MakePowerShellBatch.ps1``を起こすだけです<br>
@@ -55,3 +57,5 @@ popd
 
 ``MakePowerShellLink.bat``はカレントの``MakePowerShellLink.ps1``を起こすだけです<br>
 ``MakePowerShellLink.ps1``はフォーム起動してD&Dで指定した``.ps1``の起動用ショートカットファイルを生成します<br>
+
+空白を含むパスに使うと駄目な場合は大人しく``MakePowerShellBatch``のほーをどーぞ<br>
