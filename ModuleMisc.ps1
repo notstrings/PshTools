@@ -180,6 +180,7 @@ function RestrictTextDate {
 .DESCRIPTION
     ローマ字をひらがなにしようとしますが
     ローマ字表記方式は死ぬほど色々あるので完璧ではありません
+    つーか多分日本人でも完璧に書けるヤツ居ねぇんじゃね
 .PARAMETER Text
     対象文字列
 .EXAMPLE
@@ -214,6 +215,7 @@ function TryConvertRoma2Kana {
             "rya"= "りゃ"; "ryi"= "りぃ"; "ryu"= "りゅ"; "rye"= "りぇ"; "ryo"= "りょ";
             "gya"= "ぎゃ"; "gyi"= "ぎぃ"; "gyu"= "ぎゅ"; "gye"= "ぎぇ"; "gyo"= "ぎょ";
             "zya"= "じゃ"; "zyi"= "じぃ"; "zyu"= "じゅ"; "zye"= "じぇ"; "zyo"= "じょ";
+            "ja" = "じゃ"; "ji" = "じ";   "ju" = "じゅ"; "je" = "じぇ"; "jo" = "じょ";
             "dya"= "ぢゃ"; "dyi"= "ぢぃ"; "dyu"= "ぢゅ"; "dye"= "ぢぇ"; "dyo"= "ぢょ";
             "bya"= "びゃ"; "byi"= "びぃ"; "byu"= "びゅ"; "bye"= "びぇ"; "byo"= "びょ";
             "pya"= "ぴゃ"; "pyi"= "ぴぃ"; "pyu"= "ぴゅ"; "pye"= "ぴぇ"; "pyo"= "ぴょ";
@@ -232,6 +234,8 @@ function TryConvertRoma2Kana {
             "dja"= "でゃ"; "dji"= "でぃ"; "dju"= "でゅ"; "dje"= "でぇ"; "djo"= "でぉ";
             "tva"= "とぁ"; "tvi"= "とぃ"; "tvu"= "とゅ"; "tve"= "とぇ"; "tvo"= "とぉ";
             "dva"= "どぁ"; "dvi"= "どぃ"; "dvu"= "どゅ"; "dve"= "どぇ"; "dvo"= "どぉ";
+            "va" = "ゔぁ"; "vi" = "ゔぃ"; "vu" = "ゔ";   "ve" = "ゔぇ"; "vo" = "ゔぉ";
+            "a" = "あ"; "i" = "い"; "u" = "う"; "e" = "え"; "o" = "お"; 
             "ka"= "か"; "ki"= "き"; "ku"= "く"; "ke"= "け"; "ko"= "こ";
             "sa"= "さ"; "si"= "し"; "su"= "す"; "se"= "せ"; "so"= "そ";
             "ta"= "た"; "ti"= "ち"; "tu"= "つ"; "te"= "て"; "to"= "と";
@@ -246,10 +250,7 @@ function TryConvertRoma2Kana {
             "da"= "だ"; "di"= "ぢ"; "du"= "づ"; "de"= "で"; "do"= "ど";
             "ba"= "ば"; "bi"= "び"; "bu"= "ぶ"; "be"= "べ"; "bo"= "ぼ";
             "pa"= "ぱ"; "pi"= "ぴ"; "pu"= "ぷ"; "pe"= "ぺ"; "po"= "ぽ";
-            "va"= "ゔぁ"; "vi"= "ゔぃ"; "vu"= "ゔ";   "ve"= "ゔぇ"; "vo"= "ゔぉ";
-            "ja"= "じゃ"; "ji"= "じ";   "ju"= "じゅ"; "je"= "じぇ"; "jo"= "じょ";
-            "xa"= "ぁ"; "xi"= "ぅ"; "xu"= "ぃ"; "xe"= "ぇ"; "xo"= "ぉ";
-            "a"= "あ"; "i"= "い"; "u"= "う"; "e"= "え"; "o"= "お"; 
+            "xa"= "ぁ"; "xi"= "ぃ"; "xu"= "ぅ"; "xe"= "ぇ"; "xo"= "ぉ";
             "n"= "ん" 
         }
         $keys = $RomajiMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
@@ -272,7 +273,8 @@ function TryConvertRoma2Kana {
     ひらがなをローマ字にします
 .DESCRIPTION
     ひらがなをローマ字にしようとしますが
-    強引に処理してるだけなので正式なものではありません
+    強引に逆変換しただけなので正式なものではありません
+    ※ただし「すうぃーつ」とかいう元々日本語には無い綴りも許容する
 .PARAMETER Text
     対象文字列
 .EXAMPLE
@@ -317,6 +319,8 @@ function TryConvertKana2Roma {
             "でゃ"= "dja"; "でぃ"= "dji"; "でゅ"= "dju"; "でぇ"= "dje"; "でぉ"= "djo";
             "とぁ"= "tva"; "とぃ"= "tvi"; "とゅ"= "tvu"; "とぇ"= "tve"; "とぉ"= "tvo";
             "どぁ"= "dva"; "どぃ"= "dvi"; "どゅ"= "dvu"; "どぇ"= "dve"; "どぉ"= "dvo";
+            "ゔぁ"= "va";  "ゔぃ"= "vi";  "ゔ"= "vu";    "ゔぇ"= "ve";  "ゔぉ"= "vo";
+            "あ"= "a";  "い"= "i";  "う"= "u";  "え"= "e";  "お"= "o"; 
             "か"= "ka"; "き"= "ki"; "く"= "ku"; "け"= "ke"; "こ"= "ko";
             "さ"= "sa"; "し"= "si"; "す"= "su"; "せ"= "se"; "そ"= "so";
             "た"= "ta"; "ち"= "ti"; "つ"= "tu"; "て"= "te"; "と"= "to";
@@ -331,9 +335,7 @@ function TryConvertKana2Roma {
             "だ"= "da"; "ぢ"= "di"; "づ"= "du"; "で"= "de"; "ど"= "do";
             "ば"= "ba"; "び"= "bi"; "ぶ"= "bu"; "べ"= "be"; "ぼ"= "bo";
             "ぱ"= "pa"; "ぴ"= "pi"; "ぷ"= "pu"; "ぺ"= "pe"; "ぽ"= "po";
-            "ゔぁ"= "va"; "ゔぃ"= "vi"; "ゔ"= "vu";   "ゔぇ"= "ve"; "ゔぉ"= "vo";
-            "ぁ"= "xa"; "ぅ"= "xi"; "ぃ"= "xu"; "ぇ"= "xe"; "ぉ"= "xo";
-            "あ"= "a"; "い"= "i"; "う"= "u"; "え"= "e"; "お"= "o"; 
+            "ぁ"= "xa"; "ぃ"= "xi"; "ぅ"= "xu"; "ぇ"= "xe"; "ぉ"= "xo";
         }
         $keys = $KanaMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
         foreach ($key in $keys) {
