@@ -511,7 +511,64 @@ function ShowDDDialog {
 }
 
 ## ############################################################################
-## WebAPI関連
+## ファイル操作関連
+
+<#
+.SYNOPSIS
+    ファイルを重複しないファイル名にして複製します
+.DESCRIPTION
+    ファイルを重複しないファイル名にして複製します
+.PARAMETER SrcPath
+    複製元のファイルまたはフォルダのパス
+.PARAMETER DstPath
+    複製先のファイルまたはフォルダのパス
+.EXAMPLE
+    MoveItemWithUniqName -SrcPath "C:\Temp\test.txt" -DstPath "C:\Temp\test.txt" -isDir $false
+    "C:\Temp\test.txt"を"C:\Temp\test.txt"に複製します
+    "C:\Temp\test.txt"が既に存在する場合は"C:\Temp\test (1).txt"に複製します
+#>
+function CopyItemWithUniqName {
+    param (
+        [Parameter(Mandatory = $true)] [string] $SrcPath,
+        [Parameter(Mandatory = $true)] [string] $DstPath
+    )
+    begin {}
+    process {
+        if ($SrcPath -ne $DstPath) {
+            # ユニーク名取得
+            $sUniq = $DstPath
+            $lUniq = 1
+            while( (Test-Path -LiteralPath $sUniq) ) {
+                if ((Get-Item $SrcPath).PSIsContainer) {
+                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+                    $fname = [System.IO.Path]::GetFileName($DstPath)
+                    $ename = ""
+                }else{
+                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+                    $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
+                    $ename = [System.IO.Path]::GetExtension($DstPath)
+                }
+                $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
+                $lUniq++
+            }
+            # 進捗表示
+            if ((Get-Item $SrcPath).PSIsContainer) {
+                $index = 0
+                $count = 1
+            } else {
+                $index = 0
+                $count = (Get-ChildItem $SrcPath -Recurse).Length
+            }
+            Copy-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru -Recurse | 
+            ForEach-Object {
+                Write-Progress "$fname" -PercentComplete (($index / $count)*100)
+                if ($index -lt $count){
+                    $index += 1
+                }
+            } | Out-Null
+        }
+    }
+}
 
 <#
 .SYNOPSIS
@@ -550,7 +607,21 @@ function MoveItemWithUniqName {
                 $sUniq = [System.IO.Path]::Combine($dname, "$fname ($lUniq)" + $ename)
                 $lUniq++
             }
-            $null = Move-Item -Path $SrcPath -Destination $sUniq -Force
+            # 進捗表示
+            if ((Get-Item $SrcPath).PSIsContainer) {
+                $index = 0
+                $count = 1
+            } else {
+                $index = 0
+                $count = (Get-ChildItem $SrcPath -Recurse).Length
+            }
+            Move-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru | 
+            ForEach-Object {
+                Write-Progress "$fname" -PercentComplete (($index / $count)*100)
+                if ($index -lt $count){
+                    $index += 1
+                }
+            } | Out-Null
         }
     }
     end {}
@@ -582,6 +653,7 @@ function MoveTrush {
 }
 
 ## ############################################################################
+## WebAPI関連
 
 <#
 .SYNOPSIS
