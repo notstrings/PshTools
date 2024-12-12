@@ -1,11 +1,8 @@
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
-$result = ShowDDDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" 
-if ($result[0] -eq "OK") {
-    Write-Host "選択されたファイル:"
-    foreach ($file in $result[1]) {
-        Write-Host "  - $file"
-    }
-} else {
-    Write-Host "キャンセルされました。"
-}
+$Text = "aaaー"
+$Text = $Text -replace "Aー", "Â" 
+$Text = $Text -replace "Iー", "Î" 
+$Text = $Text -replace "Uー", "U" 
+$Text = $Text -replace "Eー", "Ê" 
+$Text = $Text -replace "Oー", "Ô" 

@@ -264,7 +264,95 @@ function TryConvertRoma2Kana {
         }
         return $ret
     }
-    end {}        
+    end {}
+}
+
+<#
+.SYNOPSIS
+    ひらがなをローマ字にします
+.DESCRIPTION
+    ひらがなをローマ字にしようとしますが
+    強引に処理してるだけなので正式なものではありません
+.PARAMETER Text
+    対象文字列
+.EXAMPLE
+    TryConvertKana2Roma "あいうえお"
+    結果:"aiueo"
+#>
+function TryConvertKana2Roma {
+    param (
+        [Parameter(Mandatory = $true)] [string] $Text
+    )
+    begin {}
+    process {
+        $KanaMapA = @{
+            "ん"= "nn"; 
+            "っ"= "tt";
+        }
+        $KanaMapB = @{
+            "きゃ"= "kya"; "きぃ"= "kyi"; "きゅ"= "kyu"; "きぇ"= "kye"; "きょ"= "kyo";
+            "しゃ"= "sya"; "しぃ"= "syi"; "しゅ"= "syu"; "しぇ"= "sye"; "しょ"= "syo";
+            "ちゃ"= "cha"; "ちぃ"= "tyi"; "ちゅ"= "chu"; "ちぇ"= "che"; "ちょ"= "cho";
+            "にゃ"= "nya"; "にぃ"= "nyi"; "にゅ"= "nyu"; "にぇ"= "nye"; "にょ"= "nyo";
+            "ひゃ"= "hya"; "ひぃ"= "hyi"; "ひゅ"= "hyu"; "ひぇ"= "hye"; "ひょ"= "hyo";
+            "みゃ"= "mya"; "みぃ"= "myi"; "みゅ"= "myu"; "みぇ"= "mye"; "みょ"= "myo";
+            "りゃ"= "rya"; "りぃ"= "ryi"; "りゅ"= "ryu"; "りぇ"= "rye"; "りょ"= "ryo";
+            "ぎゃ"= "gya"; "ぎぃ"= "gyi"; "ぎゅ"= "gyu"; "ぎぇ"= "gye"; "ぎょ"= "gyo";
+            "じゃ"= "ja";  "じぃ"= "zyi"; "じゅ"= "ju";  "じぇ"= "je";  "じょ"= "jo";
+            "ぢゃ"= "dya"; "ぢぃ"= "dyi"; "ぢゅ"= "dyu"; "ぢぇ"= "dye"; "ぢょ"= "dyo";
+            "びゃ"= "bya"; "びぃ"= "byi"; "びゅ"= "byu"; "びぇ"= "bye"; "びょ"= "byo";
+            "ぴゃ"= "pya"; "ぴぃ"= "pyi"; "ぴゅ"= "pyu"; "ぴぇ"= "pye"; "ぴょ"= "pyo";
+            "くぁ"= "kwa"; "くぃ"= "kwi"; "くゅ"= "kwu"; "くぇ"= "kwe"; "くぉ"= "kwo";
+            "すぁ"= "swa"; "すぃ"= "swi"; "すゅ"= "swu"; "すぇ"= "swe"; "すぉ"= "swo";
+            "つぁ"= "twa"; "つぃ"= "twi"; "つゅ"= "twu"; "つぇ"= "twe"; "つぉ"= "two";
+            "ぬぁ"= "nwa"; "ぬぃ"= "nwi"; "ぬゅ"= "nwu"; "ぬぇ"= "nwe"; "ぬぉ"= "nwo";
+            "ふぁ"= "hwa"; "ふぃ"= "hwi"; "ふゅ"= "hwu"; "ふぇ"= "hwe"; "ふぉ"= "hwo";
+            "むぁ"= "mwa"; "むぃ"= "mwi"; "むゅ"= "mwu"; "むぇ"= "mwe"; "むぉ"= "mwo";
+            "るぁ"= "rwa"; "るぃ"= "rwi"; "るゅ"= "rwu"; "るぇ"= "rwe"; "るぉ"= "rwo";
+            "ぐぁ"= "gwa"; "ぐぃ"= "gwi"; "ぐゅ"= "gwu"; "ぐぇ"= "gwe"; "ぐぉ"= "gwo";
+            "ずぁ"= "zwa"; "ずぃ"= "zwi"; "ずゅ"= "zwu"; "ずぇ"= "zwe"; "ずぉ"= "zwo";
+            "ぶぁ"= "bwa"; "ぶぃ"= "bwi"; "ぶゅ"= "bwu"; "ぶぇ"= "bwe"; "ぶぉ"= "bwo";
+            "ぷぁ"= "pwa"; "ぷぃ"= "pwi"; "ぷゅ"= "pwu"; "ぷぇ"= "pwe"; "ぷぉ"= "pwo";
+            "てゃ"= "tja"; "てぃ"= "tji"; "てゅ"= "tju"; "てぇ"= "tje"; "てぉ"= "tjo";
+            "でゃ"= "dja"; "でぃ"= "dji"; "でゅ"= "dju"; "でぇ"= "dje"; "でぉ"= "djo";
+            "とぁ"= "tva"; "とぃ"= "tvi"; "とゅ"= "tvu"; "とぇ"= "tve"; "とぉ"= "tvo";
+            "どぁ"= "dva"; "どぃ"= "dvi"; "どゅ"= "dvu"; "どぇ"= "dve"; "どぉ"= "dvo";
+            "か"= "ka"; "き"= "ki"; "く"= "ku"; "け"= "ke"; "こ"= "ko";
+            "さ"= "sa"; "し"= "si"; "す"= "su"; "せ"= "se"; "そ"= "so";
+            "た"= "ta"; "ち"= "ti"; "つ"= "tu"; "て"= "te"; "と"= "to";
+            "な"= "na"; "に"= "ni"; "ぬ"= "nu"; "ね"= "ne"; "の"= "no";
+            "は"= "ha"; "ひ"= "hi"; "ふ"= "hu"; "へ"= "he"; "ほ"= "ho";
+            "ま"= "ma"; "み"= "mi"; "む"= "mu"; "め"= "me"; "も"= "mo";
+            "や"= "ya";             "ゆ"= "yu";             "よ"= "yo";
+            "ら"= "ra"; "り"= "ri"; "る"= "ru"; "れ"= "re"; "ろ"= "ro";
+            "わ"= "wa"; "ゐ"= "wi";             "ゑ"= "we"; "を"= "wo";
+            "が"= "ga"; "ぎ"= "gi"; "ぐ"= "gu"; "げ"= "ge"; "ご"= "go";
+            "ざ"= "za"; "じ"= "zi"; "ず"= "zu"; "ぜ"= "ze"; "ぞ"= "zo";
+            "だ"= "da"; "ぢ"= "di"; "づ"= "du"; "で"= "de"; "ど"= "do";
+            "ば"= "ba"; "び"= "bi"; "ぶ"= "bu"; "べ"= "be"; "ぼ"= "bo";
+            "ぱ"= "pa"; "ぴ"= "pi"; "ぷ"= "pu"; "ぺ"= "pe"; "ぽ"= "po";
+            "ゔぁ"= "va"; "ゔぃ"= "vi"; "ゔ"= "vu";   "ゔぇ"= "ve"; "ゔぉ"= "vo";
+            "ぁ"= "xa"; "ぅ"= "xi"; "ぃ"= "xu"; "ぇ"= "xe"; "ぉ"= "xo";
+            "あ"= "a"; "い"= "i"; "う"= "u"; "え"= "e"; "お"= "o"; 
+        }
+        $keys = $KanaMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
+        foreach ($key in $keys) {
+            $value = $KanaMapA[$key]
+            $Text = $Text -replace $key, $value
+        }
+        $keys = $KanaMapB.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
+        foreach ($key in $keys) {
+            $value = $KanaMapB[$key]
+            $Text = $Text -replace $key, $value
+        }
+        $Text = $Text -replace "Aー", "Â" 
+        $Text = $Text -replace "Iー", "Î" 
+        $Text = $Text -replace "Uー", "U" 
+        $Text = $Text -replace "Eー", "Ê" 
+        $Text = $Text -replace "Oー", "Ô" 
+        return $Text
+    }
+    end {} 
 }
 
 <#
