@@ -466,13 +466,13 @@ Function GetEncodingSimple {
     Windows標準のファイル選択ダイアログを表示しユーザーが選択したファイルのパスを配列形式で返します
     タイトル/フィルター/初期ディレクトリ/複数選択の可否を選択できます
 .PARAMETER Title
-   ダイアログのタイトルを指定します
+    ダイアログのタイトルを指定します
 .PARAMETER Filter
-   表示するファイルの種類のフィルターを指定します
+    表示するファイルの種類のフィルターを指定します
 .PARAMETER InitialDirectory
-   最初に表示するディレクトリを指定します
+    最初に表示するディレクトリを指定します
 .PARAMETER Multiselect
-   複数のファイルを選択できるようにするかどうかを指定します。$trueで複数選択可能。
+    複数のファイルを選択できるようにするかどうかを指定します。$trueで複数選択可能。
 .EXAMPLE
 #>
 function ShowFileDialog {
