@@ -1,7 +1,6 @@
 ﻿$ErrorActionPreference = "Stop"
 
 # ファイルコピー
-# ファイルコピー
 function local:CopyItem([string] $SrcName, [string] $DstName, [bool] $isDir) {
     # ユニーク名取得
     $sUniq = $DstName
@@ -43,7 +42,7 @@ function local:DateCopyFile([System.IO.FileInfo] $Target) {
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($spath)
     $ename = [System.IO.Path]::GetExtension($spath)
     $cdate = (Get-Date).ToString('yyyyMMdd')
-    $dpath = [System.IO.Path]::Combine($dname, $cdate + "_" + $fname + $ename)
+    $dpath = [System.IO.Path]::Combine($dname, $fname + "_" + $cdate + $ename)
     CopyItem $spath $dpath $false
 }
 
@@ -53,7 +52,7 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
     $fname = [System.IO.Path]::GetFileName($spath)
     $ename = ""
     $cdate = (Get-Date).ToString('yyyyMMdd')
-    $dpath = [System.IO.Path]::Combine($dname, $cdate + "_" + $fname + $ename)
+    $dpath = [System.IO.Path]::Combine($dname, $fname + "_" + $cdate + $ename)
     CopyItem $spath $dpath $true
 }
 
