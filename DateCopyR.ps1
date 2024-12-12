@@ -34,7 +34,7 @@ function local:CopyItem([string] $SrcName, [string] $DstName, [bool] $isDir) {
             $index += 1
         }
     } | Out-Null
-    Write-Host "$count files copied."
+    $null = Write-Host "$count files copied."
 }
 
 function local:DateCopyFile([System.IO.FileInfo] $Target) {
