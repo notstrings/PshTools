@@ -27,7 +27,9 @@ function local:CopyItem([string] $SrcName, [string] $DstName, [bool] $isDir) {
     }
     Copy-Item -LiteralPath $SrcName -Destination $sUniq -PassThru -Recurse | ForEach-Object {
         Write-Progress "$fname" -PercentComplete (($index / $count)*100)
-        $index += $index -ge $count ? 0 : 1
+        if ($index -le $count){
+            $index += 1
+        }
     } | Out-Null
     Write-Host "$count files copied."
 }

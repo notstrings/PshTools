@@ -23,6 +23,7 @@ D&Dで適当にパス指定したい場合は``MakePowerShellLink.ps1``でショ
   * 和暦YY年MM月DD日
   * YY-MM-DD or YY.MM.DD※1
   * YY年MM月DD日※1
+
 ※1:表記に西暦or和暦を張り付けてファイル変更日付orフォルダ作成日付に一致すればリネーム<br>
 
 ## MakePowerShellBatch
