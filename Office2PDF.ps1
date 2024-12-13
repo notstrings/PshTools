@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 function local:Office2PDF([System.IO.FileInfo] $Target) {
     foreach ($srcpath in $Target.FullName) {
@@ -63,6 +63,7 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
             }
             ({$_ -eq ".ppt" -or $_ -eq ".pptx" -or $_ -eq ".pptm"}) {
                 # PowerPoint
+                # ・PowerPoint2010の場合やたらと不安定だが...まぁ無理もねぇかと放置
                 try {
                     $AppPPT = New-Object -ComObject PowerPoint.Application
                     $AppPPT.Visible = -1 # msoTrue=-1 
@@ -105,6 +106,8 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
         }
     }
 }
+
+$args = @("C:\Users\31873\Desktop\新しいフォルダー\aaa.pptx")
 
 try {
     if ($args.Length -eq 0) {
