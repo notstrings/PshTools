@@ -44,7 +44,12 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
 何かPowerPoint2010の場合挙動がおかしいんだが正直俺使わねぇからどーでもいいや（ぉぃ<br>
-Office系自動操作はCOM参照が残っているとプロセスが残るとか...VB6とかの時代思い出すわorz<BR>
+
+## DiffWord
+
+``DiffWord.ps1``に比較したいWordファイルのパスを２つ食わせてください<br>
+イチイチ考えるのが面倒くさい比較元・比較先を最終変更日時で勝手に判断して比較処理を実施します<br>
+D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
 ## MakePowerShellBatch
 
