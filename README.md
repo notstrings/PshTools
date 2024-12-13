@@ -37,6 +37,14 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 
 バッチでセコセコやってた頃は``XCOPY``とか``ROBOCOPY``だったのにね<BR>
 
+## Office2PDF
+
+``Office2PDF.ps1``にPDFにしたいオフィス系ファイルのパスを食わせてください<br>
+漢らしくウィンドウ表示ありでPDF保存しにいきますんで処理完了まで待ってください<br>
+D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
+
+Office系自動操作はCOM参照が残っているとプロセスが残るとか...VB6とかの時代思い出すわorz<BR>
+
 ## MakePowerShellBatch
 
 ``MakePowerShellBatch.bat``はカレントの``MakePowerShellBatch.ps1``を起こすだけです<br>
