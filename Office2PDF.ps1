@@ -107,8 +107,6 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
     }
 }
 
-$args = @("C:\Users\31873\Desktop\新しいフォルダー\aaa.pptx")
-
 try {
     if ($args.Length -eq 0) {
         exit
