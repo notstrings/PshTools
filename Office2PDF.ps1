@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-function Office2PDF([System.IO.FileInfo] $Target) {
+function local:Office2PDF([System.IO.FileInfo] $Target) {
     foreach ($srcpath in $Target.FullName) {
         $dname = [System.IO.Path]::GetDirectoryName($srcpath)
         $fname = [System.IO.Path]::GetFileNameWithoutExtension($srcpath)
