@@ -526,11 +526,12 @@ function ShowFileDialog {
 #>
 function ShowDDDialog {
     param (
-        [Parameter(Mandatory = $true)]  [string] $Title,
-        [Parameter(Mandatory = $true)]  [string] $Message,
-        [Parameter(Mandatory = $false)] [string] $Filter  = ".*",
-        [Parameter(Mandatory = $false)] [string] $ButtonA = "OK",
-        [Parameter(Mandatory = $false)] [string] $ButtonB = "Cancel"
+        [Parameter(Mandatory = $true)]  [string]   $Title,
+        [Parameter(Mandatory = $true)]  [string]   $Message,
+        [Parameter(Mandatory = $false)] [string[]] $List,
+        [Parameter(Mandatory = $false)] [string]   $Filter  = ".*",
+        [Parameter(Mandatory = $false)] [string]   $ButtonA = "OK",
+        [Parameter(Mandatory = $false)] [string]   $ButtonB = "Cancel"
     )
     begin {}
     process {
@@ -594,6 +595,13 @@ function ShowDDDialog {
             $form.Text = $ButtonB
             $form.Close()
         })
+        if ($null -ne $List) {
+            foreach($elm in $List) {
+                if( [System.IO.Path]::GetFileName($elm) -match $Filter ){
+                    [void]$Listbox.Items.Add($elm)
+                }
+            }
+        }
         $null = $form.ShowDialog()
         return @($form.Text, $listbox.Items)
     }

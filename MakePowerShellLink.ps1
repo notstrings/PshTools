@@ -27,7 +27,7 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 }
 
 try {
-    $ret = ShowDDDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" 
+    $ret = ShowDDDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -List $args
     if ( $ret[0] -eq "OK" ) {
         foreach($elm in $ret[1]) {
             MkPshLnk $elm
