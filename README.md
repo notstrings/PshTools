@@ -43,6 +43,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 漢らしくウィンドウ表示ありでPDF保存しにいきますんで処理完了まで待ってください<br>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
+何かPowerPoint2010の場合挙動がおかしいんだが正直俺使わねぇからどーでもいいや（ぉぃ<br>
 Office系自動操作はCOM参照が残っているとプロセスが残るとか...VB6とかの時代思い出すわorz<BR>
 
 ## MakePowerShellBatch
