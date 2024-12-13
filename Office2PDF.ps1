@@ -30,11 +30,15 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                         $true,                      # BitmapMissingFonts
                         $false                      # UseISO19005_1
                     )
-                    $document.Close(0)
-                    $AppDOC.Quit()
                 } finally {
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppDOC)
+                    if($null -ne $document){
+                        $document.Close(0)
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
+                    }
+                    if($null -ne $AppDOC){
+                        $AppDOC.Quit()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppDOC)
+                    }
                 }
             }
             ({$_ -eq ".xls" -or $_ -eq ".xlsx" -or $_ -eq ".xlsm"}) {
@@ -54,11 +58,15 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                         [System.Type]::Missing,     # 部単位で印刷
                         $dstpath                    # 印刷するファイルの名前
                     )
-                    $workbook.Close($false)
-                    $AppXLS.Quit()
                 } finally {
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbook)
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppXLS)
+                    if($null -ne $workbook){
+                        $workbook.Close($false)
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbook)
+                    }
+                    if($null -ne $AppXLS){
+                        $AppXLS.Quit()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppXLS)
+                    }
                 }
             }
             ({$_ -eq ".ppt" -or $_ -eq ".pptx" -or $_ -eq ".pptm"}) {
@@ -74,11 +82,15 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                         32,                         # ppSaveAsPDF=32
                         -1                          # EmbedTrueTypeFonts
                     )
-                    $presentation.Close()
-                    $AppPPT.Quit()
                 } finally {
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($presentation)
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppPPT)
+                    if($null -ne $presentation){
+                        $presentation.Close()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($presentation)
+                    }
+                    if($null -ne $AppPPT){
+                        $AppPPT.Quit()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppPPT)
+                    }
                 }
             }
             ({$_ -eq ".vsd" -or $_ -eq ".vsdx" -or $_ -eq ".vsdm"}) {
@@ -93,11 +105,15 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                         1,                          # 出力品質
                         0                           # ページ範囲
                     )
-                    $document.Close()
-                    $AppVSD.Quit()
                 } finally {
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
-                    $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppVSD)
+                    if($null -ne $document){
+                        $document.Close()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
+                    }
+                    if($null -ne $AppVSD){
+                        $AppVSD.Quit()
+                        $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppVSD)
+                    }
                 }
             }
             default {

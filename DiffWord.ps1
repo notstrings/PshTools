@@ -1,0 +1,72 @@
+﻿$ErrorActionPreference = "Stop"
+
+function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
+    try {
+        $AppDOC = New-Object -ComObject Word.Application
+        $AppDOC.Visible = $true
+        $AppDOC.DisplayAlerts = 0 # wdAlertsNone
+        $DocLHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
+        $DocRHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
+        if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
+            $AppDOC.CompareDocuments(
+                $DocLHS,        # OriginalDocument
+                $DocRHS,        # RevisedDocument
+                2,              # Destination wdCompareDestinationNew=2
+                1,              # Granularity wdGranularityWordLevel=1
+                $False,         # CompareFormatting
+                $False,         # CompareCaseChanges
+                $False,         # CompareWhitespace
+                $True,          # CompareTables
+                $False,         # CompareHeaders
+                $False,         # CompareFootnotes
+                $True,          # CompareTextboxes
+                $True,          # CompareFields
+                $False,         # CompareComments
+                $False          # CompareMoves
+            )
+        } else {
+            $AppDOC.CompareDocuments(
+                $DocRHS,        # OriginalDocument
+                $DocLHS,        # RevisedDocument
+                2,              # Destination wdCompareDestinationNew=2
+                1,              # Granularity wdGranularityWordLevel=1
+                $False,         # CompareFormatting
+                $False,         # CompareCaseChanges
+                $False,         # CompareWhitespace
+                $True,          # CompareTables
+                $False,         # CompareHeaders
+                $False,         # CompareFootnotes
+                $True,          # CompareTextboxes
+                $True,          # CompareFields
+                $False,         # CompareComments
+                $False          # CompareMoves
+            )
+        }
+    } finally {
+        if($null -ne $DocRHS){
+            $DocRHS.Close(0)
+            $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($DocRHS)
+        }
+        if($null -ne $DocLHS){
+            $DocLHS.Close(0)
+            $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($DocLHS)
+        }
+        # if($null -ne $AppDOC){ 
+        #     $AppDOC.Quit(); $AppDOC = $null
+        #     $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppDOC)
+        # }
+    }
+}
+
+try {
+    if ($args.Length -eq 1) {
+        exit
+    }
+    DiffWord (Get-Item $args[0]) (Get-Item $args[1])
+} catch {
+    $null = Write-Host "---例外発生---"
+    $null = Write-Host $_.Exception.Message
+    $null = Write-Host $_.ScriptStackTrace
+    $null = Write-Host "--------------"
+    pause
+}
