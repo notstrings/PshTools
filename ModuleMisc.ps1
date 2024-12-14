@@ -751,6 +751,78 @@ function MoveTrush {
 }
 
 ## ############################################################################
+## 7Zip
+
+function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "x", """$SrcPath""", "-o""$DstPath""", "-aoa" -Wait
+}
+function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "a", "-tzip", """$DstPath""", """$SrcPath""", "-r", "-aoa" -Wait
+}
+
+<#
+.SYNOPSIS
+    指定したパスにあるアーカイブファイルを展開します
+.DESCRIPTION
+    指定したパスにあるアーカイブファイルを再帰的に展開し元のアーカイブファイルを削除します
+.PARAMETER srcpath
+    展開するファイルまたはディレクトリのパスを指定します
+.PARAMETER dstpath
+    展開先のディレクトリパスを指定します
+.EXAMPLE
+    ExtArc -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
+    ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
+#>
+function ExtArc {
+    param (
+        [Parameter(Mandatory = $true)]  [string]$DstPath,
+        [Parameter(Mandatory = $true)]  [string]$SrcPath,
+        [Parameter(Mandatory = $false)] [string]$ExePath = "C:\Program Files\7-Zip\7z.exe"
+    )
+    begin {}
+    process {
+        innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath
+        Get-ChildItem -LiteralPath $DstPath -File -Recurse |
+        Where-Object { @(".zip", ".rar", ".7z") -contains $_.Extension } |
+        ForEach-Object {
+            $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+            $ename = ""
+            innerExp7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) 
+            $null = Remove-Item -LiteralPath ($_.FullName) -Force
+        } | Out-Null
+        $null = Remove-Item -LiteralPath $SrcPath -Force
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    指定したパスをZIP形式で圧縮します
+.DESCRIPTION
+    指定したパスをZIP形式で圧縮します
+.PARAMETER srcpath
+    圧縮するファイルまたはディレクトリのパスを指定します
+.PARAMETER dstpath
+    圧縮ファイルのパスを指定します
+.EXAMPLE
+    CmpArc -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
+    ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
+#>
+function CmpArc {
+    param (
+        [Parameter(Mandatory = $true)] [string]$DstPath,
+        [Parameter(Mandatory = $true)] [string]$SrcPath,
+        [Parameter(Mandatory = $false)] [string]$ExePath = "C:\Program Files\7-Zip\7z.exe"
+    )
+    begin {}
+    process {
+        innerCmp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath
+    }
+    end {}
+}
+
+## ############################################################################
 ## WebAPI関連
 
 <#
