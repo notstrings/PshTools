@@ -28,7 +28,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 
 ※1:表記に西暦or和暦を張り付けてファイル変更日付orフォルダ作成日付に一致すればリネーム<br>
 
-## DateCopyhttps://github.com/notstrings/PshTools/blob/main/README.md
+## DateCopy
 
 ``DateCopyX.ps1``に日付を適用したいパスを食わせてください※Fが前でRが後<br>
 日付をファイル・フォルダ名の前or後に勝手に追加してコピーします<br>
