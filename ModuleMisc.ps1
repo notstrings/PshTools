@@ -263,7 +263,7 @@ function TryConvertRoma2Kana {
             $value = $RomajiMapB[$key]
             $Text = $Text -replace $key, $value
         }
-        return $ret
+        return $Text
     }
     end {}
 }
