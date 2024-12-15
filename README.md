@@ -28,7 +28,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 
 ※1:表記に西暦or和暦を張り付けてファイル変更日付orフォルダ作成日付に一致すればリネーム<br>
 
-## DateCopy
+## DateCopyhttps://github.com/notstrings/PshTools/blob/main/README.md
 
 ``DateCopyX.ps1``に日付を適用したいパスを食わせてください※Fが前でRが後<br>
 日付をファイル・フォルダ名の前or後に勝手に追加してコピーします<br>
@@ -49,6 +49,19 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 
 ``DiffWord.ps1``に比較したいWordファイルのパスを２つ食わせてください<br>
 イチイチ考えるのが面倒くさい比較元・比較先を最終変更日時で勝手に判断して比較処理を実施します<br>
+D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
+
+## ReduceDir
+
+``ReduceDir.ps1``に整理したいフォルダのパスを食わせてください<br>
+``Thumbs.DB``と``.DS_Store``削除/空フォルダ削除を実行します<br>
+``ReduceFile``/``ReduceFOlder``関数改造すれば他にも色々できますねー<br>
+D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
+
+## RemoveDupFile
+
+``RemoveDupFile.ps1``に重複ファイル削除したいフォルダのパスを複数食わせてください<br>
+全フォルダのファイル名(拡張子無視)で重複チェックしてファイルサイズが一番デカイのを残します<br>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
 ## MakePowerShellBatch
