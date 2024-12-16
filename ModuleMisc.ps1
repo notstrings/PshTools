@@ -588,6 +588,13 @@ function ShowDDDialog {
         $form.Size = New-Object System.Drawing.Size(300,200)    # ウィンドウサイズ
         $form.StartPosition = 'CenterScreen'                    # 表示位置
         $form.Topmost = $true                                   # TopMost
+        $form.Add_Closing({
+            switch ($form.Text) {
+                $ButtonA { $form.Text = $ButtonA }
+                $ButtonB { $form.Text = $ButtonB }
+                Default  { $form.Text = "" }
+            }
+        })
         $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
         $panel1  = New-Object System.Windows.Forms.TableLayoutPanel
         $panel2  = New-Object System.Windows.Forms.Panel
