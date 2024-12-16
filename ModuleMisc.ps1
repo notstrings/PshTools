@@ -403,7 +403,8 @@ Function RemoveAllBrackets {
 .NOTES
    * BOMが存在する場合はBOMに基づいてエンコーディングを判定します
    * BOMが存在しない場合は日本語文字コードの出現頻度を基にShift-JIS、EUC-JP、UTF-8 のいずれかを判定します
-   * BOMが存在しない場合は上記以外の可能性を考慮しません(まぁ普通にテキスト弄ってる分には十分でしょ...?)
+   * BOMが存在しない場合は上記以外の可能性を考慮しません
+   * コレでダメなら``https://github.com/hnx8/ReadJEnc``辺りをどーぞ
 #>
 Function AutoGuessEncodingSimple {
     param (
@@ -452,6 +453,53 @@ Function AutoGuessEncodingSimple {
         } else {
             return [System.Text.Encoding]::GetEncoding("UTF-8")
         }
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    2つのテキストファイルの内容を比較し結果を取得します
+.DESCRIPTION
+    指定された2つのテキストファイルの内容を比較して
+    両方のファイルに存在する行と左右片側にのみ存在する行を配列として返します
+    ※結果をそのまま使うための関数じゃありません...
+.PARAMETER LHSPath
+    比較対象の左側のファイルのパスを指定します
+.PARAMETER RHSPath
+    比較対象の右側のファイルのパスを指定します
+.PARAMETER Encoding
+    ファイルのエンコーディングを指定します
+.EXAMPLE
+    $ret = DiffContent -LHSPath "file1.txt" -RHSPath "file2.txt" -Encoding ([System.Text.Encoding]::GetEncoding("Shift_JIS"))
+    $ret[0] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 両方のファイルに存在する行
+    $ret[1] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 左側のファイルにのみ存在する行の配列
+    $ret[2] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 右側のファイルにのみ存在する行の配列
+#>
+function DiffContent {
+    param (
+        [Parameter(Mandatory=$true)]  [string]$LHSPath,
+        [Parameter(Mandatory=$true)]  [string]$RHSPath,
+        [Parameter(Mandatory=$false)] [System.Text.Encoding]$Encoding = [System.Text.Encoding]::UTF8
+    )
+    begin {}
+    process {
+        $Both = @()
+        $LHSOnly = @()
+        $RHSOnly = @()
+        $LHS = @(Get-Content $LHSPath -Encoding $Encoding)
+        $RHS = @(Get-Content $RHSPath -Encoding $Encoding)
+        Compare-Object -ReferenceObject $LHS -DifferenceObject $RHS -IncludeEqual |
+        ForEach-Object {
+            if($_.SideIndicator -eq "<=") {
+                $LHSOnly += $_.InputObject
+            } elseif ($_.SideIndicator -eq "=>") {
+                $RHSOnly += $_.InputObject
+            } elseif ($_.SideIndicator -eq "==") {
+                $Both += $_.InputObject
+            }
+        } | Out-Null
+        return $Both, $LHSOnly, $RHSOnly
     }
     end {}
 }
@@ -608,8 +656,51 @@ function ShowDDDialog {
     end {}
 }
 
+<#
+.SYNOPSIS
+    IP Messengerでメッセージを飛ばす
+.DESCRIPTION
+    IP Messengerでメッセージを飛ばす
+.PARAMETER TargerIP
+    送信先IPorホスト名
+.PARAMETER Message
+    送信メッセージ(改行は文字の``\n``)
+#>
+function SendIPMsg {
+    param (
+        [Parameter(Mandatory = $false)] [string] $ExePath = "$ENV:USERPROFILE\AppData\Local\IPMsg\IPMsg.exe",
+        [Parameter(Mandatory = $false)]  [string] $TargerIP = "127.0.0.1",
+        [Parameter(Mandatory = $true)]  [string] $Message
+    )
+    begin {}
+    process {
+        Start-Process -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -NoNewWindow -Wait
+    }
+end {}
+}
+
 ## ############################################################################
 ## ファイル操作関連
+
+# ユニーク名取得
+function local:GenUniqName([string] $DstPath, [string] $SrcPath){
+    $sUniq = $DstPath
+    $lUniq = 1
+    while( (Test-Path -LiteralPath $sUniq) ) {
+        if ((Get-Item $SrcPath).PSIsContainer) {
+            $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+            $fname = [System.IO.Path]::GetFileName($DstPath)
+            $ename = ""
+        }else{
+            $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
+            $ename = [System.IO.Path]::GetExtension($DstPath)
+        }
+        $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
+        $lUniq++
+    }
+    return $sUniq
+}
 
 <#
 .SYNOPSIS
@@ -634,21 +725,7 @@ function CopyItemWithUniqName {
     process {
         if ($SrcPath -ne $DstPath) {
             # ユニーク名取得
-            $sUniq = $DstPath
-            $lUniq = 1
-            while( (Test-Path -LiteralPath $sUniq) ) {
-                if ((Get-Item $SrcPath).PSIsContainer) {
-                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-                    $fname = [System.IO.Path]::GetFileName($DstPath)
-                    $ename = ""
-                }else{
-                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-                    $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
-                    $ename = [System.IO.Path]::GetExtension($DstPath)
-                }
-                $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
-                $lUniq++
-            }
+            $sUniq = GenUniqName $DstPath $SrcPath
             # 進捗表示
             if ((Get-Item $SrcPath).PSIsContainer) {
                 $index = 0
@@ -666,6 +743,7 @@ function CopyItemWithUniqName {
             } | Out-Null
         }
     }
+    end {}
 }
 
 <#
@@ -690,21 +768,8 @@ function MoveItemWithUniqName {
     begin {}
     process {
         if ($SrcPath -ne $DstPath) {
-            $sUniq = $DstPath
-            $lUniq = 1
-            while( (Test-Path -Path $sUniq) ) {
-                if ((Get-Item $SrcPath).PSIsContainer) {
-                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-                    $fname = [System.IO.Path]::GetFileName($DstPath)
-                    $ename = ""
-                }else{
-                    $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-                    $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
-                    $ename = [System.IO.Path]::GetExtension($DstPath)
-                }
-                $sUniq = [System.IO.Path]::Combine($dname, "$fname ($lUniq)" + $ename)
-                $lUniq++
-            }
+            # ユニーク名取得
+            $sUniq = GenUniqName $DstPath $SrcPath
             # 進捗表示
             if ((Get-Item $SrcPath).PSIsContainer) {
                 $index = 0
@@ -754,10 +819,16 @@ function MoveTrush {
 ## 7Zip
 
 function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "x", """$SrcPath""", "-o""$DstPath""", "-aoa" -Wait
+    # ユニーク名取得
+    $sUniq = GenUniqName $DstPath $SrcPath
+    # 展開
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "x", """$SrcPath""", "-o""$sUniq""", "-aoa" -Wait
 }
 function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "a", "-tzip", """$DstPath""", """$SrcPath""", "-r", "-aoa" -Wait
+    # ユニーク名取得
+    $sUniq = GenUniqName $DstPath $SrcPath
+    # 圧縮
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "a", "-tzip", """$sUniq""", """$SrcPath""", "-r", "-aoa" -Wait
 }
 
 <#
@@ -765,10 +836,15 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
     指定したパスにあるアーカイブファイルを展開します
 .DESCRIPTION
     指定したパスにあるアーカイブファイルを再帰的に展開し元のアーカイブファイルを削除します
-.PARAMETER srcpath
-    展開するファイルまたはディレクトリのパスを指定します
-.PARAMETER dstpath
+    解凍先が既にある場合上書きを自動で避けます
+.PARAMETER DstPath
     展開先のディレクトリパスを指定します
+.PARAMETER SrcPath
+    展開するファイルまたはディレクトリのパスを指定します
+.PARAMETER ExePath
+    7z.exeのパスを指定します
+.PARAMETER All
+    徹底解凍するかどうか
 .EXAMPLE
     ExtArc -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
     ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
@@ -777,20 +853,23 @@ function ExtArc {
     param (
         [Parameter(Mandatory = $true)]  [string]$DstPath,
         [Parameter(Mandatory = $true)]  [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [string]$ExePath = "C:\Program Files\7-Zip\7z.exe"
+        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $false)] [bool]$All = $false
     )
     begin {}
     process {
         innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath
-        Get-ChildItem -LiteralPath $DstPath -File -Recurse |
-        Where-Object { @(".zip", ".rar", ".7z") -contains $_.Extension } |
-        ForEach-Object {
-            $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
-            $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
-            $ename = ""
-            innerExp7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) 
-            $null = Remove-Item -LiteralPath ($_.FullName) -Force
-        } | Out-Null
+        if ($All -eq $true){
+            Get-ChildItem -LiteralPath $DstPath -File -Recurse |
+            Where-Object { @(".zip", ".rar", ".7z") -contains $_.Extension } |
+            ForEach-Object {
+                $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
+                $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+                $ename = ""
+                innerExp7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) 
+                $null = Remove-Item -LiteralPath ($_.FullName) -Force
+            } | Out-Null
+        }
         $null = Remove-Item -LiteralPath $SrcPath -Force
     }
     end {}
@@ -801,10 +880,11 @@ function ExtArc {
     指定したパスをZIP形式で圧縮します
 .DESCRIPTION
     指定したパスをZIP形式で圧縮します
-.PARAMETER srcpath
-    圧縮するファイルまたはディレクトリのパスを指定します
-.PARAMETER dstpath
+    圧縮先が既にある場合上書きを自動で避けます
+.PARAMETER DstPath
     圧縮ファイルのパスを指定します
+.PARAMETER SrcPath
+    圧縮するファイルまたはディレクトリのパスを指定します
 .EXAMPLE
     CmpArc -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
     ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
@@ -813,7 +893,7 @@ function CmpArc {
     param (
         [Parameter(Mandatory = $true)] [string]$DstPath,
         [Parameter(Mandatory = $true)] [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [string]$ExePath = "C:\Program Files\7-Zip\7z.exe"
+        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe"
     )
     begin {}
     process {
