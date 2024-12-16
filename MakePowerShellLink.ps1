@@ -22,7 +22,7 @@ function local:MakeLink([string] $TargetPath) {
 }
 
 function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding) {
-    $text = [System.IO.File]::ReadAllLines($TargetPath, (GetEncodingSimple($TargetPath)))
+    $text = [System.IO.File]::ReadAllLines($TargetPath, (AutoGuessEncodingSimple($TargetPath)))
     [System.IO.File]::WriteAllLines($TargetPath, $text, $Encoding)
 }
 

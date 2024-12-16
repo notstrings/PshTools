@@ -405,7 +405,7 @@ Function RemoveAllBrackets {
    * BOMが存在しない場合は日本語文字コードの出現頻度を基にShift-JIS、EUC-JP、UTF-8 のいずれかを判定します
    * BOMが存在しない場合は上記以外の可能性を考慮しません(まぁ普通にテキスト弄ってる分には十分でしょ...?)
 #>
-Function GetEncodingSimple {
+Function AutoGuessEncodingSimple {
     param (
         [Parameter(Mandatory = $true)] [string] $Path
     )
