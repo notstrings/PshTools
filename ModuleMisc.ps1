@@ -616,29 +616,24 @@ function ShowFolderDialog {
 .SYNOPSIS
     ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
 .DESCRIPTION
-    タイトル/メッセージ/ファイルフィルター/ボタンラベルを指定して
+    タイトル/メッセージ/ファイルフィルター/初期リストを指定して
     ドラッグ＆ドロップで受け取ったファイルを表示するダイアログボックスを作成します
-    ユーザーがボタンを押すと選択した結果と選択されたファイルのパスが返されます
+    ユーザーがOKボタンを押すと選択した結果と選択されたファイルのパスが返されます
 .PARAMETER Title
     ダイアログボックスのタイトルに設定する文字列です
 .PARAMETER Message
     ダイアログボックスに表示するメッセージの文字列です
-.PARAMETER Filter
+.PARAMETER FileFilter
     ドラッグ＆ドロップで受け付けるファイル名のフィルター(正規表現)です
-.PARAMETER ButtonA
-    ボタンAのラベルに設定する文字列です
-.PARAMETER ButtonB
-    ボタンBのラベルに設定する文字列です
+.PARAMETER FileList
+    初期リスト
 .EXAMPLE
     # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
-    $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -Filter "\.txt$" 
+    $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt") 
     if ($result[0] -eq "OK") {
-        Write-Host "選択されたファイル:"
         foreach ($file in $result[1]) {
-            Write-Host "  - $file"
+            Write-Host $file
         }
-    } else {
-        Write-Host "キャンセルされました。"
     }
 #>
 function ShowFileListDialog {
@@ -739,7 +734,30 @@ function ShowFileListDialog {
 <#
 .SYNOPSIS
     ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
-    ※オプション選択付き
+    ※オプションの指定が追加されています
+.DESCRIPTION
+    タイトル/メッセージ/ファイルフィルター/初期リストを指定して
+    ドラッグ＆ドロップで受け取ったファイルを表示するダイアログボックスを作成します
+    ユーザーがOKボタンを押すと選択した結果と選択されたファイルのパスが返されます
+    ※オプションの指定が追加されています
+.PARAMETER Title
+    ダイアログボックスのタイトルに設定する文字列です
+.PARAMETER Message
+    ダイアログボックスに表示するメッセージの文字列です
+.PARAMETER FileFilter
+    ドラッグ＆ドロップで受け付けるファイル名のフィルター(正規表現)です
+.PARAMETER FileList
+    初期リスト
+.PARAMETER Options
+    オプションリスト
+.EXAMPLE
+    # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
+    $result = ShowFileListDialogWithOption -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt") -Options @("aaa","bbb")
+    if ($result[0] -eq "OK") {
+        foreach ($file in $result[1]) {
+            Write-Host $file $result[2]
+        }
+    }
 #>
 function ShowFileListDialogWithOption {
     param (
