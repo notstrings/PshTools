@@ -424,6 +424,7 @@ Function RemoveAllBrackets {
     $encoding = GetEncodingSimple "C:\temp\sample.txt"
     Write-Host "エンコーディング: $($encoding.EncodingName)"
 .NOTES
+   * 元ネタ:http://dobon.net/vb/dotnet/string/detectcode.html
    * BOMが存在する場合はBOMに基づいてエンコーディングを判定します
    * BOMが存在しない場合は日本語文字コードの出現頻度を基にShift-JIS、EUC-JP、UTF-8 のいずれかを判定します
    * BOMが存在しない場合は上記以外の可能性を考慮しません
@@ -450,8 +451,6 @@ Function AutoGuessEncodingSimple {
         # ・スコアリングせずソレっぽい位置を数えるように変更
         # ・末尾のややこしい処理は移植面倒なのでバッサリ破棄
         # 元々の処理が推定だし単発スクリプトならコレで良いでしょ多分
-        # なお元ネタは以下URLのC#コード
-        # ・http://dobon.net/vb/dotnet/string/detectcode.html
         $SJISCount = 0..($TxtData.Length - 2) | Where-Object {
             $b1 = $TxtData[$_ + 0]
             $b2 = $TxtData[$_ + 1]
@@ -571,13 +570,45 @@ function ShowFileDialog {
     )
     begin {}
     process {
+        $DUMY = new-object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.OpenFileDialog
         $FDlg.Title            = $Title
         $FDlg.InitialDirectory = $InitialDirectory
         $FDlg.Filter           = $Filter
         $FDlg.Multiselect      = $Multiselect
-        $null = $FDlg.ShowDialog()
+        $null = $FDlg.ShowDialog($DUMY)
         return $FDlg.FileNames
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    フォルダ選択ダイアログを表示し選択されたフォルダのパスを返します
+.DESCRIPTION
+    Windows標準のフォルダ選択ダイアログを表示しユーザーが選択したフォルダのパスを配列形式で返します
+    タイトル/フィルター/初期ディレクトリ/複数選択の可否を選択できます
+.PARAMETER Description
+    ダイアログの説明
+.PARAMETER InitialDirectory
+    最初に表示するディレクトリを指定します
+#>
+function ShowFolderDialog {
+    param (
+        [Parameter(Mandatory = $true)] [string] $Description,
+        [Parameter(Mandatory = $false)] [string] $InitialDirectory = $PSScriptRoot
+    )
+    begin {}
+    process {
+        $DUMY = new-object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
+        $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
+        $FDlg.Description      = $Description
+        $FDlg.InitialDirectory = $InitialDirectory
+        $FDlg.SelectedPath     = $SelectedPath
+        $null = $FDlg.ShowDialog($DUMY)
+        return $FDlg.SelectedPath
     }
     end {}
 }
@@ -836,10 +867,10 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
 
 <#
 .SYNOPSIS
-    タスクトレイに常駐して指定したスクリプトを実行し続ける
+    タスクトレイに常駐して指定したスクリプトを実行し続けます
 .DESCRIPTION
-    タスクトレイに常駐して指定したスクリプトを実行し続ける
-    タスクトレイアイコンを左クリックすることで任意タイミングで実行可能
+    タスクトレイに常駐して指定したスクリプトを実行し続けます
+    指定スクリプトはタスクトレイアイコンを左クリックすることで任意タイミングで実行可能です
 .PARAMETER Name
     Mame+Colorの組み合わせで多重起動抑止する
 .PARAMETER Color
@@ -1111,12 +1142,12 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
 .DESCRIPTION
     指定したパスにあるアーカイブファイルを再帰的に展開し元のアーカイブファイルを削除します
     解凍先が既にある場合上書きを自動で避けます
+.PARAMETER ExePath
+    7z.exeのパスを指定します
 .PARAMETER DstPath
     展開先のディレクトリパスを指定します
 .PARAMETER SrcPath
     展開するファイルまたはディレクトリのパスを指定します
-.PARAMETER ExePath
-    7z.exeのパスを指定します
 .PARAMETER All
     徹底解凍するかどうか
 .EXAMPLE
@@ -1125,9 +1156,9 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
 #>
 function ExtArc {
     param (
+        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
         [Parameter(Mandatory = $true)]  [string]$DstPath,
         [Parameter(Mandatory = $true)]  [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
         [Parameter(Mandatory = $false)] [bool]$All = $false
     )
     begin {}
@@ -1155,6 +1186,8 @@ function ExtArc {
 .DESCRIPTION
     指定したパスをZIP形式で圧縮します
     圧縮先が既にある場合上書きを自動で避けます
+.PARAMETER ExePath
+    7z.exeのパスを指定します
 .PARAMETER DstPath
     圧縮ファイルのパスを指定します
 .PARAMETER SrcPath
@@ -1165,9 +1198,9 @@ function ExtArc {
 #>
 function CmpArc {
     param (
-        [Parameter(Mandatory = $true)] [string]$DstPath,
-        [Parameter(Mandatory = $true)] [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe"
+        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $true)]  [string]$DstPath,
+        [Parameter(Mandatory = $true)]  [string]$SrcPath
     )
     begin {}
     process {
