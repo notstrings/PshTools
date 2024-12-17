@@ -509,6 +509,23 @@ function DiffContent {
 
 <#
 .SYNOPSIS
+    実行中のPowerShellターミナルを非表示にする
+.DESCRIPTION
+    実行中のPowerShellターミナルを非表示にする
+#>
+function HidePowerShellWindow {
+    param ()
+    begin {}
+    process {
+        $Terminal = Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);' -Name Win32Functions -PassThru
+        $HWND     = (Get-Process -PID $PID).MainWindowHandle 
+        [void]$Terminal::ShowWindowAsync($HWND, 0)
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
     ファイル選択ダイアログを表示し選択されたファイルのパスを返します
 .DESCRIPTION
     Windows標準のファイル選択ダイアログを表示しユーザーが選択したファイルのパスを配列形式で返します
@@ -521,7 +538,6 @@ function DiffContent {
     最初に表示するディレクトリを指定します
 .PARAMETER Multiselect
     複数のファイルを選択できるようにするかどうかを指定します。$trueで複数選択可能。
-.EXAMPLE
 #>
 function ShowFileDialog {
     param (
@@ -779,6 +795,118 @@ function ShowDDSelect {
     end {}
 }
 
+# タスクトレイ常駐用アイコン生成
+function local:GenTaskTrayIcon([uint32] $ARGB) {
+    # PowerShell(ぽい)アイコン画像バイナリ
+    # ・16x16 1bit/pixelインデックスカラー画像
+    # ・パレット色を書き換えてアイコン背景色を一括変更する
+    $icon = 'AAABAAEAEBAQAAEABAB4AAAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAQAAAAEAEDAAAAJT1tIgAAAAZQTFRFAAB/////8DxOgwAAAC1JREFUCNdjYGBgYGFg4GNgYGdgYG5gYGxgYHgARcwHQIJyDAwWNQwGNQxgAACDjAYG7YuK+QAAAABJRU5ErkJggg=='
+    $strm = New-Object System.IO.MemoryStream(,[System.Convert]::FromBase64String($icon))
+    $strm.Seek(0x3f, [System.IO.SeekOrigin]::Begin) > $null
+    $ARGB = $ARGB -band 0x00ffffff
+    $strm.WriteByte($ARGB -shr 16 -band 0xff)
+    $strm.WriteByte($ARGB -shr  8 -band 0xff)
+    $strm.WriteByte($ARGB -shr  0 -band 0xff)
+    $strm.Seek(0x0, [System.IO.SeekOrigin]::Begin) > $null
+    return New-Object System.Drawing.Icon($strm)
+}
+
+<#
+.SYNOPSIS
+    タスクトレイに常駐して指定したスクリプトを実行し続ける
+.DESCRIPTION
+    タスクトレイに常駐して指定したスクリプトを実行し続ける
+    タスクトレイアイコンを左クリックすることで任意タイミングで実行可能
+.PARAMETER Name
+    Mame+Colorの組み合わせで多重起動抑止する
+.PARAMETER Color
+    Mame+Colorの組み合わせで多重起動抑止する
+.PARAMETER Exec
+    実行したいコード
+.PARAMETER Interval
+    実行インターバル
+.NOTES
+    元ネタ
+    https://aquasoftware.net/blog/?p=1244
+#>
+function RunInTray {
+    param (
+        [Parameter(Mandatory = $true)] [string] $Name,
+        [Parameter(Mandatory = $true)] [uint32] $Color,
+        [Parameter(Mandatory = $true)] [scriptblock] $Exec,
+        [Parameter(Mandatory = $true)] [uint] $Interval
+    )
+    begin {}
+    process {
+        $mname = "$($Name)Launcher@$([System.BitConverter]::ToString([System.BitConverter]::GetBytes($ARGB)))"
+        $mutex = New-Object System.Threading.Mutex($false, $mname)
+        try {
+            # 多重起動回避
+            if ($mutex.WaitOne(0, $false)) {
+                try {
+                    # コンテキスト作成
+                    $AppCtxt = New-Object System.Windows.Forms.ApplicationContext
+    
+                    # タスクトレイアイコン作成
+                    # クリックで強制実行
+                    $TrayIcon = [System.Windows.Forms.NotifyIcon]@{
+                        Icon            = GenTaskTrayIcon($Color)
+                        Text            = $Name
+                    }
+                    $TrayIcon.add_Click({
+                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+                            try {
+                                $Exec.Invoke()
+                            } catch {
+                                $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                        }
+                    })
+                    $TrayIcon.ContextMenuStrip = New-Object System.Windows.Forms.ContextMenuStrip
+    
+                    # Exitメニュー
+                    $ExitMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = 'Exit' }
+                    $ExitMenu.add_Click({
+                        $AppCtxt.ExitThread()
+                    })
+                    $TrayIcon.ContextMenuStrip.Items.Add($ExitMenu) > $null
+    
+                    # タイマー
+                    if ($Interval -gt 0){
+                        $TrayTimer = New-Object Windows.Forms.Timer
+                        $TrayTimer.Add_Tick({
+                            $TrayTimer.Stop()
+                            try {
+                                $Exec.Invoke()
+                            } catch {
+                                $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                            $TrayTimer.Interval = $Interval
+                            $TrayTimer.Start()
+                        })
+                        $TrayTimer.Interval = 5000 # 固定
+                        $TrayTimer.Enabled = $true
+                        $TrayTimer.Start()
+                    }
+    
+                    # タスクトレイアイコン登録
+                    $TrayIcon.Visible = $true
+                    [System.Windows.Forms.Application]::Run($AppCtxt) > $null
+                } finally {
+                    if($TrayIcon){$TrayIcon.Dispose()} 
+                    if($mutex   ){$mutex.ReleaseMutex()}
+                }
+            }
+        } finally {
+            $mutex.Dispose()
+        }
+    
+    }
+    end {}
+}
+
 <#
 .SYNOPSIS
     IP Messengerでメッセージを飛ばす
@@ -799,7 +927,7 @@ function SendIPMsg {
     process {
         Start-Process -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -NoNewWindow -Wait
     }
-end {}
+    end {}
 }
 
 ## ############################################################################
