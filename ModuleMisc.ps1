@@ -645,96 +645,93 @@ function ShowFileListDialog {
     param (
         [Parameter(Mandatory = $true)]  [string]   $Title,
         [Parameter(Mandatory = $true)]  [string]   $Message,
-        [Parameter(Mandatory = $false)] [string[]] $List,
-        [Parameter(Mandatory = $false)] [string]   $Filter  = ".*"
+        [Parameter(Mandatory = $false)] [string]   $FileFilter  = ".*",
+        [Parameter(Mandatory = $false)] [string[]] $FileList
     )
     begin {}
     process {
-        $form = New-Object System.Windows.Forms.Form
-        $form.Text = $Title                                     # タイトル
-        $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
-        $form.StartPosition = 'CenterScreen'                    # 表示位置
-        $form.Topmost = $true                                   # TopMost
-        $form.Add_Closing({
-            switch ($form.Text) {
-                "OK"     { $form.Text = "OK"     }
-                "Cancel" { $form.Text = "Cancel" }
-                Default  { $form.Text = ""       }
-            }
-        })
-        $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
-            $panel1  = New-Object System.Windows.Forms.TableLayoutPanel
-                $label   = New-Object System.Windows.Forms.Label
-                $listbox = New-Object System.Windows.Forms.ListBox
-            $panel2  = New-Object System.Windows.Forms.Panel
-                $button1 = New-Object System.Windows.Forms.Button
-                $button2 = New-Object System.Windows.Forms.Button
+        # フォーム生成
+        $frmMain = New-Object System.Windows.Forms.Form
+        $frmMain.Text = $Title                                     # タイトル
+        $frmMain.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
+        $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
+        $frmMain.Topmost = $true                                   # TopMost
+        $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
+        $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
+            $pnlBody = New-Object System.Windows.Forms.Panel
+                $lblDD   = New-Object System.Windows.Forms.Label
+                $lbxDD = New-Object System.Windows.Forms.ListBox
+            $pnlTail = New-Object System.Windows.Forms.Panel
+                $btnOK     = New-Object System.Windows.Forms.Button
+                $btnCancel = New-Object System.Windows.Forms.Button
         
-        $tableLayoutPanel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-        $tableLayoutPanel1.RowCount = 2
-        $null = $tableLayoutPanel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-        $null = $tableLayoutPanel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
-        $null = $tableLayoutPanel1.Controls.Add($panel1, 0, 0)
-        $null = $tableLayoutPanel1.Controls.Add($panel2, 0, 1)
-        $null = $form.Controls.Add($tableLayoutPanel1)
+        $tlpMain.Dock = [System.Windows.Forms.DockStyle]::Fill
+        $tlpMain.RowCount = 2
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
+        $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
+        $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
+        $null = $frmMain.Controls.Add($tlpMain)
         
-            $panel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-            $panel1.RowCount = 2
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle))
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 100)))
-            $null = $panel1.Controls.Add($label, 0, 0)
-            $null = $panel1.Controls.Add($listbox, 0, 1)
+            $pnlBody.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlBody.Controls.Add($lbxDD)
+            $null = $pnlBody.Controls.Add($lblDD)
         
-                $label.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $label.Text = $Message
-                $label.AutoSize = $true
-                $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-                $listbox.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $listbox.AllowDrop = $True
-                $null = $listbox.Add_DragEnter({
+                $lblDD.Dock = [System.Windows.Forms.DockStyle]::Top
+                $lblDD.Text = $Message
+                $lblDD.AutoSize = $true
+                $lblDD.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+
+                $lbxDD.Dock = [System.Windows.Forms.DockStyle]::Fill
+                $lbxDD.AllowDrop = $true
+                $null = $lbxDD.Add_DragEnter({
                     $_.Effect = "All"
                 })
-                $null = $listbox.Add_DragDrop({
-                    foreach($elm in @($_.Data.GetData("FileDrop"))) {
-                        if( [System.IO.Path]::GetFileName($elm) -match $Filter ){
-                            [void]$Listbox.Items.Add($elm)
+                $null = $lbxDD.Add_DragDrop({
+                    @($_.Data.GetData("FileDrop")) | ForEach-Object {
+                        if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
+                            [void]$lbxDD.Items.Add($_)
                         }
                     }
                 })
+
+            $pnlTail.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlTail.Controls.Add($btnCancel)
+            $null = $pnlTail.Controls.Add($btnOK)
         
-            $null = $panel2.Controls.Add($button2)
-            $null = $panel2.Controls.Add($button1)
-            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
-        
-                $button1.Dock = [System.Windows.Forms.DockStyle]::Right
-                $button1.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button1.Text = "OK"
-                $button1.UseVisualStyleBackColor = $true
-                $null = $button1.Add_Click({
-                    $form.Text = "OK"
-                    $form.Close()
+                $btnOK.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnOK.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnOK.Text = "OK"
+                $btnOK.UseVisualStyleBackColor = $true
+                $null = $btnOK.Add_Click({
+                    $frmMain.DialogResult = "OK"
+                    $frmMain.Close()
                 })
         
-                $button2.Dock = [System.Windows.Forms.DockStyle]::Right
-                $button2.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button2.Text = "Cancel"
-                $button2.UseVisualStyleBackColor = $true
-                $null = $button2.Add_Click({
-                    $form.Text = "Cancel"
-                    $form.Close()
+                $btnCancel.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnCancel.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnCancel.Text = "Cancel"
+                $btnCancel.UseVisualStyleBackColor = $true
+                $null = $btnCancel.Add_Click({
+                    $frmMain.DialogResult = "Cancel"
+                    $frmMain.Close()
                 })
-        
-        if ($null -ne $List) {
-            foreach($elm in $List) {
-                if( [System.IO.Path]::GetFileName($elm) -match $Filter ){
-                    [void]$Listbox.Items.Add($elm)
+
+        # フォーム表示
+        $frmMain.DialogResult = "Cancel"
+        $frmMain.AcceptButton = $btnOK
+        $frmMain.CancelButton = $btnCancel
+        if ($null -ne $FileList) {
+            $FileList | ForEach-Object {
+                if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
+                    [void]$lbxDD.Items.Add($_)
                 }
             }
         }
         $DUMY = New-Object System.Windows.Forms.Form
         $DUMY.TopMost = $true
-        $null = $form.ShowDialog($DUMY)
-        return @($form.Text, $listbox.Items)
+        $null = $frmMain.ShowDialog($DUMY)
+        return @($frmMain.DialogResult, $lbxDD.Items)
     }
     end {}
 }
@@ -754,105 +751,106 @@ function ShowFileListDialogWithOption {
     )
     begin {}
     process {
-        $form = New-Object System.Windows.Forms.Form
-        $form.Text = $Title                                     # タイトル
-        $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
-        $form.StartPosition = 'CenterScreen'                    # 表示位置
-        $form.Topmost = $true                                   # TopMost
-        $form.Add_Closing({
-            switch ($form.Text) {
-                "OK"     { $form.Text = "OK"     }
-                "Cancel" { $form.Text = "Cancel" }
-                Default  { $form.Text = ""       }
-            }
-        })
-        $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
-            $panel1  = New-Object System.Windows.Forms.Panel
-                $label   = New-Object System.Windows.Forms.Label
-                $listbox = New-Object System.Windows.Forms.ListBox
-                $GroupBox = New-Object System.Windows.Forms.GroupBox
-                    $FlowLayoutPanel = New-Object System.Windows.Forms.FlowLayoutPanel
-            $panel2  = New-Object System.Windows.Forms.Panel
-                $button1 = New-Object System.Windows.Forms.Button
-                $button2 = New-Object System.Windows.Forms.Button
+        # フォーム生成
+        $frmMain = New-Object System.Windows.Forms.Form
+        $frmMain.Text = $Title                                     # タイトル
+        $frmMain.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
+        $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
+        $frmMain.Topmost = $true                                   # TopMost
+        $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
+        $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
+            $pnlBody = New-Object System.Windows.Forms.Panel
+                $lblDD   = New-Object System.Windows.Forms.Label
+                $lbxDD = New-Object System.Windows.Forms.ListBox
+                $grpOpt = New-Object System.Windows.Forms.GroupBox
+                    $flpOpt = New-Object System.Windows.Forms.FlowLayoutPanel
+            $pnlTail = New-Object System.Windows.Forms.Panel
+                $btnOK     = New-Object System.Windows.Forms.Button
+                $btnCancel = New-Object System.Windows.Forms.Button
         
-        $tableLayoutPanel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-        $tableLayoutPanel1.RowCount = 2
-        $null = $tableLayoutPanel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-        $null = $tableLayoutPanel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
-        $null = $tableLayoutPanel1.Controls.Add($panel1, 0, 0)
-        $null = $tableLayoutPanel1.Controls.Add($panel2, 0, 1)
-        $null = $form.Controls.Add($tableLayoutPanel1)
+        $tlpMain.Dock = [System.Windows.Forms.DockStyle]::Fill
+        $tlpMain.RowCount = 2
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
+        $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
+        $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
+        $null = $frmMain.Controls.Add($tlpMain)
         
-            $panel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-            $null = $panel1.Controls.Add($GroupBox)
-            $null = $panel1.Controls.Add($listbox)
-            $null = $panel1.Controls.Add($label)
+            $pnlBody.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlBody.Controls.Add($grpOpt)
+            $null = $pnlBody.Controls.Add($lbxDD)
+            $null = $pnlBody.Controls.Add($lblDD)
         
-                $label.Dock = [System.Windows.Forms.DockStyle]::Top
-                $label.Text = $Message
-                $label.AutoSize = $true
-                $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-                $listbox.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $listbox.AllowDrop = $True
-                $null = $listbox.Add_DragEnter({
+                $lblDD.Dock = [System.Windows.Forms.DockStyle]::Top
+                $lblDD.Text = $Message
+                $lblDD.AutoSize = $true
+                $lblDD.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+
+                $lbxDD.Dock = [System.Windows.Forms.DockStyle]::Fill
+                $lbxDD.AllowDrop = $true
+                $null = $lbxDD.Add_DragEnter({
                     $_.Effect = "All"
                 })
-                $null = $listbox.Add_DragDrop({
+                $null = $lbxDD.Add_DragDrop({
                     @($_.Data.GetData("FileDrop")) | ForEach-Object {
                         if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                            [void]$Listbox.Items.Add($_)
+                            [void]$lbxDD.Items.Add($_)
                         }
                     }
                 })
-                $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Bottom
-                $GroupBox.Text = "Options"
-                $GroupBox.Height = 50
-                $null = $GroupBox.Controls.Add($FlowLayoutPanel)
-                    $FlowLayoutPanel.Dock = [System.Windows.Forms.DockStyle]::Fill
+
+                $grpOpt.Dock = [System.Windows.Forms.DockStyle]::Bottom
+                $grpOpt.Text = "Options"
+                $grpOpt.Height = 50
+                $null = $grpOpt.Controls.Add($flpOpt)
+                    $flpOpt.Dock = [System.Windows.Forms.DockStyle]::Fill
                     $Checked = $true
                     $Options | ForEach-Object {
-                        $RadioButton = New-Object System.Windows.Forms.RadioButton
-                        $RadioButton.Text = $_
-                        $RadioButton.Checked = $Checked
-                        $RadioButton.AutoSize = $true
-                        $FlowLayoutPanel.Controls.Add($Radiobutton)
+                        $rdoOpt = New-Object System.Windows.Forms.RadioButton
+                        $rdoOpt.Text = $_
+                        $rdoOpt.Checked = $Checked
+                        $rdoOpt.AutoSize = $true
+                        $flpOpt.Controls.Add($rdoOpt)
                         $Checked = $false
                     }
         
-            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
-            $null = $panel2.Controls.Add($button2)
-            $null = $panel2.Controls.Add($button1)
+            $pnlTail.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlTail.Controls.Add($btnCancel)
+            $null = $pnlTail.Controls.Add($btnOK)
         
-                $button1.Dock = [System.Windows.Forms.DockStyle]::Right
-                $button1.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button1.Text = "OK"
-                $button1.UseVisualStyleBackColor = $true
-                $null = $button1.Add_Click({
-                    $form.Text = "OK"
-                    $form.Close()
+                $btnOK.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnOK.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnOK.Text = "OK"
+                $btnOK.UseVisualStyleBackColor = $true
+                $null = $btnOK.Add_Click({
+                    $frmMain.DialogResult = "OK"
+                    $frmMain.Close()
                 })
         
-                $button2.Dock = [System.Windows.Forms.DockStyle]::Right
-                $button2.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button2.Text = "Cancel"
-                $button2.UseVisualStyleBackColor = $true
-                $null = $button2.Add_Click({
-                    $form.Text = "Cancel"
-                    $form.Close()
+                $btnCancel.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnCancel.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnCancel.Text = "Cancel"
+                $btnCancel.UseVisualStyleBackColor = $true
+                $null = $btnCancel.Add_Click({
+                    $frmMain.DialogResult = "Cancel"
+                    $frmMain.Close()
                 })
-        
+
+        # フォーム表示
+        $frmMain.DialogResult = "Cancel"
+        $frmMain.AcceptButton = $btnOK
+        $frmMain.CancelButton = $btnCancel
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                    [void]$Listbox.Items.Add($_)
+                    [void]$lbxDD.Items.Add($_)
                 }
             }
         }
         $DUMY = New-Object System.Windows.Forms.Form
         $DUMY.TopMost = $true
-        $null = $form.ShowDialog($DUMY)
-        return @($form.Text, $listbox.Items, ($FlowLayoutPanel.Controls | Where-Object {$_.Checked} | Select-Object -ExpandProperty Text) )
+        $null = $frmMain.ShowDialog($DUMY)
+        return @($frmMain.DialogResult, $lbxDD.Items, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
     end {}
 }

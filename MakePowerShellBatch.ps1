@@ -37,9 +37,11 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 }
 
 try {
-    $ret = ShowFileListDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -List $args -Filter "\.ps1$"
-    foreach($elm in $ret[1]) {
-        MkPshBat $elm $ret[0]
+    $ret = ShowFileListDialogWithOption -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -FileList $args -FIleFilter "\.ps1$" -Options @("CUI", "GUI")
+    if ($ret[0] -eq "OK") {
+        foreach($elm in $ret[1]) {
+            MkPshBat $elm $ret[2]
+        }
     }
 } catch {
     $null = Write-Host "---例外発生---"
