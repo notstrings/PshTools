@@ -35,19 +35,19 @@ function RestrictTextBlank {
 
 <#
 .SYNOPSIS
-    文字列中の指定全角文字を半角に変換します
+    全角文字を半角に変換します
 .DESCRIPTION
-    文字列中の指定全角文字を半角に変換します
+    指定した全角文字を半角に変換します
 .PARAMETER Text
     対象文字列
 .EXAMPLE
-    RestrictTextWide "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３（）［］｛｝　ｱｲｳｴｵ"
-    結果:"Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３()[]{} ｱｲｳｴｵ"
+    RestrictTextZen "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３　ｱｲｳｴｵ"
+    結果:"Hello, world！123　ｱｲｳｴｵ"
 #>
-function RestrictTextWide() {
+function RestrictTextZen() {
     param (
         [Parameter(Mandatory = $false)] [string] $Text,
-        [Parameter(Mandatory = $false)] [string] $Chars = "　（）［］｛｝"
+        [Parameter(Mandatory = $false)] [string] $Chars = "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
     )
     begin {}
     process {
@@ -62,25 +62,21 @@ function RestrictTextWide() {
 
 <#
 .SYNOPSIS
-    全角英数・半角カナ文字を変換する
+    半角カタカナを全角に変換します
 .DESCRIPTION
-    文字列中の全角英数/全角空白を半角、半角カタカナを全角に変換します
+    半角カタカナを全角に変換します
 .PARAMETER Text
     対象文字列
 .EXAMPLE
-    RestrictTextJA "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３　ｱｲｳｴｵ"
+    RestrictTextHan "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３　ｱｲｳｴｵ"
     結果:"Hello, world！123　アイウエオ"
 #>
-function RestrictTextJA() {
+function RestrictTextHan() {
     param (
         [Parameter(Mandatory = $false)] [string] $Text
     )
     begin {}
     process {
-        $Text = [regex]::Replace($Text, "[Ａ-Ｚａ-ｚ０-９]+",{ 
-            param($match)
-            return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
         $Text = [regex]::Replace($Text, "[ｦ-ﾟ]+",{ 
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Wide)
@@ -162,7 +158,7 @@ function RestrictTextDate {
         # 年号省略の場合は表記年度と参照年度が一致する場合だけ処理
         if ($RefDate -ne $null) {
             ## YY-MM-DD or YY.MM.DD
-            $Text = [regex]::Replace($Text, "\b(\d\d)([.-])(0[1-9]|1[0-2])(\2)(0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
+            $Text = [regex]::Replace($Text, "(?<![0-9]+)(\d\d)([.-])(0[1-9]|1[0-2])(\2)(0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
                 param($match)
                 $name = $match.Value.ToUpper()
                 $name = $name.Replace(".","-")
@@ -179,7 +175,7 @@ function RestrictTextDate {
                 }
             }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
             ## YY年MM月DD日
-            $Text = [regex]::Replace($Text, "\b(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
+            $Text = [regex]::Replace($Text, "(?<![0-9]+)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
                 param($match)
                 $name = $match.Value.ToUpper()
                 $name = $name.Replace(".","-")
