@@ -35,22 +35,49 @@ function RestrictTextBlank {
 
 <#
 .SYNOPSIS
-    全角・半角文字を変換する
+    文字列中の指定全角文字を半角に変換します
 .DESCRIPTION
-    文字列中の全角英数/全角空白/全角括弧"（）［］｛｝"を半角、半角カタカナを全角に変換します
+    文字列中の指定全角文字を半角に変換します
 .PARAMETER Text
     対象文字列
 .EXAMPLE
-    RestrictTextZenHan "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３（）［］｛｝　ｱｲｳｴｵ"
-    結果:"Hello, world！123()[]{} アイウエオ"
+    RestrictTextWide "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３（）［］｛｝　ｱｲｳｴｵ"
+    結果:"Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３()[]{} ｱｲｳｴｵ"
 #>
-function RestrictTextZenHan() {
+function RestrictTextWide() {
+    param (
+        [Parameter(Mandatory = $false)] [string] $Text,
+        [Parameter(Mandatory = $false)] [string] $Chars = "　（）［］｛｝"
+    )
+    begin {}
+    process {
+        $Text = [regex]::Replace($Text, "[$(Chars)]+",{ 
+            param($match)
+            return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
+        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        return $Text
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    全角英数・半角カナ文字を変換する
+.DESCRIPTION
+    文字列中の全角英数/全角空白を半角、半角カタカナを全角に変換します
+.PARAMETER Text
+    対象文字列
+.EXAMPLE
+    RestrictTextJA "Ｈｅｌｌｏ，ｗｏｒｌｄ！１２３　ｱｲｳｴｵ"
+    結果:"Hello, world！123　アイウエオ"
+#>
+function RestrictTextJA() {
     param (
         [Parameter(Mandatory = $false)] [string] $Text
     )
     begin {}
     process {
-        $Text = [regex]::Replace($Text, "[Ａ-Ｚａ-ｚ０-９　（）［］｛｝]+",{ 
+        $Text = [regex]::Replace($Text, "[Ａ-Ｚａ-ｚ０-９]+",{ 
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
         }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
@@ -274,7 +301,7 @@ function TryConvertRoma2Kana {
 .DESCRIPTION
     ひらがなをローマ字にしようとしますが
     強引に逆変換しただけなので正式なものではありません
-    ※ただし「すうぃーつ」とかいう元々日本語には無い綴りも許容する
+    ※ただし「すうぃーつ」とかいう元々日本語には無い綴りも許容します
 .PARAMETER Text
     対象文字列
 .EXAMPLE

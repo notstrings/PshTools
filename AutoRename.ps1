@@ -34,7 +34,8 @@ function local:CleanupNodeName([string] $TargetPath, [datetime] $TargetDate, [bo
             $fname = [System.IO.Path]::GetFileName($dstpath)
             $ename = ""
         }
-        $fname = RestrictTextZenHan -Text $fname
+        $fname = RestrictTextJA     -Text $fname
+        $fname = RestrictTextWide   -Text $fname -Chars "　（）［］｛｝"
         $fname = RestrictTextDate   -Text $fname -Format "yyyyMMdd" -RefDate $TargetDate
         $fname = RestrictTextBlank  -Text $fname
         $ename = RestrictTextBlank  -Text $ename
