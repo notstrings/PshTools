@@ -13,27 +13,28 @@ Add-Type -AssemblyName System.Drawing
         [Parameter(Mandatory = $true)]  [string]   $Message,
         [Parameter(Mandatory = $false)] [string]   $FileFilter  = ".*",
         [Parameter(Mandatory = $false)] [string[]] $FileList,
-        [Parameter(Mandatory = $false)] [string[]] $ExecOptions
+        [Parameter(Mandatory = $false)] [string[]] $Options
     )
     begin {}
     process {
         $form = New-Object System.Windows.Forms.Form
         $form.Text = $Title                                     # タイトル
-        $form.Size = New-Object System.Drawing.Size(300,200)    # ウィンドウサイズ
+        $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
         $form.StartPosition = 'CenterScreen'                    # 表示位置
         $form.Topmost = $true                                   # TopMost
         $form.Add_Closing({
             switch ($form.Text) {
-                $ButtonA { $form.Text = $ButtonA }
-                $ButtonB { $form.Text = $ButtonB }
-                Default  { $form.Text = "" }
+                "OK"     { $form.Text = "OK"     }
+                "Cancel" { $form.Text = "Cancel" }
+                Default  { $form.Text = ""       }
             }
         })
         $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
-            $panel1  = New-Object System.Windows.Forms.TableLayoutPanel
+            $panel1  = New-Object System.Windows.Forms.Panel
                 $label   = New-Object System.Windows.Forms.Label
                 $listbox = New-Object System.Windows.Forms.ListBox
                 $GroupBox = New-Object System.Windows.Forms.GroupBox
+                    $FlowLayoutPanel = New-Object System.Windows.Forms.FlowLayoutPanel
             $panel2  = New-Object System.Windows.Forms.Panel
                 $button1 = New-Object System.Windows.Forms.Button
                 $button2 = New-Object System.Windows.Forms.Button
@@ -47,15 +48,11 @@ Add-Type -AssemblyName System.Drawing
         $null = $form.Controls.Add($tableLayoutPanel1)
         
             $panel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-            $panel1.RowCount = 3
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle))
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle))
-            $null = $panel1.Controls.Add($label, 0, 0)
-            $null = $panel1.Controls.Add($listbox, 0, 1)
-            $null = $panel1.Controls.Add($GroupBox, 0, 2)
+            $null = $panel1.Controls.Add($GroupBox)
+            $null = $panel1.Controls.Add($listbox)
+            $null = $panel1.Controls.Add($label)
         
-                $label.Dock = [System.Windows.Forms.DockStyle]::Fill
+                $label.Dock = [System.Windows.Forms.DockStyle]::Top
                 $label.Text = $Message
                 $label.AutoSize = $true
                 $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
@@ -71,19 +68,24 @@ Add-Type -AssemblyName System.Drawing
                         }
                     }
                 })
-                $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $GroupBox.Text = "Gender"
-                $GroupBox.AutoSize = $true
-                    $ExecOptions | ForEach-Object {
+                $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Bottom
+                $GroupBox.Text = "Options"
+                $GroupBox.Height = 50
+                $null = $GroupBox.Controls.Add($FlowLayoutPanel)
+                    $FlowLayoutPanel.Dock = [System.Windows.Forms.DockStyle]::Fill
+                    $Checked = $true
+                    $Options | ForEach-Object {
                         $RadioButton = New-Object System.Windows.Forms.RadioButton
-                        $RadioButton.Dock = [System.Windows.Forms.DockStyle]::Top
                         $RadioButton.Text = $_
-                        $GroupBox.Controls.Add($Radiobutton)
+                        $RadioButton.Checked = $Checked
+                        $RadioButton.AutoSize = $true
+                        $FlowLayoutPanel.Controls.Add($Radiobutton)
+                        $Checked = $false
                     }
         
+            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
             $null = $panel2.Controls.Add($button2)
             $null = $panel2.Controls.Add($button1)
-            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
         
                 $button1.Dock = [System.Windows.Forms.DockStyle]::Right
                 $button1.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
@@ -110,10 +112,12 @@ Add-Type -AssemblyName System.Drawing
                 }
             }
         }
-        $null = $form.ShowDialog()
-        return @($form.Text, $listbox.Items)
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
+        $null = $form.ShowDialog($DUMY)
+        return @($form.Text, $listbox.Items, ($FlowLayoutPanel.Controls | Where-Object {$_.Checked} | Select-Object -ExpandProperty Text) )
     }
     end {}
 }
 
-ShowDDDialogWithSelect "Title" "Message" @("aa") @("a","b")
+Write-host (ShowDDSelect "Title" "Message" ".*" @("aa") @("aa","bbb") )

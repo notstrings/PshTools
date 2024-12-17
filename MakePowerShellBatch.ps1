@@ -37,7 +37,7 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 }
 
 try {
-    $ret = ShowDDDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -ButtonA "CUI" -ButtonB "GUI" -List $args
+    $ret = ShowFileListDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -List $args -Filter "\.ps1$"
     foreach($elm in $ret[1]) {
         MkPshBat $elm $ret[0]
     }

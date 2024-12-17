@@ -570,7 +570,7 @@ function ShowFileDialog {
     )
     begin {}
     process {
-        $DUMY = new-object System.Windows.Forms.Form
+        $DUMY = New-Object System.Windows.Forms.Form
         $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.OpenFileDialog
         $FDlg.Title            = $Title
@@ -601,12 +601,11 @@ function ShowFolderDialog {
     )
     begin {}
     process {
-        $DUMY = new-object System.Windows.Forms.Form
+        $DUMY = New-Object System.Windows.Forms.Form
         $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
         $FDlg.Description      = $Description
         $FDlg.InitialDirectory = $InitialDirectory
-        $FDlg.SelectedPath     = $SelectedPath
         $null = $FDlg.ShowDialog($DUMY)
         return $FDlg.SelectedPath
     }
@@ -617,9 +616,9 @@ function ShowFolderDialog {
 .SYNOPSIS
     ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
 .DESCRIPTION
-    FileDDBox 関数はタイトル/メッセージ/ファイルフィルター/ボタンラベルを指定して
+    タイトル/メッセージ/ファイルフィルター/ボタンラベルを指定して
     ドラッグ＆ドロップで受け取ったファイルを表示するダイアログボックスを作成します
-    ユーザーがボタンを押すと選択したボタンのラベルと選択されたファイルのパスが返されます
+    ユーザーがボタンを押すと選択した結果と選択されたファイルのパスが返されます
 .PARAMETER Title
     ダイアログボックスのタイトルに設定する文字列です
 .PARAMETER Message
@@ -632,7 +631,7 @@ function ShowFolderDialog {
     ボタンBのラベルに設定する文字列です
 .EXAMPLE
     # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
-    $result = ShowDDDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -Filter "\.txt$" -ButtonA "OK" -ButtonB "キャンセル"
+    $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -Filter "\.txt$" 
     if ($result[0] -eq "OK") {
         Write-Host "選択されたファイル:"
         foreach ($file in $result[1]) {
@@ -642,27 +641,25 @@ function ShowFolderDialog {
         Write-Host "キャンセルされました。"
     }
 #>
-function ShowDDDialog {
+function ShowFileListDialog {
     param (
         [Parameter(Mandatory = $true)]  [string]   $Title,
         [Parameter(Mandatory = $true)]  [string]   $Message,
         [Parameter(Mandatory = $false)] [string[]] $List,
-        [Parameter(Mandatory = $false)] [string]   $Filter  = ".*",
-        [Parameter(Mandatory = $false)] [string]   $ButtonA = "OK",
-        [Parameter(Mandatory = $false)] [string]   $ButtonB = "Cancel"
+        [Parameter(Mandatory = $false)] [string]   $Filter  = ".*"
     )
     begin {}
     process {
         $form = New-Object System.Windows.Forms.Form
         $form.Text = $Title                                     # タイトル
-        $form.Size = New-Object System.Drawing.Size(300,200)    # ウィンドウサイズ
+        $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
         $form.StartPosition = 'CenterScreen'                    # 表示位置
         $form.Topmost = $true                                   # TopMost
         $form.Add_Closing({
             switch ($form.Text) {
-                $ButtonA { $form.Text = $ButtonA }
-                $ButtonB { $form.Text = $ButtonB }
-                Default  { $form.Text = "" }
+                "OK"     { $form.Text = "OK"     }
+                "Cancel" { $form.Text = "Cancel" }
+                Default  { $form.Text = ""       }
             }
         })
         $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
@@ -711,19 +708,19 @@ function ShowDDDialog {
         
                 $button1.Dock = [System.Windows.Forms.DockStyle]::Right
                 $button1.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button1.Text = $ButtonA
+                $button1.Text = "OK"
                 $button1.UseVisualStyleBackColor = $true
                 $null = $button1.Add_Click({
-                    $form.Text = $ButtonA
+                    $form.Text = "OK"
                     $form.Close()
                 })
         
                 $button2.Dock = [System.Windows.Forms.DockStyle]::Right
                 $button2.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
-                $button2.Text = $ButtonB
+                $button2.Text = "Cancel"
                 $button2.UseVisualStyleBackColor = $true
                 $null = $button2.Add_Click({
-                    $form.Text = $ButtonB
+                    $form.Text = "Cancel"
                     $form.Close()
                 })
         
@@ -734,39 +731,47 @@ function ShowDDDialog {
                 }
             }
         }
-        $null = $form.ShowDialog()
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
+        $null = $form.ShowDialog($DUMY)
         return @($form.Text, $listbox.Items)
     }
     end {}
 }
 
-function ShowDDSelect {
+<#
+.SYNOPSIS
+    ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
+    ※オプション選択付き
+#>
+function ShowFileListDialogWithOption {
     param (
         [Parameter(Mandatory = $true)]  [string]   $Title,
         [Parameter(Mandatory = $true)]  [string]   $Message,
         [Parameter(Mandatory = $false)] [string]   $FileFilter  = ".*",
         [Parameter(Mandatory = $false)] [string[]] $FileList,
-        [Parameter(Mandatory = $false)] [string[]] $ExecOptions
+        [Parameter(Mandatory = $false)] [string[]] $Options
     )
     begin {}
     process {
         $form = New-Object System.Windows.Forms.Form
         $form.Text = $Title                                     # タイトル
-        $form.Size = New-Object System.Drawing.Size(300,200)    # ウィンドウサイズ
+        $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
         $form.StartPosition = 'CenterScreen'                    # 表示位置
         $form.Topmost = $true                                   # TopMost
         $form.Add_Closing({
             switch ($form.Text) {
-                $ButtonA { $form.Text = $ButtonA }
-                $ButtonB { $form.Text = $ButtonB }
-                Default  { $form.Text = "" }
+                "OK"     { $form.Text = "OK"     }
+                "Cancel" { $form.Text = "Cancel" }
+                Default  { $form.Text = ""       }
             }
         })
         $tableLayoutPanel1 = New-Object System.Windows.Forms.TableLayoutPanel
-            $panel1  = New-Object System.Windows.Forms.TableLayoutPanel
+            $panel1  = New-Object System.Windows.Forms.Panel
                 $label   = New-Object System.Windows.Forms.Label
                 $listbox = New-Object System.Windows.Forms.ListBox
                 $GroupBox = New-Object System.Windows.Forms.GroupBox
+                    $FlowLayoutPanel = New-Object System.Windows.Forms.FlowLayoutPanel
             $panel2  = New-Object System.Windows.Forms.Panel
                 $button1 = New-Object System.Windows.Forms.Button
                 $button2 = New-Object System.Windows.Forms.Button
@@ -780,15 +785,11 @@ function ShowDDSelect {
         $null = $form.Controls.Add($tableLayoutPanel1)
         
             $panel1.Dock = [System.Windows.Forms.DockStyle]::Fill
-            $panel1.RowCount = 3
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle))
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-            $null = $panel1.RowStyles.Add((New-Object System.Windows.Forms.RowStyle))
-            $null = $panel1.Controls.Add($label, 0, 0)
-            $null = $panel1.Controls.Add($listbox, 0, 1)
-            $null = $panel1.Controls.Add($GroupBox, 0, 2)
+            $null = $panel1.Controls.Add($GroupBox)
+            $null = $panel1.Controls.Add($listbox)
+            $null = $panel1.Controls.Add($label)
         
-                $label.Dock = [System.Windows.Forms.DockStyle]::Fill
+                $label.Dock = [System.Windows.Forms.DockStyle]::Top
                 $label.Text = $Message
                 $label.AutoSize = $true
                 $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
@@ -804,19 +805,24 @@ function ShowDDSelect {
                         }
                     }
                 })
-                $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $GroupBox.Text = "Gender"
-                $GroupBox.AutoSize = $true
-                    $ExecOptions | ForEach-Object {
+                $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Bottom
+                $GroupBox.Text = "Options"
+                $GroupBox.Height = 50
+                $null = $GroupBox.Controls.Add($FlowLayoutPanel)
+                    $FlowLayoutPanel.Dock = [System.Windows.Forms.DockStyle]::Fill
+                    $Checked = $true
+                    $Options | ForEach-Object {
                         $RadioButton = New-Object System.Windows.Forms.RadioButton
-                        $RadioButton.Dock = [System.Windows.Forms.DockStyle]::Top
                         $RadioButton.Text = $_
-                        $GroupBox.Controls.Add($Radiobutton)
+                        $RadioButton.Checked = $Checked
+                        $RadioButton.AutoSize = $true
+                        $FlowLayoutPanel.Controls.Add($Radiobutton)
+                        $Checked = $false
                     }
         
+            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
             $null = $panel2.Controls.Add($button2)
             $null = $panel2.Controls.Add($button1)
-            $panel2.Dock = [System.Windows.Forms.DockStyle]::Fill
         
                 $button1.Dock = [System.Windows.Forms.DockStyle]::Right
                 $button1.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
@@ -843,8 +849,10 @@ function ShowDDSelect {
                 }
             }
         }
-        $null = $form.ShowDialog()
-        return @($form.Text, $listbox.Items)
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
+        $null = $form.ShowDialog($DUMY)
+        return @($form.Text, $listbox.Items, ($FlowLayoutPanel.Controls | Where-Object {$_.Checked} | Select-Object -ExpandProperty Text) )
     }
     end {}
 }
@@ -974,7 +982,7 @@ function RunInTray {
 function SendIPMsg {
     param (
         [Parameter(Mandatory = $false)] [string] $ExePath = "$ENV:USERPROFILE\AppData\Local\IPMsg\IPMsg.exe",
-        [Parameter(Mandatory = $false)]  [string] $TargerIP = "127.0.0.1",
+        [Parameter(Mandatory = $false)] [string] $TargerIP = "127.0.0.1",
         [Parameter(Mandatory = $true)]  [string] $Message
     )
     begin {}
