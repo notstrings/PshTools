@@ -22,6 +22,7 @@ Add-Type -AssemblyName System.Drawing
         $form.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
         $form.StartPosition = 'CenterScreen'                    # 表示位置
         $form.Topmost = $true                                   # TopMost
+        $form.Padding = New-Object System.Windows.Forms.Padding(5)
         $form.Add_Closing({
             switch ($form.Text) {
                 "OK"     { $form.Text = "OK"     }
@@ -56,6 +57,7 @@ Add-Type -AssemblyName System.Drawing
                 $label.Text = $Message
                 $label.AutoSize = $true
                 $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+
                 $listbox.Dock = [System.Windows.Forms.DockStyle]::Fill
                 $listbox.AllowDrop = $True
                 $null = $listbox.Add_DragEnter({
@@ -68,6 +70,7 @@ Add-Type -AssemblyName System.Drawing
                         }
                     }
                 })
+
                 $GroupBox.Dock = [System.Windows.Forms.DockStyle]::Bottom
                 $GroupBox.Text = "Options"
                 $GroupBox.Height = 50
@@ -79,6 +82,7 @@ Add-Type -AssemblyName System.Drawing
                         $RadioButton.Text = $_
                         $RadioButton.Checked = $Checked
                         $RadioButton.AutoSize = $true
+                        # $RadioButton.Appearance = [System.Windows.Forms.Appearance]::Button
                         $FlowLayoutPanel.Controls.Add($Radiobutton)
                         $Checked = $false
                     }
@@ -104,7 +108,9 @@ Add-Type -AssemblyName System.Drawing
                     $form.Text = "Cancel"
                     $form.Close()
                 })
-        
+
+        $form.AcceptButton = $button1
+        $form.CancelButton = $button2
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
