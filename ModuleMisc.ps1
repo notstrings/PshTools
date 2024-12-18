@@ -994,6 +994,9 @@ function RunInTray {
     送信先IPorホスト名
 .PARAMETER Message
     送信メッセージ(改行は文字の``\n``)
+.NOTES
+    依存
+    winget install FastCopy.IPMsg
 #>
 function SendIPMsg {
     param (
@@ -1177,6 +1180,9 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
 .EXAMPLE
     ExtArc -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
     ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
+.NOTES
+    依存
+    winget install 7zip.7zip
 #>
 function ExtArc {
     param (
@@ -1219,6 +1225,9 @@ function ExtArc {
 .EXAMPLE
     CmpArc -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
     ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
+.NOTES
+    依存
+    winget install 7zip.7zip
 #>
 function CmpArc {
     param (
