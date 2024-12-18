@@ -1148,6 +1148,89 @@ function MoveTrush {
 }
 
 ## ############################################################################
+## Zip(Windows標準機能)
+
+function local:innerExpand([string]$DstPath, [string]$SrcPath) {
+    # ユニーク名取得
+    $sUniq = GenUniqName $DstPath $SrcPath
+    # 展開
+    $null = Expand-Archive -LiteralPath """$SrcPath""" -DestinationPath """$sUniq"""
+}
+function local:innerCompress([string]$DstPath, [string]$SrcPath) {
+    # ユニーク名取得
+    $sUniq = GenUniqName $DstPath $SrcPath
+    # 圧縮
+    $null = Compress-Archive -LiteralPath """$SrcPath""" -DestinationPath """$sUniq"""
+}
+
+<#
+.SYNOPSIS
+    指定したパスにあるアーカイブファイルを展開します
+.DESCRIPTION
+    指定したパスにあるアーカイブファイルを再帰的に展開し元のアーカイブファイルを削除します
+    解凍先が既にある場合上書きを自動で避けます
+.PARAMETER DstPath
+    展開先のディレクトリパスを指定します
+.PARAMETER SrcPath
+    展開するファイルまたはディレクトリのパスを指定します
+.PARAMETER All
+    徹底解凍するかどうか
+.EXAMPLE
+    ExtArc -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
+    ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
+#>
+function ExtArc {
+    param (
+        [Parameter(Mandatory = $true)]  [string]$DstPath,
+        [Parameter(Mandatory = $true)]  [string]$SrcPath,
+        [Parameter(Mandatory = $false)] [bool]$All = $false
+    )
+    begin {}
+    process {
+        innerExpand -DstPath $DstPath -SrcPath $SrcPath
+        if ($All -eq $true){
+            Get-ChildItem -LiteralPath $DstPath -File -Recurse |
+            Where-Object { @(".zip") -contains $_.Extension } |
+            ForEach-Object {
+                $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
+                $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+                $ename = ""
+                innerExpand -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) 
+                $null = Remove-Item -LiteralPath ($_.FullName) -Force
+            } | Out-Null
+        }
+        $null = Remove-Item -LiteralPath $SrcPath -Force
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    指定したパスをZIP形式で圧縮します
+.DESCRIPTION
+    指定したパスをZIP形式で圧縮します
+    圧縮先が既にある場合上書きを自動で避けます
+.PARAMETER DstPath
+    圧縮ファイルのパスを指定します
+.PARAMETER SrcPath
+    圧縮するファイルまたはディレクトリのパスを指定します
+.EXAMPLE
+    CmpArc -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
+    ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
+#>
+function CmpArc {
+    param (
+        [Parameter(Mandatory = $true)]  [string]$DstPath,
+        [Parameter(Mandatory = $true)]  [string]$SrcPath
+    )
+    begin {}
+    process {
+        innerCompress -DstPath $DstPath -SrcPath $SrcPath
+    }
+    end {}
+}
+
+## ############################################################################
 ## 7Zip
 
 function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
@@ -1178,13 +1261,13 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
 .PARAMETER All
     徹底解凍するかどうか
 .EXAMPLE
-    ExtArc -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
+    ExtArc7Z -SrcPath "C:\temp\archive.zip" -DstPath "C:\temp\extracted"
     ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
 .NOTES
     依存
     winget install 7zip.7zip
 #>
-function ExtArc {
+function ExtArc7Z {
     param (
         [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
         [Parameter(Mandatory = $true)]  [string]$DstPath,
@@ -1223,13 +1306,13 @@ function ExtArc {
 .PARAMETER SrcPath
     圧縮するファイルまたはディレクトリのパスを指定します
 .EXAMPLE
-    CmpArc -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
+    CmpArc7Z -SrcPath "C:\temp\files" -DstPath "C:\temp\archive.zip"
     ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
 .NOTES
     依存
     winget install 7zip.7zip
 #>
-function CmpArc {
+function CmpArc7Z {
     param (
         [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
         [Parameter(Mandatory = $true)]  [string]$DstPath,
