@@ -492,7 +492,7 @@ Function AutoGuessEncodingSimple {
             $b1 = $TxtData[$_ + 0]
             $b2 = $TxtData[$_ + 1]
             (((0xA1 -le $b1 -and $b1 -le 0xFE) -and (0xA1 -le $b2 -and $b2 -le 0xFE)) -or
-            ((0x8E -eq $b1)                   -and (0xA1 -le $b2 -and $b2 -le 0xDF)))
+             ((0x8E -eq $b1)                   -and (0xA1 -le $b2 -and $b2 -le 0xDF)))
         }
         $UTF8Count = 0..($TxtData.Length - 2) | Where-Object {
             $b1 = $TxtData[$_ + 0]
