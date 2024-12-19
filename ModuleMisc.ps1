@@ -593,7 +593,7 @@ function HidePowerShellWindow {
 #>
 function ShowFileDialog {
     param (
-        [Parameter(Mandatory = $true)] [string] $Title,
+        [Parameter(Mandatory = $true)]  [string] $Title,
         [Parameter(Mandatory = $false)] [string] $Filter  = "テキストファイル(*.txt)|*.txt",
         [Parameter(Mandatory = $false)] [string] $InitialDirectory = $PSScriptRoot,
         [Parameter(Mandatory = $false)] [string] $Multiselect = $false
@@ -626,7 +626,7 @@ function ShowFileDialog {
 #>
 function ShowFolderDialog {
     param (
-        [Parameter(Mandatory = $true)] [string] $Description,
+        [Parameter(Mandatory = $true)]  [string] $Description,
         [Parameter(Mandatory = $false)] [string] $InitialDirectory = $PSScriptRoot
     )
     begin {}
@@ -1049,11 +1049,11 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
 #>
 function RunInTray {
     param (
-        [Parameter(Mandatory = $true)] [string] $Name,
-        [Parameter(Mandatory = $true)] [uint32] $Color,
+        [Parameter(Mandatory = $true)] [string]      $Name,
+        [Parameter(Mandatory = $true)] [uint32]      $Color,
         [Parameter(Mandatory = $true)] [scriptblock] $Conf,
         [Parameter(Mandatory = $true)] [scriptblock] $Exec,
-        [Parameter(Mandatory = $true)] [uint] $Interval
+        [Parameter(Mandatory = $true)] [uint]        $Interval
     )
     begin {}
     process {
@@ -1341,9 +1341,9 @@ function local:innerCompress([string]$DstPath, [string]$SrcPath) {
 #>
 function ExtArc {
     param (
-        [Parameter(Mandatory = $true)]  [string]$DstPath,
-        [Parameter(Mandatory = $true)]  [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [bool]$All = $false
+        [Parameter(Mandatory = $true)]  [string] $DstPath,
+        [Parameter(Mandatory = $true)]  [string] $SrcPath,
+        [Parameter(Mandatory = $false)] [bool]   $All = $false
     )
     begin {}
     process {
@@ -1380,8 +1380,8 @@ function ExtArc {
 #>
 function CmpArc {
     param (
-        [Parameter(Mandatory = $true)]  [string]$DstPath,
-        [Parameter(Mandatory = $true)]  [string]$SrcPath
+        [Parameter(Mandatory = $true)]  [string] $DstPath,
+        [Parameter(Mandatory = $true)]  [string] $SrcPath
     )
     begin {}
     process {
@@ -1429,10 +1429,10 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
 #>
 function ExtArc7Z {
     param (
-        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
-        [Parameter(Mandatory = $true)]  [string]$DstPath,
-        [Parameter(Mandatory = $true)]  [string]$SrcPath,
-        [Parameter(Mandatory = $false)] [bool]$All = $false
+        [Parameter(Mandatory = $false)] [string]  $ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $true)]  [string]  $DstPath,
+        [Parameter(Mandatory = $true)]  [string]  $SrcPath,
+        [Parameter(Mandatory = $false)] [bool]    $All = $false
     )
     begin {}
     process {
@@ -1474,9 +1474,9 @@ function ExtArc7Z {
 #>
 function CmpArc7Z {
     param (
-        [Parameter(Mandatory = $false)] [string]$ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
-        [Parameter(Mandatory = $true)]  [string]$DstPath,
-        [Parameter(Mandatory = $true)]  [string]$SrcPath
+        [Parameter(Mandatory = $false)] [string] $ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $true)]  [string] $DstPath,
+        [Parameter(Mandatory = $true)]  [string] $SrcPath
     )
     begin {}
     process {
