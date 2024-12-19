@@ -69,28 +69,27 @@ function FolderMonitor() {
     }
 }
 
-class AppSettings {
-    [System.ComponentModel.Description("名前")]
-    [string]$AppName
-    [int]$Version
-    [bool]$AutoUpdate
-    [string]$LogFilePath
-    [System.Diagnostics.SourceLevels]$LogLevel
+class ConfChild {
+    [System.ComponentModel.Description("監視名称")]
+    [string]$MonName
+    [System.ComponentModel.Description("監視位置")]
+    [string]$MonPath
+}
+class Conf {
+    [ConfChild[]]$ConfChild
 }
 
 function FunctionName() {
-    $settings = [AppSettings]@{
-        AppName = "My Application"
-        Version = 1
-        AutoUpdate = $true
-        LogFilePath = "C:\app.log"
-        LogLevel = [System.Diagnostics.SourceLevels]::Information
-    }
-    $ret = ShowSettingDialog "Title" $settings
+    $conf = New-Object Conf
+    $conf.ConfChild = @()
+    $ret = ShowSettingDialog "Title" $conf
     if ($ret[0] -eq "OK") {
         $ret[1]
     }    
 }
 
+FunctionName
+
+
 # 常駐監視
-RunInTray "Monitor" 0x0000ff { FunctionName } { FolderMonitor } (5*60*1000)
+# RunInTray "Monitor" 0x0000ff { FunctionName } { FolderMonitor } (5*60*1000)

@@ -1006,7 +1006,7 @@ function ShowSettingDialog {
         # $frmMain.CancelButton = $btnCancel
         $null = $frmMain.ShowDialog($DUMY)
   
-        return @($frmMain.DialogResult, $lbxDD.Items, $ret)
+        return @($frmMain.DialogResult, $ret)
     }
     end {}
   }
