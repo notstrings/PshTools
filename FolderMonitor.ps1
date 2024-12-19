@@ -52,7 +52,7 @@ function local:EditConf() {
         SaveConf "$($PSScriptRoot)\Config\MonitorSetting.json" $crnt
     }
 }
-# EditConf
+EditConf
 
 ## 監視処理 #######################################################################
 
@@ -63,7 +63,7 @@ function local:FolderMonitor() {
     $conf.ConfChild | ForEach-Object {
         $MonitorName = $_.MonName
         $MonitorPath = $_.MonPath
-        if (Test-Path -LiteralPath $MonitorPath) {
+        if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
             $Result = CheckFolderUpdate $MonitorName $MonitorPath
             if ($Result){
                 $Message += "$($MonitorName)\n$($MonitorPath)\n$($Result)" 
@@ -115,9 +115,9 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
                 }
             }
         } | Out-Null
-        $DelFile | ForEach-Object { $Ret += "DEL:$([System.IO.Path]::GetRelativePath($MonitorPath, $_))\n" } | Out-Null
-        $AddFile | ForEach-Object { $Ret += "ADD:$([System.IO.Path]::GetRelativePath($MonitorPath, $_))\n" } | Out-Null
-        $ModFile | ForEach-Object { $Ret += "MOD:$([System.IO.Path]::GetRelativePath($MonitorPath, $_))\n" } | Out-Null
+        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
+        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
+        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
     }
 
     # 現在のフォルダ状況を過去のフォルダ状況とする
@@ -125,6 +125,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 
     return $Ret
 }
+FolderMonitor
 
 # 常駐監視
-RunInTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } (5*60*1000)
+# RunInTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } (5*60*1000)
