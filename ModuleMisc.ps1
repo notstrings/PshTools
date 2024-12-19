@@ -561,11 +561,11 @@ function DiffContent {
 
 <#
 .SYNOPSIS
-    コンソールの親フォームを取得
+    コンソールの親ウィンドウを取得
 .DESCRIPTION
-    コンソールの親フォームを取得
+    コンソールの親ウィンドウを取得
 #>
-function GetConsoleForm {
+function GetConsoleWindow {
     param ()
     begin {}
     process {
@@ -573,7 +573,7 @@ function GetConsoleForm {
             [DllImport("Kernel32.dll")]
             public static extern IntPtr GetConsoleWindow();
         '
-        return [System.Windows.Forms.Form]::FromHandle([Win32Util.ConsoleAPI]::GetConsoleWindow())
+        return [Win32Util.ConsoleAPI]::GetConsoleWindow()
     }
     end {}
 }
@@ -607,7 +607,7 @@ function ShowFileDialog {
         $FDlg.InitialDirectory = $InitialDirectory
         $FDlg.Filter           = $Filter
         $FDlg.Multiselect      = $Multiselect
-        $frmMain.Owner = GetConsoleForm
+        $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
         return $FDlg.FileNames
     }
@@ -635,7 +635,7 @@ function ShowFolderDialog {
         $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
         $FDlg.Description      = $Description
         $FDlg.InitialDirectory = $InitialDirectory
-        $frmMain.Owner = GetConsoleForm
+        $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
         return $FDlg.SelectedPath
     }
@@ -754,7 +754,7 @@ function ShowFileListDialog {
         $frmMain.DialogResult = "Cancel"
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
-        $frmMain.Owner = GetConsoleForm
+        $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
         return @($frmMain.DialogResult, $lbxDD.Items)
     }
@@ -896,7 +896,7 @@ function ShowFileListDialogWithOption {
         $frmMain.DialogResult = "Cancel"
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
-        $frmMain.Owner = GetConsoleForm
+        $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
         return @($frmMain.DialogResult, $lbxDD.Items, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
@@ -949,7 +949,7 @@ function ShowSettingDialog {
         $frmMain = New-Object System.Windows.Forms.Form
         $frmMain.Text = $Title                                     # タイトル
         $frmMain.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
-        $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
+        $frmMain.StartPosition = 'CenterParent'                    # 表示位置
         $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
   
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
@@ -999,7 +999,7 @@ function ShowSettingDialog {
         $frmMain.DialogResult = "Cancel"
         # $frmMain.AcceptButton = $btnOK
         # $frmMain.CancelButton = $btnCancel
-        $frmMain.Owner = GetConsoleForm
+        $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
   
         return @($frmMain.DialogResult, $ret)
