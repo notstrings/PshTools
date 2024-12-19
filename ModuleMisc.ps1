@@ -1049,7 +1049,7 @@ function RunInTray {
         [Parameter(Mandatory = $true)] [uint32]      $Color,
         [Parameter(Mandatory = $true)] [scriptblock] $Conf,
         [Parameter(Mandatory = $true)] [scriptblock] $Exec,
-        [Parameter(Mandatory = $true)] [uint]        $Interval
+        [Parameter(Mandatory = $true)] [int]         $Interval
     )
     begin {}
     process {

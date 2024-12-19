@@ -105,12 +105,14 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
         $AddFile = @()
         Compare-Object -ReferenceObject $LHSOnlyCSV -DifferenceObject $RHSOnlyCSV -IncludeEqual -Property FullName |
         ForEach-Object {
-            if($_.SideIndicator -eq "<=") {
-                if($null -ne $_.FullName){$DelFile += $_.FullName } 
-            } elseif ($_.SideIndicator -eq "=>") {
-                if($null -ne $_.FullName){$AddFile += $_.FullName} 
-            } elseif ($_.SideIndicator -eq "==") {
-                if($null -ne $_.FullName){$ModFile += $_.FullName} 
+            if($null -ne $_.FullName -and "FullName" -ne $_.FullName){
+                if($_.SideIndicator -eq "<=") {
+                    $DelFile += $_.FullName
+                } elseif ($_.SideIndicator -eq "=>") {
+                    $AddFile += $_.FullName 
+                } elseif ($_.SideIndicator -eq "==") {
+                    $ModFile += $_.FullName
+                }
             }
         } | Out-Null
         $DelFile | ForEach-Object { $Ret += "DEL:$([System.IO.Path]::GetRelativePath($MonitorPath, $_))\n" } | Out-Null
