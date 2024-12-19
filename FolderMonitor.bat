@@ -1,6 +1,6 @@
-﻿@echo off
+@echo off
 pushd %~dp0
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\FolderMonitor.ps1" %*
+chcp 65001
+start C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell_ise.exe -NoProfile -File ".\FolderMonitor.ps1" %*
 popd
 
-pause
