@@ -1035,27 +1035,29 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
     タスクトレイに常駐して指定したスクリプトを定期的に実行します
     指定スクリプトはタスクトレイアイコンを左クリックすることで任意タイミングで実行可能です
 .PARAMETER Name
-    Mame+Colorの組み合わせで多重起動抑止する
+    タスクの名前
 .PARAMETER Color
-    Mame+Colorの組み合わせで多重起動抑止する
+    アイコンの色
+.PARAMETER Conf
+    設定コードブロック(タスクトレイアイコン右クリックで起動)
 .PARAMETER Exec
-    実行したいコード
+    実行コードブロック(タスクトレイアイコン右クリックorインターバルで起動)
 .PARAMETER Interval
     実行インターバル
 .NOTES
-    元ネタ
-    https://aquasoftware.net/blog/?p=1244
+    元ネタ:https://aquasoftware.net/blog/?p=1244
 #>
 function RunInTray {
     param (
         [Parameter(Mandatory = $true)] [string] $Name,
         [Parameter(Mandatory = $true)] [uint32] $Color,
+        [Parameter(Mandatory = $true)] [scriptblock] $Conf,
         [Parameter(Mandatory = $true)] [scriptblock] $Exec,
         [Parameter(Mandatory = $true)] [uint] $Interval
     )
     begin {}
     process {
-        $mname = "$($Name)Launcher@$([System.BitConverter]::ToString([System.BitConverter]::GetBytes($ARGB)))"
+        $mname = "$($Name)Launcher@$Interval)"
         $mutex = New-Object System.Threading.Mutex($false, $mname)
         try {
             # 多重起動回避
@@ -1065,17 +1067,31 @@ function RunInTray {
                     $AppCtxt = New-Object System.Windows.Forms.ApplicationContext
     
                     # タスクトレイアイコン作成
-                    # クリックで強制実行
                     $TrayIcon = [System.Windows.Forms.NotifyIcon]@{
                         Icon            = GenTaskTrayIcon($Color)
                         Text            = $Name
                     }
                     $TrayIcon.add_Click({
-                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+                        # 右クリック：設定
+                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) {
                             try {
-                                $Exec.Invoke()
+                                $null = $Conf.Invoke()
                             } catch {
                                 $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                        }
+                        # 左クリック：即時
+                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+                            $rsl = ""
+                            try {
+                                $rsl = $Exec.Invoke()
+                            } catch {
+                                $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                            if ($rsl -ne "") {
+                                $TrayIcon.BalloonTipText = $rsl
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
                         }
@@ -1094,10 +1110,15 @@ function RunInTray {
                         $TrayTimer = New-Object Windows.Forms.Timer
                         $TrayTimer.Add_Tick({
                             $TrayTimer.Stop()
+                            $rsl = ""
                             try {
-                                $Exec.Invoke()
+                                $rsl = $Exec.Invoke()
                             } catch {
                                 $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                            if ($rsl -ne "") {
+                                $TrayIcon.BalloonTipText = $rsl
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
                             $TrayTimer.Interval = $Interval
