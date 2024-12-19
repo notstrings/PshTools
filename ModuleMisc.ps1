@@ -532,7 +532,7 @@ function DiffContent {
     param (
         [Parameter(Mandatory=$true)]  [string]$LHSPath,
         [Parameter(Mandatory=$true)]  [string]$RHSPath,
-        [Parameter(Mandatory=$false)] [System.Text.Encoding]$Encoding = [System.Text.Encoding]::UTF8
+        [Parameter(Mandatory=$false)] [string]$Encoding = "UTF8"
     )
     begin {}
     process {

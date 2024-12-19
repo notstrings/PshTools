@@ -31,6 +31,7 @@ function local:LoadConf([string] $sPath) {
         $child2 = New-Object ConfChild -Property @{MonName = "監視02"; MonPath = ""}
         $child3 = New-Object ConfChild -Property @{MonName = "監視03"; MonPath = ""}
         $inst = New-Object Conf -Property @{ ConfChild = @($child1, $child2, $child3) }
+        $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
         SaveConf $sPath $inst
     }
     # 設定読出
@@ -87,7 +88,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
     # 現在の監視フォルダ状況を取得
     Get-ChildItem $MonitorPath -File -Recurse | 
     Select-Object FullName, LastWriteTime |
-    Export-Csv -Path $CrntPath -NoTypeInformation -Encoding ([System.Text.Encoding]::GetEncoding("Shift_JIS"))
+    Export-Csv -Path $CrntPath -NoTypeInformation -Encoding "OEM"
     
     # 昨今の監視フォルダ状況差分を確認
     if (Test-Path $PrevPath){
@@ -95,7 +96,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
         # ・追加は前回リストに無い差分
         # ・削除は今回リストに無い差分
         # ・更新は更新日時のみの差分
-        $Diff = DiffContent -LHSPath $PrevPath -RHSPath $CrntPath -Encoding ([System.Text.Encoding]::GetEncoding("Shift_JIS"))
+        $Diff = DiffContent -LHSPath $PrevPath -RHSPath $CrntPath -Encoding "OEM"
         $LHSOnlyCSV = ($Diff[1] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
         $RHSOnlyCSV = ($Diff[2] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
         if ($LHSOnlyCSV.Length -eq 0){$LHSOnlyCSV = ""}
