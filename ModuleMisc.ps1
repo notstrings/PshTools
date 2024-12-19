@@ -1071,41 +1071,45 @@ function RunInTray {
                         Icon            = GenTaskTrayIcon($Color)
                         Text            = $Name
                     }
-                    $TrayIcon.add_Click({
-                        # 右クリック：設定
-                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) {
-                            try {
-                                $null = $Conf.Invoke()
-                            } catch {
-                                $TrayIcon.BalloonTipText = $_.ToString()
-                                $TrayIcon.ShowBalloonTip(5000)
-                            }
-                        }
-                        # 左クリック：即時
-                        if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-                            $rsl = ""
-                            try {
-                                $rsl = $Exec.Invoke()
-                            } catch {
-                                $TrayIcon.BalloonTipText = $_.ToString()
-                                $TrayIcon.ShowBalloonTip(5000)
-                            }
-                            if ($rsl -ne "") {
-                                $TrayIcon.BalloonTipText = $rsl
-                                $TrayIcon.ShowBalloonTip(5000)
-                            }
+                    $TrayIcon.ContextMenuStrip = New-Object System.Windows.Forms.ContextMenuStrip
+
+                    # 設定メニュー
+                    $ConfMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '設定' }
+                    $ConfMenu.add_Click({
+                        try {
+                            $null = $Conf.Invoke()
+                        } catch {
+                            $TrayIcon.BalloonTipText = $_.ToString()
+                            $TrayIcon.ShowBalloonTip(5000)
                         }
                     })
-                    $TrayIcon.ContextMenuStrip = New-Object System.Windows.Forms.ContextMenuStrip
-    
-                    # Exitメニュー
-                    $ExitMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = 'Exit' }
+                    $TrayIcon.ContextMenuStrip.Items.Add($ConfMenu) > $null
+
+                    # 実行メニュー
+                    $ExecMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '実行' }
+                    $ExecMenu.add_Click({
+                        $rsl = ""
+                        try {
+                            $rsl = $Exec.Invoke()
+                        } catch {
+                            $TrayIcon.BalloonTipText = $_.ToString()
+                            $TrayIcon.ShowBalloonTip(5000)
+                        }
+                        if ($rsl -ne "") {
+                            $TrayIcon.BalloonTipText = $rsl
+                            $TrayIcon.ShowBalloonTip(5000)
+                        }
+                    })
+                    $TrayIcon.ContextMenuStrip.Items.Add($ExecMenu) > $null
+
+                    # 終了メニュー
+                    $ExitMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '終了' }
                     $ExitMenu.add_Click({
                         $AppCtxt.ExitThread()
                     })
                     $TrayIcon.ContextMenuStrip.Items.Add($ExitMenu) > $null
-    
-                    # タイマー
+                    
+                    # インターバル
                     if ($Interval -gt 0){
                         $TrayTimer = New-Object Windows.Forms.Timer
                         $TrayTimer.Add_Tick({
@@ -1132,9 +1136,12 @@ function RunInTray {
                     # タスクトレイアイコン登録
                     $TrayIcon.Visible = $true
                     [System.Windows.Forms.Application]::Run($AppCtxt) > $null
+                    $TrayIcon.Visible = $false
+                    $TrayTimer.Stop()
                 } finally {
-                    if($TrayIcon){$TrayIcon.Dispose()} 
-                    if($mutex   ){$mutex.ReleaseMutex()}
+                    if($TrayTimer){$TrayTimer.Dispose()} 
+                    if($TrayIcon ){$TrayIcon.Dispose()} 
+                    if($mutex    ){$mutex.ReleaseMutex()}
                 }
             }
         } finally {
