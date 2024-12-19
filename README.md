@@ -64,6 +64,13 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 全フォルダのファイル名(拡張子無視)で重複チェックしてファイルサイズが一番デカイのを残します<br>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
+## FolderMonitor
+
+``FolderMonitor.ps1``は起動するとタスクトレイに常駐します<br>
+右クリックメニューから設定して監視対象フォルダを指定してください<br>
+５分に一回指定フォルダの差分を確認してIPMessengerで自分に通知します<br>
+※IPMessengerはデフォ設定でインストールしてください<br>
+
 ## MakePowerShellBatch
 
 ``MakePowerShellBatch.bat``はカレントの``MakePowerShellBatch.ps1``を起こすだけです<br>
