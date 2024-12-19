@@ -85,7 +85,7 @@ function FunctionName() {
     $ret = ShowSettingDialog "Title" $conf
     if ($ret[0] -eq "OK") {
         $ret[1]
-    }    
+    }
 }
 
 FunctionName

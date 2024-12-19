@@ -561,17 +561,23 @@ function DiffContent {
 
 <#
 .SYNOPSIS
-    実行中のPowerShellターミナルを非表示にする
+    実行中のPowerShellウィンドウハンドルを取得
 .DESCRIPTION
-    実行中のPowerShellターミナルを非表示にする
+    実行中のPowerShellウィンドウハンドルを取得
 #>
-function HidePowerShellWindow {
+function GetConsoleWindow {
     param ()
     begin {}
     process {
-        $Terminal = Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);' -Name Win32Functions -PassThru
-        $HWND     = (Get-Process -PID $PID).MainWindowHandle 
-        [void]$Terminal::ShowWindowAsync($HWND, 0)
+Add-Type @"
+    using System;
+    using System.Runtime.InteropServices;
+    public class MyConsoleWindow {
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+    }
+"@
+        return [MyConsoleWindow]::GetConsoleWindow()
     }
     end {}
 }
@@ -600,14 +606,12 @@ function ShowFileDialog {
     )
     begin {}
     process {
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.OpenFileDialog
         $FDlg.Title            = $Title
         $FDlg.InitialDirectory = $InitialDirectory
         $FDlg.Filter           = $Filter
         $FDlg.Multiselect      = $Multiselect
-        $null = $FDlg.ShowDialog($DUMY)
+        $null = $FDlg.ShowDialog((GetConsoleWindow))
         return $FDlg.FileNames
     }
     end {}
@@ -631,12 +635,10 @@ function ShowFolderDialog {
     )
     begin {}
     process {
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
         $FDlg.Description      = $Description
         $FDlg.InitialDirectory = $InitialDirectory
-        $null = $FDlg.ShowDialog($DUMY)
+        $null = $FDlg.ShowDialog((GetConsoleWindow))
         return $FDlg.SelectedPath
     }
     end {}
@@ -744,8 +746,6 @@ function ShowFileListDialog {
                 })
 
         # フォーム表示
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
@@ -756,7 +756,7 @@ function ShowFileListDialog {
         $frmMain.DialogResult = "Cancel"
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
-        $null = $frmMain.ShowDialog($DUMY)
+        $null = $frmMain.ShowDialog((GetConsoleWindow))
         return @($frmMain.DialogResult, $lbxDD.Items)
     }
     end {}
@@ -887,8 +887,6 @@ function ShowFileListDialogWithOption {
                 })
 
         # フォーム表示
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
@@ -899,7 +897,7 @@ function ShowFileListDialogWithOption {
         $frmMain.DialogResult = "Cancel"
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
-        $null = $frmMain.ShowDialog($DUMY)
+        $null = $frmMain.ShowDialog((GetConsoleWindow))
         return @($frmMain.DialogResult, $lbxDD.Items, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
     end {}
@@ -999,12 +997,10 @@ function ShowSettingDialog {
                 })
   
         # フォーム表示
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
         $frmMain.DialogResult = "Cancel"
         # $frmMain.AcceptButton = $btnOK
         # $frmMain.CancelButton = $btnCancel
-        $null = $frmMain.ShowDialog($DUMY)
+        $null = $frmMain.ShowDialog([System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)))
   
         return @($frmMain.DialogResult, $ret)
     }
