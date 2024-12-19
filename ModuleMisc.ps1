@@ -6,6 +6,37 @@ Add-type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 ## ############################################################################
+## オブジェクト操作
+
+<#
+.SYNOPSIS
+    オブジェクトをディープコピー
+.DESCRIPTION
+    オブジェクトをディープコピー
+.PARAMETER Text
+    対象オブジェクト
+.NOTES
+    あまりちゃんと考えてないんで複雑な物はダメかも
+#>
+function DeepCopyObj {
+    param (
+        [Parameter(Mandatory = $true)] [object] $obj
+    )
+    begin {}
+    process {
+        $typ = $obj.GetType()
+        $ret = New-Object -TypeName $typ.FullName
+        foreach ($prop in $typ.GetProperties()){
+            if ($prop.CanRead -and $prop.CanWrite) {
+                $prop.SetValue($ret, $prop.GetValue($obj))
+            }
+        }
+        return $ret
+    }
+    end {}
+}
+
+## ############################################################################
 ## 文字関連
 
 <#
@@ -485,7 +516,6 @@ Function AutoGuessEncodingSimple {
 .DESCRIPTION
     指定された2つのテキストファイルの内容を比較して
     両方のファイルに存在する行と左右片側にのみ存在する行を配列として返します
-    ※結果をそのまま使うための関数じゃありません...
 .PARAMETER LHSPath
     比較対象の左側のファイルのパスを指定します
 .PARAMETER RHSPath
@@ -652,6 +682,7 @@ function ShowFileListDialog {
         $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
         $frmMain.Topmost = $true                                   # TopMost
         $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
+
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
             $pnlBody = New-Object System.Windows.Forms.Panel
                 $lblDD   = New-Object System.Windows.Forms.Label
@@ -713,9 +744,8 @@ function ShowFileListDialog {
                 })
 
         # フォーム表示
-        $frmMain.DialogResult = "Cancel"
-        $frmMain.AcceptButton = $btnOK
-        $frmMain.CancelButton = $btnCancel
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
@@ -723,8 +753,9 @@ function ShowFileListDialog {
                 }
             }
         }
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
+        $frmMain.DialogResult = "Cancel"
+        $frmMain.AcceptButton = $btnOK
+        $frmMain.CancelButton = $btnCancel
         $null = $frmMain.ShowDialog($DUMY)
         return @($frmMain.DialogResult, $lbxDD.Items)
     }
@@ -776,6 +807,7 @@ function ShowFileListDialogWithOption {
         $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
         $frmMain.Topmost = $true                                   # TopMost
         $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
+
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
             $pnlBody = New-Object System.Windows.Forms.Panel
                 $lblDD   = New-Object System.Windows.Forms.Label
@@ -855,9 +887,8 @@ function ShowFileListDialogWithOption {
                 })
 
         # フォーム表示
-        $frmMain.DialogResult = "Cancel"
-        $frmMain.AcceptButton = $btnOK
-        $frmMain.CancelButton = $btnCancel
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
         if ($null -ne $FileList) {
             $FileList | ForEach-Object {
                 if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
@@ -865,15 +896,123 @@ function ShowFileListDialogWithOption {
                 }
             }
         }
-        $DUMY = New-Object System.Windows.Forms.Form
-        $DUMY.TopMost = $true
+        $frmMain.DialogResult = "Cancel"
+        $frmMain.AcceptButton = $btnOK
+        $frmMain.CancelButton = $btnCancel
         $null = $frmMain.ShowDialog($DUMY)
         return @($frmMain.DialogResult, $lbxDD.Items, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
     end {}
 }
 
+<#
+.SYNOPSIS
+    プロパディグリッドを使った汎用設定ダイアログを表示します
+.DESCRIPTION
+    プロパディグリッドを使った汎用設定ダイアログを表示します
+    引数値はディープコピーして使うので副作用は外部に伝搬しません
+.PARAMETER Title
+    ダイアログボックスのタイトルに設定する文字列です
+.PARAMETER Setting
+    クラスインスタンスを設定してください
+    ※多分連想配列でも大丈夫です
+.EXAMPLE
+    class AppSettings {
+        [System.ComponentModel.Description("名前")]
+        [string]$AppName
+        [int]$Version
+        [bool]$AutoUpdate
+        [string]$LogFilePath
+        [System.Diagnostics.SourceLevels]$LogLevel
+    }
+    $settings = [AppSettings]@{
+        AppName = "My Application"
+        Version = 1
+        AutoUpdate = $true
+        LogFilePath = "C:\app.log"
+        LogLevel = [System.Diagnostics.SourceLevels]::Information
+    }
+    $ret = ShowSettingDialog "Title" $settings
+    if ($ret[0] -eq "OK") {
+        $ret[1]
+    }
+#>
+function ShowSettingDialog {
+    param (
+        [Parameter(Mandatory = $true)]  [string]          $Title,
+        [Parameter(Mandatory = $true)]  [System.Object]   $Setting
+    )
+    begin {}
+    process {
+        # ディープコピー
+        $ret = DeepCopyObj $Setting
+  
+        # フォーム生成
+        $frmMain = New-Object System.Windows.Forms.Form
+        $frmMain.Text = $Title                                     # タイトル
+        $frmMain.Size = New-Object System.Drawing.Size(480,320)    # ウィンドウサイズ
+        $frmMain.StartPosition = 'CenterScreen'                    # 表示位置
+        $frmMain.Topmost = $true                                   # TopMost
+        $frmMain.Padding = New-Object System.Windows.Forms.Padding(5)
+  
+        $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel
+            $pnlBody = New-Object System.Windows.Forms.Panel
+                $grdProp = New-Object System.Windows.Forms.PropertyGrid
+            $pnlTail = New-Object System.Windows.Forms.Panel
+                $btnOK     = New-Object System.Windows.Forms.Button
+                $btnCancel = New-Object System.Windows.Forms.Button
+        
+        $tlpMain.Dock = [System.Windows.Forms.DockStyle]::Fill
+        $tlpMain.RowCount = 2
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
+        $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
+        $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
+        $null = $frmMain.Controls.Add($tlpMain)
+        
+            $pnlBody.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlBody.Controls.Add($grdProp)
+        
+                $grdProp.Dock = [System.Windows.Forms.DockStyle]::Fill
+                $grdProp.SelectedObject = $ret
+        
+            $pnlTail.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $null = $pnlTail.Controls.Add($btnCancel)
+            $null = $pnlTail.Controls.Add($btnOK)
+        
+                $btnOK.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnOK.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnOK.Text = "OK"
+                $btnOK.UseVisualStyleBackColor = $true
+                $null = $btnOK.Add_Click({
+                    $frmMain.DialogResult = "OK"
+                    $frmMain.Close()
+                })
+        
+                $btnCancel.Dock = [System.Windows.Forms.DockStyle]::Right
+                $btnCancel.Size = New-Object System.Drawing.Size(128, 36) # ボタン巾のみ指定可能
+                $btnCancel.Text = "Cancel"
+                $btnCancel.UseVisualStyleBackColor = $true
+                $null = $btnCancel.Add_Click({
+                    $frmMain.DialogResult = "Cancel"
+                    $frmMain.Close()
+                })
+  
+        # フォーム表示
+        $DUMY = New-Object System.Windows.Forms.Form
+        $DUMY.TopMost = $true
+        $frmMain.DialogResult = "Cancel"
+        # $frmMain.AcceptButton = $btnOK
+        # $frmMain.CancelButton = $btnCancel
+        $null = $frmMain.ShowDialog($DUMY)
+  
+        return @($frmMain.DialogResult, $lbxDD.Items, $ret)
+    }
+    end {}
+  }
+
 # タスクトレイ常駐用アイコン生成
+# 元ネタ:https://aquasoftware.net/blog/?p=1244
 function local:GenTaskTrayIcon([uint32] $ARGB) {
     # PowerShell(ぽい)アイコン画像バイナリ
     # ・16x16 1bit/pixelインデックスカラー画像
@@ -891,9 +1030,9 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
 
 <#
 .SYNOPSIS
-    タスクトレイに常駐して指定したスクリプトを実行し続けます
+    タスクトレイに常駐して指定したスクリプトを定期的に実行します
 .DESCRIPTION
-    タスクトレイに常駐して指定したスクリプトを実行し続けます
+    タスクトレイに常駐して指定したスクリプトを定期的に実行します
     指定スクリプトはタスクトレイアイコンを左クリックすることで任意タイミングで実行可能です
 .PARAMETER Name
     Mame+Colorの組み合わせで多重起動抑止する
@@ -995,8 +1134,8 @@ function RunInTray {
 .PARAMETER Message
     送信メッセージ(改行は文字の``\n``)
 .NOTES
-    依存
-    winget install FastCopy.IPMsg
+    依存:winget install FastCopy.IPMsg
+    ※IPMessengerは単一行がファイルパスの場合その行がリンクになる
 #>
 function SendIPMsg {
     param (
