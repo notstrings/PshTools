@@ -1,5 +1,15 @@
-﻿properties:
+﻿# 一般用
+properties:
+  configurationVersion: 0.2.0
   resources:
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installIPMsg
+      directives:
+        description: Install IP Messenger
+      settings:
+        id: FastCopy.IPMsg
+        source: winget
+
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installPowerToys
       directives:
@@ -8,6 +18,7 @@
       settings:
         id: Microsoft.PowerToys
         source: winget
+
     - resource: Microsoft.PowerToys.Configure/PowerToysConfigure
       dependsOn:
         - installPowerToys
@@ -18,4 +29,5 @@
           Enabled: true
           KeepDisplayOn: true
           Mode: INDEFINITE
-  configurationVersion: 0.2.0
+
+
