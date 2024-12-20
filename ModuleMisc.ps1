@@ -1328,6 +1328,8 @@ function SendIPMsg {
     )
     begin {}
     process {
+        $Message = $Message.Replace("`r`n","\n")
+        $Message = $Message.Replace("`n","\n")
         Start-Process -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -NoNewWindow -Wait
     }
     end {}
