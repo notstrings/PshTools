@@ -40,6 +40,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 ## Office2PDF
 
 ``Office2PDF.ps1``にPDFにしたいオフィス系ファイルのパスを食わせてください<br>
+Word/Excel/PowerPoint/Visioで一通りの形式に対応しているような気がする<br>
 漢らしくウィンドウ表示ありでPDF保存しにいきますんで処理完了まで待ってください<br>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
@@ -48,7 +49,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 ## DiffWord
 
 ``DiffWord.ps1``に比較したいWordファイルのパスを２つ食わせてください<br>
-イチイチ考えるのが面倒くさい比較元・比較先を最終変更日時で勝手に判断して比較処理を実施します<br>
+イチイチ考えるのが面倒くさい比較元・比較先を最終変更日時で判断して自動で比較処理を実施します<br>
 D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショートカットファイルを作ってください<br>
 
 ## ReduceDir
@@ -68,24 +69,20 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 
 ``FolderMonitor.ps1``は起動するとタスクトレイに常駐します<br>
 右クリックメニューから設定して監視対象フォルダを指定してください<br>
-５分に一回指定フォルダの差分を確認してIPMessengerで自分に通知します<br>
+デフォで５分に一回指定フォルダの差分を確認してIPMessengerで自分に通知します<br>
+タスクトレイの右クリックメニューからGUIで設定可です<br>
 ※IPMessengerはデフォ設定でインストールしてください<br>
+
+## ScheduleShutdown
+
+なんのこともないshutdownコマンド投げるだけのブツです<br>
+予約キャンセルのコマンドってどーも忘れんのよねー<br>
 
 ## MakePowerShellBatch
 
 ``MakePowerShellBatch.bat``はカレントの``MakePowerShellBatch.ps1``を起こすだけです<br>
 ``MakePowerShellBatch.ps1``はフォーム起動してD&Dで指定した``.ps1``をUTF-8(BOM付)に変換して起動用バッチを吐きます<BR>
-
-中身は以下の通りですんでBypassが嫌ならスクリプトを弄ってください<BR>
-あとウィンドウを非表示にしたい場合は``-WindowStyle hidden``辺り追加してください<BR>
-※一瞬見えるんだけどまぁいいでしょ<BR>
-
-```
-@echo off
-pushd %~dp0
-powershell -ExecutionPolicy Bypass -File ".\[[指定したPowerShell]]" %*
-popd
-```
+GUI/CUI的なPowerShell用のバッチ生成とついでにPowerShell ISE起動するバッチ生成を選択できます<BR>
 
 ## MakePowerShellLink
 
@@ -93,3 +90,8 @@ popd
 ``MakePowerShellLink.ps1``はフォーム起動してD&Dで指定した``.ps1``の起動用ショートカットファイルを生成します<br>
 
 空白を含むパスに使うと駄目な場合は大人しく``MakePowerShellBatch``のほーをどーぞ<br>
+
+## AutoInstall
+
+WingetのDSCとかいう機能で色々インストールします<BR>
+なるほどコレが構成管理って奴なのかとゆー興味本位<BR>
