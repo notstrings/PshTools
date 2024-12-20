@@ -72,3 +72,4 @@ ForEach ($arg in $args) {
         }
     }
 }
+$null = Write-Host "<End>"
