@@ -11,35 +11,30 @@ class ConfChild {
     [string]$MonPath
 }
 class Conf {
-    [ConfChild[]]$ConfChild
+    [ConfChild[]] $ConfChild
+    [int]         $Interval
 }
 $conf = New-Object Conf
 $conf.ConfChild = @()
 
 # 設定書込
 function local:SaveConf([string] $sPath, [Conf] $conf) {
-    $conf.ConfChild | ForEach-Object {
-        $_.MonPath = $_.MonPath -replace "\\", "/"
-    }
     $conf | ConvertTo-Json | Out-File -FilePath $sPath
 }
 # 設定読出
 function local:LoadConf([string] $sPath) {
     # デフォ値生成※設定ファイル無しの場合
     if ((Test-Path -LiteralPath $sPath) -eq $false) {
-        $child1 = New-Object ConfChild -Property @{MonName = "監視01"; MonPath = ""}
-        $child2 = New-Object ConfChild -Property @{MonName = "監視02"; MonPath = ""}
-        $child3 = New-Object ConfChild -Property @{MonName = "監視03"; MonPath = ""}
-        $inst = New-Object Conf -Property @{ ConfChild = @($child1, $child2, $child3) }
+        $child1 = New-Object ConfChild -Property @{MonName = "Mon01"; MonPath = ""}
+        $child2 = New-Object ConfChild -Property @{MonName = "Mon02"; MonPath = ""}
+        $child3 = New-Object ConfChild -Property @{MonName = "Mon03"; MonPath = ""}
+        $inst = New-Object Conf -Property @{ ConfChild = @($child1, $child2, $child3); Interval = (5*60*1000) }
         $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
         SaveConf $sPath $inst
     }
     # 設定読出
-    $jcon = Get-Content -Path $sPath | ConvertFrom-Json
-    $inst = New-Object Conf 
-    $inst.ConfChild = $jcon.ConfChild | ForEach-Object {
-        New-Object ConfChild -Property @{MonName = $_.MonName; MonPath = ($_.MonPath -replace "/", "\")}
-    }
+    $json = Get-Content -Path $sPath | ConvertFrom-Json
+    $inst = GenClassByPSCustomObject ([Conf]) $json
     return $inst
 }
 # 設定編集
@@ -48,12 +43,12 @@ function local:EditConf() {
     $crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
     # 設定画面表示
     $ret = ShowSettingDialog "Title" $crnt
-    if ($ret[0] -eq "OK") {
+    if ($ret -eq "OK") {
         # 設定書込
         SaveConf "$($PSScriptRoot)\Config\MonitorSetting.json" $crnt
     }
 }
-EditConf
+# EditConf
 
 ## 監視処理 #######################################################################
 
@@ -65,7 +60,7 @@ function local:FolderMonitor() {
         $MonitorName = $_.MonName
         $MonitorPath = $_.MonPath
         if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
-            $Result = CheckFolderUpdate $MonitorName $MonitorPath
+            $Result = CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
             if ($Result){
                 $Message += "$($MonitorName)\n$($MonitorPath)\n$($Result)" 
             }
@@ -126,7 +121,8 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 
     return $Ret
 }
-FolderMonitor
+# FolderMonitor
 
 # 常駐監視
-# RunInTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } (5*60*1000)
+$crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
+RunInTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)

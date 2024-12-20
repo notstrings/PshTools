@@ -15,8 +15,6 @@ Add-Type -AssemblyName System.Drawing
     オブジェクトをディープコピー
 .PARAMETER Text
     対象オブジェクト
-.NOTES
-    あまりちゃんと考えてないんで複雑な物はダメかも
 #>
 function DeepCopyObj {
     param (
@@ -24,16 +22,88 @@ function DeepCopyObj {
     )
     begin {}
     process {
-        $typ = $obj.GetType()
-        $ret = New-Object -TypeName $typ.FullName
-        foreach ($prop in $typ.GetProperties()){
-            if ($prop.CanRead -and $prop.CanWrite) {
-                $prop.SetValue($ret, $prop.GetValue($obj))
+        if ($null -eq $obj) {
+            # Null の場合
+            return $null
+        } elseif ($obj.GetType().IsPrimitive) {
+            # プリミティブ型の場合
+            return $obj
+        } elseif ($obj -is [string] -or $obj -is [datetime] -or $obj -is [decimal]) {
+            # 文字列/DateTime/Decimal
+            return $obj
+        } elseif ($obj -is [hashtable]) {
+            # ハッシュテーブル
+            $ret = @{}
+            foreach ($key in $obj.Keys) {
+                $ret[$key] = DeepCopyObj $obj[$key] 
             }
+            return $ret
+        } elseif ($obj -is [array]) {
+            # 配列
+            $ret = @()
+            foreach ($item in $obj) {
+                $ret += DeepCopyObj $item 
+            }
+            return $ret
+        } elseif ($obj -is [System.Management.Automation.PSCustomObject]) {
+            # PSCustomObject
+            $ret = [PSCustomObject]@{}
+            foreach ($prop in $obj.psobject.Properties) {
+                $ret | Add-Member -MemberType NoteProperty -Name $prop.Name -Value (DeepCopyObj $prop.Value)
+            }
+            return $ret
+        } elseif ($obj.GetType().IsClass -and -not $obj.GetType().IsValueType) {
+            # カスタムオブジェクト
+            $typ = $obj.GetType()
+            $ret = New-Object -TypeName $typ.FullName
+            foreach ($prop in $typ.GetProperties()){
+                if ($prop.CanRead -and $prop.CanWrite) {
+                    $prop.SetValue($ret, $prop.GetValue($obj))
+                }
+            }
+            return $ret
+        } else {
+            # その他(ENUMとか？)
+            return $obj
         }
-        return $ret
     }
     end {}
+}
+
+<#
+.SYNOPSIS
+    PSCustomObjectで指定クラスを生成します
+.DESCRIPTION
+    PSCustomObjectで指定クラスを生成します
+.PARAMETER Type
+    生成インスタンスの形
+.PARAMETER Data
+    生成インスタンスのメンバに対応するPSCustomObject
+.EXAMPLE
+    # 指定クラスを生成して初期化するのに使う子
+    $jcon = Get-Content -Path "config.json" | ConvertFrom-Json
+    $conf = GenClassByPSCustomObject ([Config]) $jcon 
+.NOTES
+    簡易実装
+    どうやらPowerShell7系?ではChangeTypeだけで十分らしい
+    [System.Convert]::ChangeType($psConf, ([Config]))
+#>
+function GenClassByPSCustomObject {
+    param (
+        [Parameter(Mandatory = $true)] [System.Type]   $Type,
+        [Parameter(Mandatory = $true)] [PSCustomObject]$Data
+    )
+    begin {}
+    process {
+        $inst = New-Object -TypeName $Type.FullName
+        $Data.PSObject.Properties | ForEach-Object {
+            if (Get-Member -InputObject $inst -Name $_.Name) {
+                $inst.($_.Name) = $_.Value
+            }
+        }
+        return $inst
+    }
+    end {}    
 }
 
 ## ############################################################################
@@ -93,9 +163,9 @@ function RestrictTextZen() {
 
 <#
 .SYNOPSIS
-    半角カタカナを全角に変換します
+    半角カナを全角に変換します
 .DESCRIPTION
-    半角カタカナを全角に変換します
+    半角カナを全角に変換します
 .PARAMETER Text
     対象文字列
 .EXAMPLE
@@ -908,12 +978,11 @@ function ShowFileListDialogWithOption {
     プロパディグリッドを使った汎用設定ダイアログを表示します
 .DESCRIPTION
     プロパディグリッドを使った汎用設定ダイアログを表示します
-    引数値はディープコピーして使うので副作用は外部に伝搬しません
+    設定対象が参照型の場合は画面操作による副作用を受けますので編集用変数を用意してください
 .PARAMETER Title
     ダイアログボックスのタイトルに設定する文字列です
 .PARAMETER Setting
-    クラスインスタンスを設定してください
-    ※多分連想配列でも大丈夫です
+    設定対象オブジェクト(クラスインスタンスを想定)
 .EXAMPLE
     class AppSettings {
         [System.ComponentModel.Description("名前")]
@@ -930,10 +999,13 @@ function ShowFileListDialogWithOption {
         LogFilePath = "C:\app.log"
         LogLevel = [System.Diagnostics.SourceLevels]::Information
     }
-    $ret = ShowSettingDialog "Title" $settings
-    if ($ret[0] -eq "OK") {
-        $ret[1]
+    $edit = DeepCopyObj $settings
+    $ret = ShowSettingDialog "Title" $edit
+    if ($ret -eq "OK") {
+        $edit
     }
+.NOTES
+    ディープコピーを組み込めば良いんだが万能とまで言える自信もないので...
 #>
 function ShowSettingDialog {
     param (
@@ -943,7 +1015,7 @@ function ShowSettingDialog {
     begin {}
     process {
         # ディープコピー
-        $ret = DeepCopyObj $Setting
+        # $ret = DeepCopyObj $Setting
   
         # フォーム生成
         $frmMain = New-Object System.Windows.Forms.Form
@@ -971,7 +1043,7 @@ function ShowSettingDialog {
             $null = $pnlBody.Controls.Add($grdProp)
         
                 $grdProp.Dock = [System.Windows.Forms.DockStyle]::Fill
-                $grdProp.SelectedObject = $ret
+                $grdProp.SelectedObject = $Setting
         
             $pnlTail.Dock = [System.Windows.Forms.DockStyle]::Fill
             $null = $pnlTail.Controls.Add($btnCancel)
@@ -1002,7 +1074,7 @@ function ShowSettingDialog {
         $frmMain.Owner = [System.Windows.Forms.Form]::FromHandle((GetConsoleWindow)) # 無駄な足掻きをしておく
         $null = $frmMain.ShowDialog()
   
-        return @($frmMain.DialogResult, $ret)
+        return $frmMain.DialogResult
     }
     end {}
   }
@@ -1040,6 +1112,12 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
     実行コードブロック(タスクトレイアイコン右クリックorインターバルで起動)
 .PARAMETER Interval
     実行インターバル
+.PARAMETER MenuNameExit
+    コンテキスメニュー表示文字列(Exit)
+.PARAMETER MenuNameConf
+    コンテキスメニュー表示文字列(Conf)
+.PARAMETER MenuNameExec
+    コンテキスメニュー表示文字列(Exec)
 .NOTES
     元ネタ:https://aquasoftware.net/blog/?p=1244
 #>
@@ -1049,7 +1127,10 @@ function RunInTray {
         [Parameter(Mandatory = $true)] [uint32]      $Color,
         [Parameter(Mandatory = $true)] [scriptblock] $Conf,
         [Parameter(Mandatory = $true)] [scriptblock] $Exec,
-        [Parameter(Mandatory = $true)] [int]         $Interval
+        [Parameter(Mandatory = $true)] [int]         $Interval,
+        [Parameter(Mandatory = $false)] [string]     $MenuNameExit = "終了",
+        [Parameter(Mandatory = $false)] [string]     $MenuNameConf = "設定",
+        [Parameter(Mandatory = $false)] [string]     $MenuNameExec = "実行"
     )
     begin {}
     process {
@@ -1066,40 +1147,49 @@ function RunInTray {
                     $TrayIcon = [System.Windows.Forms.NotifyIcon]@{
                         Icon            = GenTaskTrayIcon($Color)
                         Text            = $Name
+                        BalloonTipIcon  = 'Error'
+                        BalloonTipTitle = 'Error'
                     }
                     $TrayIcon.ContextMenuStrip = New-Object System.Windows.Forms.ContextMenuStrip
 
                     # 設定メニュー
-                    $ConfMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '設定' }
-                    $ConfMenu.add_Click({
-                        try {
-                            $null = $Conf.Invoke()
-                        } catch {
-                            $TrayIcon.BalloonTipText = $_.ToString()
-                            $TrayIcon.ShowBalloonTip(5000)
-                        }
-                    })
-                    $TrayIcon.ContextMenuStrip.Items.Add($ConfMenu) > $null
+                    if ($MenuNameConf) {
+                        $ConfMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = $MenuNameConf }
+                        $ConfMenu.add_Click({
+                            try {
+                                $null = $Conf.Invoke()
+                            } catch {
+                                $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                        })
+                        $TrayIcon.ContextMenuStrip.Items.Add($ConfMenu) > $null
+                    }
 
                     # 実行メニュー
-                    $ExecMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '実行' }
-                    $ExecMenu.add_Click({
-                        $rsl = ""
-                        try {
-                            $rsl = $Exec.Invoke()
-                        } catch {
-                            $TrayIcon.BalloonTipText = $_.ToString()
-                            $TrayIcon.ShowBalloonTip(5000)
-                        }
-                        if ($rsl -ne "") {
-                            $TrayIcon.BalloonTipText = $rsl
-                            $TrayIcon.ShowBalloonTip(5000)
-                        }
-                    })
-                    $TrayIcon.ContextMenuStrip.Items.Add($ExecMenu) > $null
+                    if ($MenuNameExec) {
+                        $ExecMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = $MenuNameExec }
+                        $ExecMenu.add_Click({
+                            $rsl = ""
+                            try {
+                                $rsl = $Exec.Invoke()
+                            } catch {
+                                $TrayIcon.BalloonTipText = $_.ToString()
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                            if ($rsl -ne "") {
+                                $TrayIcon.BalloonTipText = $rsl
+                                $TrayIcon.ShowBalloonTip(5000)
+                            }
+                        })
+                        $TrayIcon.ContextMenuStrip.Items.Add($ExecMenu) > $null
+                    }
 
                     # 終了メニュー
-                    $ExitMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = '終了' }
+                    if ("" -eq $ExitMenu -or $null -eq $ExitMenu) {
+                        $ExitMenu = "Exit"
+                    }
+                    $ExitMenu = [System.Windows.Forms.ToolStripMenuItem]@{ Text = $MenuNameExit }
                     $ExitMenu.add_Click({
                         $AppCtxt.ExitThread()
                     })

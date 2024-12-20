@@ -3,11 +3,11 @@
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
 function local:MkPshLnk([string] $TargetPath) {
-    MakeLink   $TargetPath
+    MakeLink   $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
     ConvPshEnc $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
 }
 
-function local:MakeLink([string] $TargetPath) {
+function local:MakeLink([string] $TargetPath, [System.Text.Encoding] $Encoding) {
     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
     $ppath = [System.IO.Path]::Combine($dname, $fname + ".ps1")
