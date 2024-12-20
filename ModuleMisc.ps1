@@ -1240,6 +1240,75 @@ function RunInTray {
 
 <#
 .SYNOPSIS
+    Mailを送信します
+.DESCRIPTION
+    指定されたMailアカウントを使用してメールを送信します
+    送信元/送信先/CC/BCC/件名/本文/添付ファイルを指定してメールを送信できます
+.PARAMETER From
+    送信元のメールアドレスです
+.PARAMETER To
+    送信先のメールアドレスです
+.PARAMETER CC
+    CCに追加するメールアドレスです
+.PARAMETER BCC
+    BCCに追加するメールアドレスです
+.PARAMETER Subject
+    メールの件名です
+.PARAMETER Body
+    メールの本文です
+.PARAMETER SSL
+    SSLを使用可否です
+.PARAMETER AttachmentPath
+    添付ファイルのパスです
+.PARAMETER SMTPServer
+    SMTPサーバーのホスト名です
+.PARAMETER SMTPPort
+    SMTPサーバーのポート番号です
+.PARAMETER UID
+    GmailアカウントのユーザーIDです
+.PARAMETER PWD
+    Gmailアカウントのパスワードです
+.EXAMPLE
+    SendMail -From "example@gmail.com" -To "recipient@example.com" -Subject "Test Email" -Body "This is a test email." -UID "example" -PWD "yourpassword"
+#>
+function SendMail {
+    param (
+        [Parameter(Mandatory = $true)]  [string]  $From,
+        [Parameter(Mandatory = $true)]  [string]  $To,
+        [Parameter(Mandatory = $false)] [string]  $CC = "",
+        [Parameter(Mandatory = $false)] [string]  $BCC = "",
+        [Parameter(Mandatory = $true)]  [string]  $Subject,
+        [Parameter(Mandatory = $true)]  [string]  $Body,
+        [Parameter(Mandatory = $false)] [boolean] $SSL = $true,
+        [Parameter(Mandatory = $false)] [string]  $AttachmentPath = "",
+        [Parameter(Mandatory = $false)] [string]  $SMTPServer = "smtp.gmail.com",
+        [Parameter(Mandatory = $false)] [int]     $SMTPPort = 587,
+        [Parameter(Mandatory = $true)]  [string]  $UID,
+        [Parameter(Mandatory = $true)]  [string]  $PWD
+    )
+    begin {}
+    process {
+        $SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, $SMTPPort) 
+        $SMTPClient.EnableSsl = $SSL 
+        $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($UID,$PWD) 
+        $Mail = New-Object Net.Mail.MailMessage($From,$To,$Subject,$Body)
+        if ($CC -ne ""){
+            $Mail.CC.Add($CC)
+        }
+        if ($BCC -ne ""){
+            $Mail.BCC.Add($BCC)
+        }
+        if ($AttachmentPath -ne ""){
+            $Attachment = New-Object Net.Mail.Attachment($AttachmentPath)
+            $Mail.Attachments.Add($Attachment)
+        }
+        $SMTPClient.Send($Mail)
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
     IP Messengerでメッセージを飛ばす
 .DESCRIPTION
     IP Messengerでメッセージを飛ばす
