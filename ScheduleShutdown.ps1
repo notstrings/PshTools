@@ -31,7 +31,7 @@ switch (
 ) {
     0 { exit 0 }
     1 {
-        Write-Host "インストールが完了したらAwakeツールを有効にしてください"
+        Write-Host "自動構成実行中"
         winget configure .\PowerToys.dsc
     }
 }
