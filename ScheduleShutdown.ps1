@@ -31,7 +31,8 @@ switch (
 ) {
     0 { exit 0 }
     1 {
-        Write-Host "自動構成実行中"
+        Write-Host "自動構成中"
+        winget install --id "Microsoft.PowerToys" -e --accept-package-agreements --source winget
         winget configure .\PowerToys.dsc
     }
 }
