@@ -28,24 +28,24 @@ function local:LoadConf([string] $sPath) {
         $child1 = New-Object ConfChild -Property @{MonName = "Mon01"; MonPath = ""}
         $child2 = New-Object ConfChild -Property @{MonName = "Mon02"; MonPath = ""}
         $child3 = New-Object ConfChild -Property @{MonName = "Mon03"; MonPath = ""}
-        $inst = New-Object Conf -Property @{ ConfChild = @($child1, $child2, $child3); Interval = (5*60*1000) }
+        $conf = New-Object Conf -Property @{ ConfChild = @($child1, $child2, $child3); Interval = (5*60*1000) }
         $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
-        SaveConf $sPath $inst
+        SaveConf $sPath $conf
     }
     # 設定読出
     $json = Get-Content -Path $sPath | ConvertFrom-Json
-    $inst = GenClassByPSCustomObject ([Conf]) $json
-    return $inst
+    $conf = GenClassByPSCustomObject ([Conf]) $json
+    return $conf
 }
 # 設定編集
 function local:EditConf() {
     # 設定読出
-    $crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
+    $conf = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
     # 設定画面表示
-    $ret = ShowSettingDialog "Title" $crnt
+    $ret = ShowSettingDialog "Title" $conf
     if ($ret -eq "OK") {
         # 設定書込
-        SaveConf "$($PSScriptRoot)\Config\MonitorSetting.json" $crnt
+        SaveConf "$($PSScriptRoot)\Config\MonitorSetting.json" $conf
     }
 }
 # EditConf
