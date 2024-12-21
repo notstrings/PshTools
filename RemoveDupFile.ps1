@@ -4,17 +4,27 @@
 
 function local:RemoveDupFile([string[]] $Targets) {
     $hash = @{}
-    $Targets.GetEnumerator() |
+    $Targets |
     ForEach-Object {
         Get-ChildItem -LiteralPath $_ -File |
         ForEach-Object {
-            $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
-            if (-not $hash.ContainsKey($fname)){
-                $hash[$fname] = @()
+            $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+            if (-not $hash.ContainsKey($uniqkey)){
+                $hash[$uniqkey] = @()
             }
-            $hash[$fname] += $_
+            $hash[$uniqkey] += $_
         }
     }
+    # ForEach-Object {
+    #     Get-ChildItem -LiteralPath $_ -File |
+    #     ForEach-Object {
+    #         $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
+    #         if (-not $hash.ContainsKey($uniqkey)){
+    #             $hash[$uniqkey] = @()
+    #         }
+    #         $hash[$uniqkey] += $_
+    #     }
+    # }
     $hash.Values | ForEach-Object {
         $_ |
         Sort-Object -Property Length -Descending |
