@@ -934,7 +934,7 @@ function ShowFileListDialogWithOption {
                         $flpOpt.Controls.Add($rdoOpt)
                         $Checked = $false
                     }
-        
+
             $pnlTail.Dock = [System.Windows.Forms.DockStyle]::Fill
             $null = $pnlTail.Controls.Add($btnCancel)
             $null = $pnlTail.Controls.Add($btnOK)
