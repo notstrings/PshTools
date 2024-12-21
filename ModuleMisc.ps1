@@ -922,9 +922,10 @@ function ShowFileListDialogWithOption {
 
                 $grpOpt.Dock = [System.Windows.Forms.DockStyle]::Bottom
                 $grpOpt.Text = "Options"
-                $grpOpt.Height = 50
+                $grpOpt.AutoSize = $true
                 $null = $grpOpt.Controls.Add($flpOpt)
                     $flpOpt.Dock = [System.Windows.Forms.DockStyle]::Fill
+                    $flpOpt.AutoSize = $true
                     $Checked = $true
                     $Options | ForEach-Object {
                         $rdoOpt = New-Object System.Windows.Forms.RadioButton
