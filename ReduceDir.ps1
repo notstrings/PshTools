@@ -33,10 +33,12 @@ function local:ReduceFolder([string]$Target) {
     #     return
     # }
     # 引き上げ
-    # if ( @(Get-ChildItem -LiteralPath ($Target+"/..") -File     ).Length -eq 0 -and
-    #      @(Get-ChildItem -LiteralPath ($Target+"/..") -Directory).Length -eq 1 ) {
-    #     Move-Item -Path ($Target+"/*") ($Target+"/..") -Force
-    #     Remove-Item -LiteralPath $Target -Recurse -Force
+    # if ( @(Get-ChildItem -LiteralPath ([System.IO.Path]::GetDirectoryName($Target)) -File     ).Length -eq 0 -and
+    #      @(Get-ChildItem -LiteralPath ([System.IO.Path]::GetDirectoryName($Target)) -Directory).Length -eq 1 ) {
+    #     if((Test-Path -LiteralPath  [System.IO.Path]::Combine($Target, [System.IO.Path]::GetFileName($Target)) -eq $false)){
+    #         Move-Item -Path ($Target+"/*") ($Target+"/..") -Force
+    #         Remove-Item -LiteralPath $Target -Recurse -Force
+    #     }
     #     return
     # }
 }

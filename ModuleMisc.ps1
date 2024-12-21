@@ -1344,23 +1344,31 @@ function SendIPMsg {
 ## ファイル操作関連
 
 # ユニーク名取得
-function local:GenUniqName([string] $DstPath, [string] $SrcPath){
-    $sUniq = $DstPath
-    $lUniq = 1
-    while( (Test-Path -LiteralPath $sUniq) ) {
-        if ((Get-Item $SrcPath).PSIsContainer) {
-            $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-            $fname = [System.IO.Path]::GetFileName($DstPath)
-            $ename = ""
-        }else{
-            $dname = [System.IO.Path]::GetDirectoryName($DstPath)
-            $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
-            $ename = [System.IO.Path]::GetExtension($DstPath)
+function GenUniqName {
+    param (
+        [string] $DstPath, 
+        [string] $SrcPath
+    )
+    begin {}
+    process {
+        $sUniq = $DstPath
+        $lUniq = 1
+        while( (Test-Path -LiteralPath $sUniq) ) {
+            if ((Get-Item $SrcPath).PSIsContainer) {
+                $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+                $fname = [System.IO.Path]::GetFileName($DstPath)
+                $ename = ""
+            }else{
+                $dname = [System.IO.Path]::GetDirectoryName($DstPath)
+                $fname = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
+                $ename = [System.IO.Path]::GetExtension($DstPath)
+            }
+            $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
+            $lUniq++
         }
-        $sUniq = [System.IO.Path]::Combine($dname, $fname + " ($lUniq)" + $ename)
-        $lUniq++
+        return $sUniq
     }
-    return $sUniq
+    end {}
 }
 
 <#
