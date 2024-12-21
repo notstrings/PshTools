@@ -8,40 +8,28 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         $DocLHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
         $DocRHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
         if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
-            $AppDOC.CompareDocuments(
-                $DocLHS,        # OriginalDocument
-                $DocRHS,        # RevisedDocument
-                2,              # Destination wdCompareDestinationNew=2
-                1,              # Granularity wdGranularityWordLevel=1
-                $False,         # CompareFormatting
-                $False,         # CompareCaseChanges
-                $False,         # CompareWhitespace
-                $True,          # CompareTables
-                $False,         # CompareHeaders
-                $False,         # CompareFootnotes
-                $True,          # CompareTextboxes
-                $True,          # CompareFields
-                $False,         # CompareComments
-                $False          # CompareMoves
-            )
+            $DocLHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
+            $DocRHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
         } else {
-            $AppDOC.CompareDocuments(
-                $DocRHS,        # OriginalDocument
-                $DocLHS,        # RevisedDocument
-                2,              # Destination wdCompareDestinationNew=2
-                1,              # Granularity wdGranularityWordLevel=1
-                $False,         # CompareFormatting
-                $False,         # CompareCaseChanges
-                $False,         # CompareWhitespace
-                $True,          # CompareTables
-                $False,         # CompareHeaders
-                $False,         # CompareFootnotes
-                $True,          # CompareTextboxes
-                $True,          # CompareFields
-                $False,         # CompareComments
-                $False          # CompareMoves
-            )
+            $DocLHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
+            $DocRHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
         }
+        $AppDOC.CompareDocuments(
+            $DocLHS,        # OriginalDocument
+            $DocRHS,        # RevisedDocument
+            2,              # Destination wdCompareDestinationNew=2
+            1,              # Granularity wdGranularityWordLevel=1
+            $False,         # CompareFormatting
+            $False,         # CompareCaseChanges
+            $False,         # CompareWhitespace
+            $True,          # CompareTables
+            $False,         # CompareHeaders
+            $False,         # CompareFootnotes
+            $True,          # CompareTextboxes
+            $True,          # CompareFields
+            $False,         # CompareComments
+            $False          # CompareMoves
+        )
     } finally {
         if($null -ne $DocRHS){
             $DocRHS.Close(0)
