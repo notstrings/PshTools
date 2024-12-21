@@ -912,8 +912,10 @@ function ShowFileListDialogWithOption {
                 })
                 $null = $lbxDD.Add_DragDrop({
                     @($_.Data.GetData("FileDrop")) | ForEach-Object {
-                        if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                            [void]$lbxDD.Items.Add($_)
+                        if( (Get-Item $_).PSIsContainer -eq $false ){
+                            if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
+                                [void]$lbxDD.Items.Add($_)
+                            }
                         }
                     }
                 })
