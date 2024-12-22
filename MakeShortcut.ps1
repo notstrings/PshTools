@@ -14,8 +14,8 @@ function local:MakeLink([string] $TargetPath, [System.Text.Encoding] $Encoding) 
     $lpath = [System.IO.Path]::Combine($dname, $fname + ".lnk")
     $WSH = New-Object -ComObject WScript.Shell
     $lnk = $WSH.CreateShortCut($lpath)
-    $lnk.TargetPath       = """C:\windows\System32\WindowsPowerShell\v1.0\powershell.exe"""
-    $lnk.IconLocation     = "C:\windows\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
+    $lnk.TargetPath       = """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"""
+    $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
     $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$ppath"""
     $lnk.WorkingDirectory = """$dname"""
     $null = $lnk.Save()
