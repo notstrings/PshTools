@@ -1,23 +1,23 @@
 ﻿$ErrorActionPreference = "Stop"
 
-# ファイル処理
-function local:ReduceF([System.IO.FileInfo] $Target) {
+# ファイル
+function local:ExecFPath([System.IO.FileInfo] $Target) {
     ReduceFile $Target.FullName
 }
 
-# フォルダ処理
-function local:ReduceD([System.IO.DirectoryInfo] $Target) {
+# フォルダ
+function local:ExecDPath([System.IO.DirectoryInfo] $Target) {
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ReduceF $elm
+        ExecFPath $elm
     }
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ReduceD $elm
+        ExecDPath $elm
     }
-    ReduceFolder $Target.FullName
+    ReduceDir $Target.FullName
 }
 
 # 整理
-function local:ReduceFolder([string]$Target) {
+function local:ReduceDir([string]$Target) {
     # 空フォルダ
     if ( @(Get-ChildItem -LiteralPath $Target -File     ).Length -eq 0 -and
          @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
@@ -70,7 +70,7 @@ $null = Write-Host "---ReduceDir---"
 ForEach ($arg in $args) {
     if( Test-Path -LiteralPath $arg ){
         if ((Get-Item $arg).PSIsContainer) {
-            ReduceD (Get-Item $arg)
+            ReduceDir (Get-Item $arg)
         }
     }
 }

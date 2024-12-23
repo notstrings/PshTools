@@ -2,24 +2,24 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
-# ファイル名の処理
-function local:CleanupFName([System.IO.FileInfo] $Target) {
-    CleanupNodeName $Target.FullName $Target.LastWriteTime $false
+# ファイル
+function local:ExecFPath([System.IO.FileInfo] $Target) {
+    AutoRename $Target.FullName $Target.LastWriteTime $false
 }
 
-# フォルダ名の処理
-function local:CleanupDName([System.IO.DirectoryInfo] $Target) {
+# フォルダ
+function local:ExecDPath([System.IO.DirectoryInfo] $Target) {
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        CleanupDName $elm
+        ExecDPath $elm
     }
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        CleanupFName $elm
+        ExecFPath $elm
     }
-    CleanupNodeName $Target.FullName $Target.CreationTime $true
+    AutoRename $Target.FullName $Target.CreationTime $true
 }
 
 # ファイル・フォルダ名の処理
-function local:CleanupNodeName([string] $TargetPath, [datetime] $TargetDate, [bool] $isDir) {
+function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $isDir) {
     try {
         # 修正前名称
         $srcpath = $TargetPath
@@ -62,9 +62,9 @@ try {
     ForEach ($arg in $args) {
         if( Test-Path -LiteralPath $arg ){
             if ((Get-Item $arg).PSIsContainer) {
-                CleanupDName (Get-Item $arg)
+                ExecDPath (Get-Item $arg)
             } else {
-                CleanupFName (Get-Item $arg)
+                ExecFPath (Get-Item $arg)
             }
         }
     }
