@@ -1019,9 +1019,6 @@ function ShowSettingDialog {
     )
     begin {}
     process {
-        # ディープコピー
-        # $ret = DeepCopyObj $Setting
-  
         # フォーム生成
         $frmMain = New-Object System.Windows.Forms.Form
         $frmMain.Text = $Title                                     # タイトル
@@ -1082,7 +1079,7 @@ function ShowSettingDialog {
         return $frmMain.DialogResult
     }
     end {}
-  }
+}
 
 # タスクトレイ常駐用アイコン生成
 # 元ネタ:https://aquasoftware.net/blog/?p=1244
