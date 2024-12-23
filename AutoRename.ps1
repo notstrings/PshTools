@@ -3,17 +3,17 @@
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
 # ファイル
-function local:ExecFPath([System.IO.FileInfo] $Target) {
+function local:ExecFile([System.IO.FileInfo] $Target) {
     AutoRename $Target.FullName $Target.LastWriteTime $false
 }
 
 # フォルダ
-function local:ExecDPath([System.IO.DirectoryInfo] $Target) {
+function local:ExecDir([System.IO.DirectoryInfo] $Target) {
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ExecDPath $elm
+        ExecDir  $elm
     }
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ExecFPath $elm
+        ExecFile $elm
     }
     AutoRename $Target.FullName $Target.CreationTime $true
 }
@@ -38,7 +38,6 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
         $fname = RestrictTextHan    -Text $fname
         $fname = RestrictTextDate   -Text $fname -Format "yyyyMMdd" -RefDate $TargetDate
         $fname = RestrictTextBlank  -Text $fname
-        $ename = RestrictTextBlank  -Text $ename
         $dstpath = [System.IO.Path]::Combine($dname, $fname + $ename)
         # 必要があればリネーム
         if ($fname -ne "") {
@@ -62,9 +61,9 @@ try {
     ForEach ($arg in $args) {
         if( Test-Path -LiteralPath $arg ){
             if ((Get-Item $arg).PSIsContainer) {
-                ExecDPath (Get-Item $arg)
+                ExecDir  (Get-Item $arg)
             } else {
-                ExecFPath (Get-Item $arg)
+                ExecFile (Get-Item $arg)
             }
         }
     }

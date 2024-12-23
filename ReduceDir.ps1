@@ -1,17 +1,17 @@
 ﻿$ErrorActionPreference = "Stop"
 
 # ファイル
-function local:ExecFPath([System.IO.FileInfo] $Target) {
+function local:ExecFile([System.IO.FileInfo] $Target) {
     ReduceFile $Target.FullName
 }
 
 # フォルダ
-function local:ExecDPath([System.IO.DirectoryInfo] $Target) {
+function local:ExecDir([System.IO.DirectoryInfo] $Target) {
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ExecFPath $elm
+        ExecFile $elm
     }
     ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ExecDPath $elm
+        ExecDir  $elm
     }
     ReduceDir $Target.FullName
 }
@@ -70,7 +70,7 @@ $null = Write-Host "---ReduceDir---"
 ForEach ($arg in $args) {
     if( Test-Path -LiteralPath $arg ){
         if ((Get-Item $arg).PSIsContainer) {
-            ReduceDir (Get-Item $arg)
+            ExecDir (Get-Item $arg)
         }
     }
 }
