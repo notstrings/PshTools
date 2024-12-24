@@ -65,9 +65,10 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 
 try {
     $ret = ShowFileListDialogWithOption `
-            -Title "出力選択" `
+            -Title "バッチファイル生成" `
             -Message "対象ファイルをD&Dしてください" `
             -FileList $args `
+            -FileFilter "\.(ps1|dsc|yaml)$" `
             -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {

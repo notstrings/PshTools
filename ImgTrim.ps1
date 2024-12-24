@@ -6,7 +6,7 @@ $ExePath = "C:\ImageMagick\magick.exe"
 # imagemagickのdelegate.xlsの@PSDelegate@を.\CommonFilesにリプレース
 
 # ファイル・フォルダ名の処理
-function local:ImageMagick([string] $TargetPath) {
+function local:ExecImageMagick([string] $TargetPath) {
     try {
         # 入力ファイル名
         $srcpath = $TargetPath
@@ -26,15 +26,15 @@ function local:ImageMagick([string] $TargetPath) {
 
 try {
     $ret = ShowFileListDialogWithOption `
-            -Title "出力選択" `
+            -Title "ImageMagickHelper" `
             -Message "対象画像ファイルをD&Dしてください" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png)$" `
-            -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
+            -Options @("RESIZE", "TRIM", "ANNOTATE", "COMPARE")
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                ImageMagick $elm
+                ExecImageMagick $elm
             }
         }
     }

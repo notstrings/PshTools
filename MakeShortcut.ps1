@@ -29,7 +29,7 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 
 try {
     $ret = ShowFileListDialog `
-            -Title "出力選択" `
+            -Title "ショートカットファイル生成" `
             -Message "対象PS1ファイルをD&Dしてください" `
             -FileList $args `
             -FileFilter "\.ps1$"
