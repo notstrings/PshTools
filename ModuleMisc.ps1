@@ -1022,8 +1022,6 @@ function ShowFileListDialogWithOption {
     if ($ret -eq "OK") {
         $edit
     }
-.NOTES
-    ディープコピーを組み込めば良いんだが万能とまで言える自信もないので...
 #>
 function ShowSettingDialog {
     param (
