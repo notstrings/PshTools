@@ -91,7 +91,7 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
 
 try {
     $ret = ShowFileListDialogWithOption `
-            -Title "ImageManipHelper" `
+            -Title "画像操作" `
             -Message "対象画像ファイルをD&Dしてください`n(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
