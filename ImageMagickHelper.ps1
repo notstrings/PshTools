@@ -1,24 +1,89 @@
 $ErrorActionPreference = "Stop"
 
-$ExePath = "C:\ImageMagick\magick.exe"
-# imagemagickインストール
-# portableGhostscriptをimagemagickの下CommonFilesに放り込む
-# imagemagickのdelegate.xlsの@PSDelegate@を.\CommonFilesにリプレース
+. "$($PSScriptRoot)/ModuleMisc.ps1"
 
 # ファイル・フォルダ名の処理
-function local:ExecImageMagick([string] $TargetPath) {
+function local:ExecImageMagick([string] $TargetPath, [string] $Mode) {
     try {
-        # 入力ファイル名
-        $srcpath = $TargetPath
-
-        # 出力ファイル名
         $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
         $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
-        $ename = ".png"
-        $dstpath = [System.IO.Path]::Combine($dname, "out", $fname + $ename)
-
+        $ename = [System.IO.Path]::GetExtension($TargetPath).ToLower()
+        $ExePath = "C:\ImageMagick\magick.exe"
+        $srcpath = $TargetPath
+        $dstpath = [System.IO.Path]::Combine($dname, "Conv")
+        $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
         # 変換実施
-        & $ExePath convert """$srcpath""" -fuzz 10% -resize "800x800>" """$dstpath"""
+        switch ($Mode) {
+            "CONVERT PNG" {
+                if ($ename -ne ".pdf") {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".png")
+                    & $ExePath convert $srcpath $dstpath
+                }
+            }
+            "RESIZE" {
+                if ($ename -ne ".pdf") {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + $ename)
+                    & $ExePath convert -resize "800x800>" $srcpath $dstpath
+                }
+            }
+            "TRIM" {
+                if ($ename -ne ".pdf") {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + $ename)
+                    & $ExePath convert -fuzz 10% -trim $srcpath $dstpath
+                }
+            }
+            "DESKEW" {
+                if ($ename -ne ".pdf") {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + $ename)
+                    & $ExePath convert -deskew 40% $srcpath $dstpath
+                }
+            }
+            "ANOTATE" {
+                if ($ename -ne ".pdf") {
+                    $text0 = [System.IO.Path]::GetFileName([System.IO.Path]::GetDirectoryName($srcpath))
+                    $text1 = [System.IO.Path]::GetFileNameWithoutExtension($srcpath)
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + $ename)
+                    & $ExePath convert  `
+                        $srcpath `
+                        `( +clone -alpha opaque -fill white -colorize 100% `) `
+                        +swap -compose Over -composite `
+                        -gravity north `
+                        -font "MS-Mincho-&-MS-PMincho" -pointsize 35 `
+                        `( -background none -fill "#000000" label:"$text0" `) `
+                        -composite `
+                        -gravity south `
+                        -font "MS-Mincho-&-MS-PMincho" -pointsize 25 `
+                        `( -background none -fill "#000000" label:"$text1" `) `
+                        -composite `
+                        -bordercolor "#000000" -border "8x8" `
+                        $dstpath
+                }
+            }
+            "CONVERT PDF" {
+                if ($ename -ne ".pdf") {
+                    # スタンプサイズ
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".pdf")
+                    & $ExePath convert -resize "x400" -density 1024 $srcpath $dstpath
+                }
+            }
+            "SPLIT PDF" {
+                if ($ename -eq ".pdf") {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname)
+                    $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
+                    $dstpath = [System.IO.Path]::Combine($dstpath, "%04d.png")
+                    & $ExePath convert -density 300 -alpha remove $srcpath $dstpath
+                }
+            }
+            "COMPRESS PDF" {
+                if ($ename -eq ".pdf") {
+                    $ExePath = "C:\ImageMagick\CommonFiles\Ghostscript\bin\gswin32c"
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".pdf")
+                    & $ExePath `
+                        -sDEVICE=pdfwrite -dCompatibilityLevel="1.4" -dPDFSETTINGS=/screen -dNOPAUSE -dBATCH -dQUIET -dPDFFitPage `
+                        -sOutputFile="$dstpath" "$srcpath"
+                }
+            }
+        }
     } catch {
         $null = Write-Host "Error:" $_.Exception.Message
     }
@@ -27,14 +92,14 @@ function local:ExecImageMagick([string] $TargetPath) {
 try {
     $ret = ShowFileListDialogWithOption `
             -Title "ImageMagickHelper" `
-            -Message "対象画像ファイルをD&Dしてください" `
+            -Message "対象画像ファイルをD&Dしてください`n(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)" `
             -FileList $args `
-            -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png)$" `
-            -Options @("RESIZE", "TRIM", "ANNOTATE", "COMPARE")
+            -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
+            -Options @("CONVERT PNG", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "SPLIT PDF", "COMPRESS PDF")
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                ExecImageMagick $elm
+                ExecImageMagick $elm $ret[2]
             }
         }
     }
