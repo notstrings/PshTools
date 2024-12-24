@@ -1246,7 +1246,6 @@ function RunInTray {
         } finally {
             $mutex.Dispose()
         }
-    
     }
     end {}
 }
