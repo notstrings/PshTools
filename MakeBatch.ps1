@@ -66,7 +66,7 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 try {
     $ret = ShowFileListDialogWithOption `
             -Title "バッチファイル生成" `
-            -Message "対象ファイルをD&Dしてください" `
+            -Message "対象ファイルをドラッグ＆ドロップしてください" `
             -FileList $args `
             -FileFilter "\.(ps1|dsc|yaml)$" `
             -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
