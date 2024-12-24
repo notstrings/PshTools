@@ -128,8 +128,8 @@ try {
         exit
     }
     $null = Write-Host "---Office2PDF---"
-    ForEach ($arg in $args) {
-        if( Test-Path -LiteralPath $arg ){
+    foreach ($arg in $args) {
+        if (Test-Path -LiteralPath $arg) {
             Office2PDF (Get-Item $arg)
         }
     }

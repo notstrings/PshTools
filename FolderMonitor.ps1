@@ -83,7 +83,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
     # 現在の監視フォルダ状況を取得
     Get-ChildItem $MonitorPath -File -Recurse | 
     Select-Object FullName, LastWriteTime |
-    Export-Csv -Path $CrntPath -NoTypeInformation -Encoding "OEM"
+    Export-Csv -Path $CrntPath -NoTypeInformation -Encoding "OEM" # PowerShell5互換のためエンコーディングを文字指定
     
     # 昨今の監視フォルダ状況差分を確認
     if (Test-Path $PrevPath){
@@ -91,7 +91,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
         # ・追加は前回リストに無い差分
         # ・削除は今回リストに無い差分
         # ・更新は更新日時のみの差分
-        $Diff = DiffContent -LHSPath $PrevPath -RHSPath $CrntPath -Encoding "OEM"
+        $Diff = DiffContent -LHSPath $PrevPath -RHSPath $CrntPath -Encoding "OEM"  # PowerShell5互換のためエンコーディングを文字指定
         $LHSOnlyCSV = ($Diff[1] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
         $RHSOnlyCSV = ($Diff[2] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
         if ($LHSOnlyCSV.Length -eq 0){$LHSOnlyCSV = ""}

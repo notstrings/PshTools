@@ -50,7 +50,12 @@ try {
     if ($args.Length -eq 1) {
         exit
     }
-    DiffWord (Get-Item $args[0]) (Get-Item $args[1])
+    $exist = $true
+    $exist = $exist -and (Test-Path -LiteralPath $args[0])
+    $exist = $exist -and (Test-Path -LiteralPath $args[1])
+    if ($exist) {
+        DiffWord (Get-Item $args[0]) (Get-Item $args[1])
+    }
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message

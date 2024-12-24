@@ -9,10 +9,10 @@ function local:ExecFile([System.IO.FileInfo] $Target) {
 
 # フォルダ
 function local:ExecDir([System.IO.DirectoryInfo] $Target) {
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
         ExecDir  $elm
     }
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
         ExecFile $elm
     }
     AutoRename $Target.FullName $Target.CreationTime $true
@@ -58,8 +58,8 @@ try {
         exit 1
     }
     $null = Write-Host "<<Start>>"
-    ForEach ($arg in $args) {
-        if( Test-Path -LiteralPath $arg ){
+    foreach ($arg in $args) {
+        if (Test-Path -LiteralPath $arg) {
             if ((Get-Item $arg).PSIsContainer) {
                 ExecDir  (Get-Item $arg)
             } else {

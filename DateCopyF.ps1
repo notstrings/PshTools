@@ -27,8 +27,8 @@ try {
         exit
     }
     $null = Write-Host "---DateCopy---"
-    ForEach ($arg in $args) {
-        if( Test-Path -LiteralPath $arg ){
+    foreach ($arg in $args) {
+        if (Test-Path -LiteralPath $arg) {
             if ((Get-Item $arg).PSIsContainer) {
                 DateCopyDir  (Get-Item $arg)
             } else {

@@ -10,13 +10,14 @@ function local:MkPshLnk([string] $TargetPath) {
 function local:MakeLink([string] $TargetPath, [System.Text.Encoding] $Encoding) {
     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
-    $ppath = [System.IO.Path]::Combine($dname, $fname + ".ps1")
-    $lpath = [System.IO.Path]::Combine($dname, $fname + ".lnk")
+    $ename = [System.IO.Path]::GetExtension($TargetPath)
+    $abspath = [System.IO.Path]::Combine($dname, $fname + $ename)
+    $dstpath = [System.IO.Path]::Combine($dname, $fname + ".lnk")
     $WSH = New-Object -ComObject WScript.Shell
-    $lnk = $WSH.CreateShortCut($lpath)
+    $lnk = $WSH.CreateShortCut($dstpath)
     $lnk.TargetPath       = """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"""
     $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
-    $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$ppath"""
+    $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$abspath"""
     $lnk.WorkingDirectory = """$dname"""
     $null = $lnk.Save()
 }
@@ -29,8 +30,10 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 try {
     $ret = ShowFileListDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -FileList $args -FIleFilter "\.ps1$"
     if ($ret[0] -eq "OK") {
-        foreach($elm in $ret[1]) {
-            MkPshLnk $elm
+        foreach ($elm in $ret[1]) {
+            if (Test-Path -LiteralPath $elm) {
+                MkPshLnk $elm
+            }
         }
     }
 } catch {

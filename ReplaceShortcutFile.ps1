@@ -26,10 +26,10 @@ function local:CleanupFName([System.IO.FileInfo] $Target) {
 # フォルダ
 function local:CleanupDName([System.IO.DirectoryInfo] $Target) {
     $null = Write-Host "検査`t""$($Target.FullName)"""
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
         CleanupDName $elm
     }
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File -Filter "*.lnk")) {
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File -Filter "*.lnk")) {
         CleanupFName $elm
     }
 }
@@ -153,8 +153,8 @@ try {
         exit
     }
     $null = Write-Host "---ショートカットファイル修正---"
-    ForEach ($arg in $args) {
-        if ( Test-Path -LiteralPath $arg ) {
+    foreach ($arg in $args) {
+        if (Test-Path -LiteralPath $arg) {
             if ((Get-Item $arg).PSIsContainer) {
                 CleanupDName (Get-Item $arg)
             } else {

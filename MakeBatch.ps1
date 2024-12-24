@@ -10,52 +10,52 @@ function local:MkPshBat([string] $TargetPath, [string] $Mode) {
 function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Encoding] $Encoding) {
     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
-    $ename = [System.IO.Path]::GetExtension($TargetPath)
-    $tpath = [System.IO.Path]::GetFileName($TargetPath)
-    $bpath = [System.IO.Path]::Combine($dname, $fname + ".bat")
+    $ename = [System.IO.Path]::GetExtension($TargetPath).ToLower()
+    $relpath = [System.IO.Path]::Combine(".",    $fname + $ename)
+    $dstpath = [System.IO.Path]::Combine($dname, $fname + ".bat")
     switch ($Mode) {
         "PSH5 CUI" {
-            if ($ename.ToLower() -eq ".ps1") {
+            if ($ename -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
                 $text = $text + "chcp 65001" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File "".\$tpath"" %*" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
         "PSH5 GUI" {
-            if ($ename.ToLower() -eq ".ps1") {
+            if ($ename -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
                 $text = $text + "chcp 65001" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File "".\$tpath"" %*" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
         "PSH5 ISE" {
-            if ($ename.ToLower() -eq ".ps1") {
+            if ($ename -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
                 $text = $text + "chcp 65001" + "`r`n"
-                $text = $text + "start ""$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell_ise.exe"" -NoProfile -File "".\$tpath"" %*" + "`r`n"
+                $text = $text + "start ""$($ENV:SystemRoot)\system32\WindowsPowerShell\v1.0\powershell_ise.exe"" -NoProfile -File ""$relpath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
         "WINGET DSC" {
-            if ($ename.ToLower() -eq ".yaml" -or $ename.ToLower() -eq ".dsc") {
+            if ($ename -eq ".yaml" -or $ename -eq ".dsc") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
                 $text = $text + "chcp 65001" + "`r`n"
-                $text = $text + """$($ENV:USERPROFILE)\AppData\Local\Microsoft\WindowsApps\winget.exe"" configure "".\$tpath""`r`n"
+                $text = $text + """$($ENV:USERPROFILE)\AppData\Local\Microsoft\WindowsApps\winget.exe"" configure ""$relpath""`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
     }
-    [IO.File]::WriteAllLines($bpath, $text, $Encoding)
+    [IO.File]::WriteAllLines($dstpath, $text, $Encoding)
 }
 
 function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Encoding] $Encoding) {
@@ -67,7 +67,9 @@ try {
     $ret = ShowFileListDialogWithOption -Title "出力選択" -Message "対象ファイルをD&Dしてください" -FileList $args -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
-            MkPshBat $elm $ret[2]
+            if (Test-Path -LiteralPath $elm) {
+                MkPshBat $elm $ret[2]
+            }
         }
     }
 } catch {

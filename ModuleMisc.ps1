@@ -597,6 +597,8 @@ Function AutoGuessEncodingSimple {
     $ret[0] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 両方のファイルに存在する行
     $ret[1] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 左側のファイルにのみ存在する行の配列
     $ret[2] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 右側のファイルにのみ存在する行の配列
+.NOTES
+    PowerShell5互換のためエンコーディングを文字指定する必要がある
 #>
 function DiffContent {
     param (
