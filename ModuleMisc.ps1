@@ -721,12 +721,12 @@ function local:MakeFileListForFileListDialog([string[]] $Targets, [string] $Filt
         if (Test-Path -LiteralPath $elm) {
             if ([System.IO.Directory]::Exists($elm)) {
                 foreach ($cld in @(Get-ChildItem -LiteralPath $elm -File -Recurse)) {
-                    if( [System.IO.Path]::GetFileName($cld.FullName) -match $Filter ){
+                    if ($cld.Name -match $Filter) {
                         $ret += $cld.FullName
                     }
                 }
             } else {
-                if( [System.IO.Path]::GetFileName($elm) -match $Filter ){
+                if ([System.IO.Path]::GetFileName($elm) -match $Filter) {
                     $ret += $elm
                 }
             }
