@@ -92,7 +92,7 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
 try {
     $ret = ShowFileListDialogWithOption `
             -Title "画像操作" `
-            -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)`n※pdfは一部処理のみ有効" `
+            -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdfです`n※pdfは一部処理のみ有効" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
             -Options @("CONVERT PNG", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "SPLIT PDF※", "COMPRESS PDF※")
