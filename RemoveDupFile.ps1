@@ -4,8 +4,7 @@
 
 function local:RemoveDupFile([string[]] $Targets) {
     $hash = @{}
-    $Targets |
-    ForEach-Object {
+    $Targets | ForEach-Object {
         Get-ChildItem -LiteralPath $_ -File |
         ForEach-Object {
             $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
@@ -15,7 +14,7 @@ function local:RemoveDupFile([string[]] $Targets) {
             $hash[$uniqkey] += $_
         }
     }
-    # ForEach-Object {
+    # $Targets | ForEach-Object {
     #     Get-ChildItem -LiteralPath $_ -File |
     #     ForEach-Object {
     #         $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
