@@ -125,4 +125,4 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 
 # 常駐監視
 $crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
-RunInTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)
+RunInTaskTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)

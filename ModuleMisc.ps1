@@ -1134,7 +1134,7 @@ function local:GenTaskTrayIcon([uint32] $ARGB) {
 .NOTES
     元ネタ:https://aquasoftware.net/blog/?p=1244
 #>
-function RunInTray {
+function RunInTaskTray {
     param (
         [Parameter(Mandatory = $true)] [string]      $Name,
         [Parameter(Mandatory = $true)] [uint32]      $Color,
