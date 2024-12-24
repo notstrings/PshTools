@@ -67,7 +67,7 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
                     & $IMPath convert -resize "x400" -density 1024 $srcpath $dstpath
                 }
             }
-            "SPLIT PDF" {
+            "SPLIT PDF※" {
                 if ($ename -eq ".pdf") {
                     $dstpath = [System.IO.Path]::Combine($dstpath, $fname)
                     $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
@@ -75,7 +75,7 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
                     & $IMPath convert -density 300 -alpha remove $srcpath $dstpath
                 }
             }
-            "COMPRESS PDF" {
+            "COMPRESS PDF※" {
                 if ($ename -eq ".pdf") {
                     $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".pdf")
                     & $GSPath `
@@ -92,10 +92,10 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
 try {
     $ret = ShowFileListDialogWithOption `
             -Title "画像操作" `
-            -Message "対象画像ファイルをD&Dしてください`n(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)" `
+            -Message "対象画像ファイルをD&Dしてください`n入力可能形式(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)`n※pdfは一部処理のみ有効" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
-            -Options @("CONVERT PNG", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "SPLIT PDF", "COMPRESS PDF")
+            -Options @("CONVERT PNG", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "SPLIT PDF※", "COMPRESS PDF※")
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
