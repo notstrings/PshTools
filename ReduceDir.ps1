@@ -69,7 +69,7 @@ if ($args.Length -eq 0) {
 $null = Write-Host "---ReduceDir---"
 foreach ($arg in $args) {
     if (Test-Path -LiteralPath $arg) {
-        if ((Get-Item $arg).PSIsContainer) {
+        if ([System.IO.Directory]::Exists($arg)) {
             ExecDir (Get-Item $arg)
         }
     }

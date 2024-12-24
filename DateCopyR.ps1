@@ -29,7 +29,7 @@ try {
     $null = Write-Host "---DateCopy---"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
-            if ((Get-Item $arg).PSIsContainer) {
+            if ([System.IO.Directory]::Exists($arg)) {
                 DateCopyDir  (Get-Item $arg)
             } else {
                 DateCopyFile (Get-Item $arg)

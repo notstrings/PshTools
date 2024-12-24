@@ -60,7 +60,7 @@ try {
     $null = Write-Host "<<Start>>"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
-            if ((Get-Item $arg).PSIsContainer) {
+            if ([System.IO.Directory]::Exists($arg)) {
                 ExecDir  (Get-Item $arg)
             } else {
                 ExecFile (Get-Item $arg)

@@ -46,7 +46,7 @@ try {
     $null = Write-Host "<<Start>>"
     ForEach ($arg in $args) {
         if( Test-Path -LiteralPath $arg ){
-            if ((Get-Item $arg).PSIsContainer) {
+            if ([System.IO.Directory]::Exists($arg)) {
                 ProcessDPath (Get-Item $arg)
             } else {
                 ProcessFPath (Get-Item $arg)

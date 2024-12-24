@@ -156,7 +156,7 @@ try {
     $null = Write-Host "---ショートカットファイル修正---"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
-            if ((Get-Item $arg).PSIsContainer) {
+            if ([System.IO.Directory]::Exists($arg)) {
                 CleanupDName (Get-Item $arg)
             } else {
                 CleanupFName (Get-Item $arg)

@@ -714,6 +714,27 @@ function ShowFolderDialog {
     end {}
 }
 
+# FileListDialog用ファイルリスト生成
+function local:MakeFileListForFileListDialog([string[]] $Targets, [string] $Filter) {
+    $ret = @()
+    foreach ($elm in $Targets) {
+        if (Test-Path -LiteralPath $elm) {
+            if ([System.IO.Directory]::Exists($elm)) {
+                foreach ($cld in @(Get-ChildItem -LiteralPath $elm -File -Recurse)) {
+                    if( [System.IO.Path]::GetFileName($cld.FullName) -match $Filter ){
+                        $ret += $cld.FullName
+                    }
+                }
+            } else {
+                if( [System.IO.Path]::GetFileName($elm) -match $Filter ){
+                    $ret += $elm
+                }
+            }
+        }
+    }
+    return $ret
+}
+
 <#
 .SYNOPSIS
     ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
@@ -786,10 +807,8 @@ function ShowFileListDialog {
                     $_.Effect = "All"
                 })
                 $null = $lbxDD.Add_DragDrop({
-                    @($_.Data.GetData("FileDrop")) | ForEach-Object {
-                        if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                            [void]$lbxDD.Items.Add($_)
-                        }
+                    @(MakeFileListForFileListDialog $_.Data.GetData("FileDrop") $FileFilter) | ForEach-Object {
+                        [void]$lbxDD.Items.Add($_)
                     }
                 })
 
@@ -817,10 +836,8 @@ function ShowFileListDialog {
 
         # フォーム表示
         if ($null -ne $FileList) {
-            $FileList | ForEach-Object {
-                if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                    [void]$lbxDD.Items.Add($_)
-                }
+            @(MakeFileListForFileListDialog $FileList $FileFilter) | ForEach-Object {
+                [void]$lbxDD.Items.Add($_)
             }
         }
         $frmMain.DialogResult = "Cancel"
@@ -913,12 +930,8 @@ function ShowFileListDialogWithOption {
                     $_.Effect = "All"
                 })
                 $null = $lbxDD.Add_DragDrop({
-                    @($_.Data.GetData("FileDrop")) | ForEach-Object {
-                        if( (Get-Item $_).PSIsContainer -eq $false ){
-                            if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                                [void]$lbxDD.Items.Add($_)
-                            }
-                        }
+                    @(MakeFileListForFileListDialog $_.Data.GetData("FileDrop") $FileFilter) | ForEach-Object {
+                        [void]$lbxDD.Items.Add($_)
                     }
                 })
 
@@ -964,10 +977,8 @@ function ShowFileListDialogWithOption {
 
         # フォーム表示
         if ($null -ne $FileList) {
-            $FileList | ForEach-Object {
-                if( [System.IO.Path]::GetFileName($_) -match $FileFilter ){
-                    [void]$lbxDD.Items.Add($_)
-                }
+            @(MakeFileListForFileListDialog $FileList $FileFilter) | ForEach-Object {
+                [void]$lbxDD.Items.Add($_)
             }
         }
         $frmMain.DialogResult = "Cancel"
@@ -1411,7 +1422,7 @@ function GenUniqName {
         $sUniq = $DstPath
         $lUniq = 1
         while( (Test-Path -LiteralPath $sUniq) ) {
-            if ((Get-Item $SrcPath).PSIsContainer) {
+            if ([System.IO.Directory]::Exists($SrcPath)) {
                 $dname = [System.IO.Path]::GetDirectoryName($DstPath)
                 $fname = [System.IO.Path]::GetFileName($DstPath)
                 $ename = ""
@@ -1453,12 +1464,12 @@ function CopyItemWithUniqName {
             # ユニーク名取得
             $sUniq = GenUniqName $DstPath $SrcPath
             # 進捗表示
-            if ((Get-Item $SrcPath).PSIsContainer) {
+            if ([System.IO.File]::Exists($SrcPath)) {
                 $index = 0
                 $count = 1
             } else {
                 $index = 0
-                $count = (Get-ChildItem $SrcPath -Recurse).Length
+                $count = @(Get-ChildItem $SrcPath -Recurse).Length
             }
             Copy-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru -Recurse | 
             ForEach-Object {
@@ -1497,12 +1508,12 @@ function MoveItemWithUniqName {
             # ユニーク名取得
             $sUniq = GenUniqName $DstPath $SrcPath
             # 進捗表示
-            if ((Get-Item $SrcPath).PSIsContainer) {
+            if ([System.IO.File]::Exists($SrcPath)) {
                 $index = 0
                 $count = 1
             } else {
                 $index = 0
-                $count = (Get-ChildItem $SrcPath -Recurse).Length
+                $count = @(Get-ChildItem $SrcPath -Recurse).Length
             }
             Move-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru | 
             ForEach-Object {
