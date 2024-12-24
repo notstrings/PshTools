@@ -5,23 +5,8 @@ $ExePath = "C:\ImageMagick\magick.exe"
 # portableGhostscriptをimagemagickの下CommonFilesに放り込む
 # imagemagickのdelegate.xlsの@PSDelegate@を.\CommonFilesにリプレース
 
-# ファイル名の処理
-function local:ProcessFPath([System.IO.FileInfo] $Target) {
-    ProcessNode $Target.FullName
-}
-
-# フォルダ名の処理
-function local:ProcessDPath([System.IO.DirectoryInfo] $Target) {
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ProcessDPath $elm
-    }
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ProcessFPath $elm
-    }
-}
-
 # ファイル・フォルダ名の処理
-function local:ProcessNode([string] $TargetPath) {
+function local:ImageMagick([string] $TargetPath) {
     try {
         # 入力ファイル名
         $srcpath = $TargetPath
@@ -40,20 +25,19 @@ function local:ProcessNode([string] $TargetPath) {
 }
 
 try {
-    if ($args.Length -eq 0) {
-        exit 1
-    }
-    $null = Write-Host "<<Start>>"
-    ForEach ($arg in $args) {
-        if( Test-Path -LiteralPath $arg ){
-            if ([System.IO.Directory]::Exists($arg)) {
-                ProcessDPath (Get-Item $arg)
-            } else {
-                ProcessFPath (Get-Item $arg)
+    $ret = ShowFileListDialogWithOption `
+            -Title "出力選択" `
+            -Message "対象画像ファイルをD&Dしてください" `
+            -FileList $args `
+            -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png)$" `
+            -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
+    if ($ret[0] -eq "OK") {
+        foreach ($elm in $ret[1]) {
+            if (Test-Path -LiteralPath $elm) {
+                ImageMagick $elm
             }
         }
     }
-    $null = Write-Host "<<End>>"
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message
@@ -61,3 +45,4 @@ try {
     $null = Write-Host "--------------"
     pause
 }
+ 

@@ -64,7 +64,11 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 }
 
 try {
-    $ret = ShowFileListDialogWithOption -Title "出力選択" -Message "対象ファイルをD&Dしてください" -FileList $args -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
+    $ret = ShowFileListDialogWithOption `
+            -Title "出力選択" `
+            -Message "対象ファイルをD&Dしてください" `
+            -FileList $args `
+            -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE", "WINGET DSC")
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
