@@ -28,7 +28,7 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 }
 
 try {
-    $ret = ShowFileListDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -FileList $args -FIleFilter "\.ps1$"
+    $ret = ShowFileListDialog -Title "出力選択" -Message "対象PS1ファイルをD&Dしてください" -FileList $args -FileFilter "\.ps1$"
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
