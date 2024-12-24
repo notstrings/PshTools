@@ -1,23 +1,23 @@
 ﻿$ErrorActionPreference = "Stop"
 
 # ファイル
-function local:ExecFile([System.IO.FileInfo] $Target) {
+function local:ReduceFile([System.IO.FileInfo] $Target) {
     ReduceFile $Target.FullName
 }
 
 # フォルダ
-function local:ExecDir([System.IO.DirectoryInfo] $Target) {
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ExecFile $elm
+function local:ReduceDir([System.IO.DirectoryInfo] $Target) {
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
+        ReduceFile $elm
     }
-    ForEach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ExecDir  $elm
+    foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
+        ReduceDir  $elm
     }
-    ReduceDir $Target.FullName
+    Reduce $Target.FullName
 }
 
 # 整理
-function local:ReduceDir([string]$Target) {
+function local:Reduce([string]$Target) {
     # 空フォルダ
     if ( @(Get-ChildItem -LiteralPath $Target -File     ).Length -eq 0 -and
          @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
@@ -63,15 +63,22 @@ function local:ReduceFile([string]$Target) {
     # }
 }
 
-if ($args.Length -eq 0) {
-    exit
-}
-$null = Write-Host "---ReduceDir---"
-foreach ($arg in $args) {
-    if (Test-Path -LiteralPath $arg) {
-        if ([System.IO.Directory]::Exists($arg)) {
-            ExecDir (Get-Item $arg)
+try {
+    $null = Write-Host "---ReduceDir---"
+    if ($args.Length -eq 0) {
+        exit
+    }
+    foreach ($arg in $args) {
+        if (Test-Path -LiteralPath $arg) {
+            if ([System.IO.Directory]::Exists($arg)) {
+                ReduceDir (Get-Item $arg)
+            }
         }
     }
+} catch {
+    $null = Write-Host "---例外発生---"
+    $null = Write-Host $_.Exception.Message
+    $null = Write-Host $_.ScriptStackTrace
+    $null = Write-Host "--------------"
+    pause
 }
-$null = Write-Host "<End>"

@@ -33,8 +33,16 @@ function local:RemoveDupFile([string[]] $Targets) {
     }
 }
 
-if ($args.Length -eq 0) {
-    exit
+try {
+    $null = Write-Host "---ReduceDir---"
+    if ($args.Length -eq 0) {
+        exit
+    }
+    RemoveDupFile $args
+} catch {
+    $null = Write-Host "---例外発生---"
+    $null = Write-Host $_.Exception.Message
+    $null = Write-Host $_.ScriptStackTrace
+    $null = Write-Host "--------------"
+    pause
 }
-$null = Write-Host "---ReduceDir---"
-RemoveDupFile $args

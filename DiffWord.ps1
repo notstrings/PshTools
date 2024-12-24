@@ -47,6 +47,7 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
 }
 
 try {
+    $null = Write-Host "---DiffWord---"
     if ($args.Length -eq 1) {
         exit
     }

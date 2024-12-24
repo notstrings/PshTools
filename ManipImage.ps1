@@ -90,6 +90,7 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
 }
 
 try {
+    $null = Write-Host "---ManipImage---"
     $ret = ShowFileListDialogWithOption `
             -Title "画像操作" `
             -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdfです`n※pdfは一部処理のみ有効" `

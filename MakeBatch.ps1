@@ -64,6 +64,7 @@ function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Enc
 }
 
 try {
+    $null = Write-Host "---MakeBatch---"
     $ret = ShowFileListDialogWithOption `
             -Title "バッチファイル生成" `
             -Message "対象ファイルをドラッグ＆ドロップしてください" `

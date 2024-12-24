@@ -124,10 +124,10 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
 }
 
 try {
+    $null = Write-Host "---Office2PDF---"
     if ($args.Length -eq 0) {
         exit
     }
-    $null = Write-Host "---Office2PDF---"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             Office2PDF (Get-Item $arg)

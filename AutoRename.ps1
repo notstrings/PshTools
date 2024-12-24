@@ -3,17 +3,17 @@
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
 # ファイル
-function local:ExecFile([System.IO.FileInfo] $Target) {
+function local:AutoRenameFile([System.IO.FileInfo] $Target) {
     AutoRename $Target.FullName $Target.LastWriteTime $false
 }
 
 # フォルダ
-function local:ExecDir([System.IO.DirectoryInfo] $Target) {
+function local:AutoRenameDir([System.IO.DirectoryInfo] $Target) {
     foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        ExecDir  $elm
+        AutoRenameDir  $elm
     }
     foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File)) {
-        ExecFile $elm
+        AutoRenameFile $elm
     }
     AutoRename $Target.FullName $Target.CreationTime $true
 }
@@ -54,20 +54,19 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
 }
 
 try {
+    $null = Write-Host "---AutoRename---"
     if ($args.Length -eq 0) {
         exit 1
     }
-    $null = Write-Host "<<Start>>"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                ExecDir  (Get-Item $arg)
+                AutoRenameDir  (Get-Item $arg)
             } else {
-                ExecFile (Get-Item $arg)
+                AutoRenameFile (Get-Item $arg)
             }
         }
     }
-    $null = Write-Host "<<End>>"
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message

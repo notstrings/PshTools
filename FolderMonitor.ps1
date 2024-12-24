@@ -123,6 +123,14 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 }
 # FolderMonitor
 
-# 常駐監視
-$crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
-RunInTaskTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)
+try {
+    $null = Write-Host "---FolderMonitor---"
+    $crnt = LoadConf "$($PSScriptRoot)\Config\MonitorSetting.json"
+    RunInTaskTray "Monitor" 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)
+} catch {
+    $null = Write-Host "---例外発生---"
+    $null = Write-Host $_.Exception.Message
+    $null = Write-Host $_.ScriptStackTrace
+    $null = Write-Host "--------------"
+    pause
+}

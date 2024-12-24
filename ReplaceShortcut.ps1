@@ -11,6 +11,7 @@ function local:ReplaceIgnoreCase([string] $text, [string] $from, [string] $to) {
 
 # 文字置換(大文字小文字を区別しない)※マップ
 function local:ReplaceIgnoreCaseMap([string] $text, [PSCustomObject] $map) {
+    # 字数の多い要素から置換
     $keys = $PathMap.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
     foreach ($key in $keys) {
         $text = ReplaceIgnoreCase $text -replace $key, $PathMap[$key]
@@ -19,18 +20,18 @@ function local:ReplaceIgnoreCaseMap([string] $text, [PSCustomObject] $map) {
 }
 
 # ファイル
-function local:CleanupFName([System.IO.FileInfo] $Target) {
+function local:CleanupShortcutFile([System.IO.FileInfo] $Target) {
     CleanupShortcut $Target.FullName 
 }
 
 # フォルダ
-function local:CleanupDName([System.IO.DirectoryInfo] $Target) {
+function local:CleanupShortcutDir([System.IO.DirectoryInfo] $Target) {
     $null = Write-Host "検査`t""$($Target.FullName)"""
     foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -Directory)) {
-        CleanupDName $elm
+        CleanupShortcutDir $elm
     }
     foreach ($elm in @(Get-ChildItem -LiteralPath $Target.FullName -File -Filter "*.lnk")) {
-        CleanupFName $elm
+        CleanupShortcutFile $elm
     }
 }
 
@@ -150,16 +151,16 @@ function ReplacePath([string] $FilePath) {
 # $args = @("$($ENV:USERPROFILE)")
 
 try {
+    $null = Write-Host "---ReplaceShortcut---"
     if ($args.Length -eq 0) {
         exit
     }
-    $null = Write-Host "---ショートカットファイル修正---"
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                CleanupDName (Get-Item $arg)
+                CleanupShortcutDir (Get-Item $arg)
             } else {
-                CleanupFName (Get-Item $arg)
+                CleanupShortcutFile (Get-Item $arg)
             }
         }
     }

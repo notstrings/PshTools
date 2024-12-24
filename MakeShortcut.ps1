@@ -28,6 +28,7 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 }
 
 try {
+    $null = Write-Host "---MakeShortcut---"
     $ret = ShowFileListDialog `
             -Title "ショートカットファイル生成" `
             -Message "対象PS1ファイルをドラッグ＆ドロップしてください" `
