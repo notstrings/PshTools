@@ -136,6 +136,7 @@ function ReplacePath([string] $FilePath) {
     $fname = ReplaceIgnoreCase $fname '\\sample_serv0003' '\\sample_serv0004'
     $fname = $fname -replace '^([A-Z]):', '\\sample_serv0004\BACKUP\$1'
     # 単純なマッピング
+    # ※ここでは文字列長は勝手に判断するので気にしなくていい
     $map = @{
         "\\serv0001\xxx\yyyy" = "\\serv0001\zzz\yyyy"; 
         "\\serv0002\xxx\yyyy" = "\\serv0001\zzz\yyyy"; 
