@@ -36,7 +36,7 @@ function local:CleanupShortcutDir([System.IO.DirectoryInfo] $Target) {
 }
 
 # 本体
-function CleanupShortcut([string] $TargetName) {
+function local:CleanupShortcut([string] $TargetName) {
     # ショートカットファイルの内容を取得
     try {
         # 長大なパスの場合ショートカットファイルを開けないケースがある
@@ -115,7 +115,7 @@ function CleanupShortcut([string] $TargetName) {
 }
 
 # 無視判定
-function isSkipPath([string] $Path) {
+function local:isSkipPath([string] $Path) {
     $skip = @(
         '\\192.168.1.10\*',     # 無視したいリンクを指定
         '\\ignore_serv000\*'    # 無視したいリンクを指定
@@ -129,7 +129,7 @@ function isSkipPath([string] $Path) {
 }
 
 # 代替試行
-function ReplacePath([string] $FilePath) {
+function local:ReplacePath([string] $FilePath) {
     $fname = $FilePath
     # サーバやドライブ変更
     $fname = ReplaceIgnoreCase $fname '\\sample_serv0001' '\\sample_serv0002'

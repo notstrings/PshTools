@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
 # ファイル・フォルダ名の処理
-function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
+function local:ManipImage([string] $TargetPath, [string] $Mode) {
     try {
         $IMPath = "C:\ImageMagick\magick.exe"
         $GSPath = "C:\ImageMagick\CommonFiles\Ghostscript\bin\gswin64c"
@@ -99,7 +99,7 @@ try {
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                ExecImageManip $elm $ret[2]
+                ManipImage $elm $ret[2]
             }
         }
     }
