@@ -132,5 +132,4 @@ try {
     $null = Write-Host $_.Exception.Message
     $null = Write-Host $_.ScriptStackTrace
     $null = Write-Host "--------------"
-    pause
 }

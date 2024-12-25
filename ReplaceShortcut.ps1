@@ -164,12 +164,10 @@ try {
             }
         }
     }
-    pause
 }
 catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message
     $null = Write-Host $_.ScriptStackTrace
     $null = Write-Host "--------------"
-    pause
 }
