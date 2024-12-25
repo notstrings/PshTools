@@ -155,7 +155,7 @@ function RestrictTextZen() {
         $Text = [regex]::Replace($Text, "[$(Chars)]+",{ 
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         return $Text
     }
     end {}
@@ -181,7 +181,7 @@ function RestrictTextHan() {
         $Text = [regex]::Replace($Text, "[ｦ-ﾟ]+",{ 
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Wide)
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         return $Text
     }
     end {}
@@ -223,14 +223,14 @@ function RestrictTextDate {
             $name = $name.Replace(".","-")
             $date = [DateTime]::ParseExact($name, "yyyy-M-d", $null) 
             if($date){ return $date.ToString($Format) }else{ return $match.Value }
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## YYYY年MM月DD日
         $Text = [regex]::Replace($Text, "(?<![0-9]+)(19|20)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
             param($match)
             $name = $match.Value.ToUpper()
             $date = [DateTime]::ParseExact($name, "yyyy年M月d日", $null) 
             if($date){ return $date.ToString($Format) }else{ return $match.Value }
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## 和暦YY-MM-DD or 和暦YY.MM.DD 
         $Text = [regex]::Replace($Text, "(令和|\bR|平成|\bH|昭和|\bS|明治|\bM|大正|\bT)(\d{1,2})([.-])([1-9]|0[1-9]|1[0-2])(\3)([1-9]|0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
             param($match)
@@ -243,7 +243,7 @@ function RestrictTextDate {
             $name = $name.Replace("T","大正")
             $date = [DateTime]::ParseExact($name, "gy-M-d", $info) 
             if($date){ return $date.ToString($Format) }else{ return $match.Value }
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## 和暦YY年MM月DD日
         $Text = [regex]::Replace($Text, "(令和|\bR|平成|\bH|昭和|\bS|明治|\bM|大正|\bT)(\d{1,2}|元)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
             param($match)
@@ -255,7 +255,7 @@ function RestrictTextDate {
             $name = $name.Replace("T","大正")
             $date = [DateTime]::ParseExact($name, "gy年M月d日", $info) 
             if($date){ return $date.ToString($Format) }else{ return $match.Value }
-        }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+        }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         # 年号省略の場合は表記年度と参照年度が一致する場合だけ処理
         if ($RefDate -ne $null) {
             ## YY-MM-DD or YY.MM.DD
@@ -274,7 +274,7 @@ function RestrictTextDate {
                 }else{
                     return $match.Value
                 }
-            }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+            }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
             ## YY年MM月DD日
             $Text = [regex]::Replace($Text, "(?<![0-9]+)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
                 param($match)
@@ -291,7 +291,7 @@ function RestrictTextDate {
                 }else{
                     return $match.Value
                 }
-            }, [system.text.regularexpressions.regexoptions]::IgnoreCase)
+            }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         }
         return $Text
     }

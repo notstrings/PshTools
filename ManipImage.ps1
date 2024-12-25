@@ -15,10 +15,15 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
         $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
         # 変換実施
         switch ($Mode) {
-            "CONVERT PNG" {
+            "CONVERT PNG※" {
                 if ($ename -ne ".pdf") {
                     $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".png")
                     & $IMPath convert $srcpath $dstpath
+                } else {
+                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname)
+                    $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
+                    $dstpath = [System.IO.Path]::Combine($dstpath, "%04d.png")
+                    & $IMPath convert -density 300 -alpha remove $srcpath $dstpath
                 }
             }
             "RESIZE" {
@@ -67,19 +72,13 @@ function local:ExecImageManip([string] $TargetPath, [string] $Mode) {
                     & $IMPath convert -resize "x400" -density 1024 $srcpath $dstpath
                 }
             }
-            "SPLIT PDF※" {
-                if ($ename -eq ".pdf") {
-                    $dstpath = [System.IO.Path]::Combine($dstpath, $fname)
-                    $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
-                    $dstpath = [System.IO.Path]::Combine($dstpath, "%04d.png")
-                    & $IMPath convert -density 300 -alpha remove $srcpath $dstpath
-                }
-            }
             "COMPRESS PDF※" {
                 if ($ename -eq ".pdf") {
                     $dstpath = [System.IO.Path]::Combine($dstpath, $fname + ".pdf")
                     & $GSPath `
-                        -sDEVICE=pdfwrite -dCompatibilityLevel="1.4" -dPDFSETTINGS=/screen -dNOPAUSE -dBATCH -dQUIET -dPDFFitPage `
+                        -sDEVICE=pdfwrite -dCompatibilityLevel="1.4" `
+                        -dPDFSETTINGS=/screen `
+                        -dNOPAUSE -dBATCH -dQUIET -dPDFFitPage `
                         -sOutputFile="$dstpath" "$srcpath"
                 }
             }
@@ -96,7 +95,7 @@ try {
             -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdfです`n※pdfは一部処理のみ有効" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
-            -Options @("CONVERT PNG", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "SPLIT PDF※", "COMPRESS PDF※")
+            -Options @("CONVERT PNG※", "RESIZE", "TRIM", "DESKEW", "ANOTATE", "CONVERT PDF", "COMPRESS PDF※")
     if ($ret[0] -eq "OK") {
         foreach ($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
