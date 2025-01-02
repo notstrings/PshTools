@@ -1,0 +1,209 @@
+﻿# 一般用
+properties:
+  configurationVersion: 0.2.0
+  resources:
+    # PowerToys
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installPowerToys
+      directives:
+        description: Install PowerToys
+        allowPrerelease: true
+      settings:
+        id: Microsoft.PowerToys
+        source: winget
+    - resource: Microsoft.PowerToys.Configure/PowerToysConfigure
+      dependsOn:
+        - installPowerToys
+      directives:
+        description: Configure PowerToys
+      settings:
+        Awake:
+          Enabled: true
+          KeepDisplayOn: true
+          Mode: INDEFINITE
+
+    # 7zip
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install7zip
+      directives:
+        description: Install 7zip
+      settings:
+        id: 7zip.7zip
+        source: winget
+
+    # Chrome
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installChrome
+      directives:
+        description: Install Chrome
+      settings:
+        id: Google.Chrome
+        source: winget
+
+    # Thunderbird
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installThunderbird
+    #   directives:
+    #     description: Install Thunderbird
+    #   settings:
+    #     id: Mozilla.Thunderbird
+    #     source: winget
+
+    # WinSCP
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installWinSCP
+      directives:
+        description: Install WinSCP
+      settings:
+        id: WinSCP.WinSCP
+        source: winget
+
+    # IP Messenger
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installIPMsg
+    #   directives:
+    #     description: Install IP Messenger
+    #   settings:
+    #     id: FastCopy.IPMsg
+    #     source: winget
+
+    # Zoom
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installZoom
+    #   directives:
+    #     description: Install Zoom
+    #     allowPrerelease: true
+    #   settings:
+    #     id:     Zoom.Zoom
+    #     source: winget
+
+    # MPC-BE
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installMPCBE
+      directives:
+        description: Install MPC-BE
+        allowPrerelease: true
+      settings:
+        id:     MPC-BE.MPC-BE
+        source: winget
+
+    # K-LiteCodecPack
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installKLiteCodecPack
+      directives:
+        description: Install K-LiteCodecPack
+        allowPrerelease: true
+      settings:
+        id:     CodecGuide.K-LiteCodecPack.Full
+        source: winget
+
+    # KeePassXC
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installKeePassXC
+    #   directives:
+    #     description: Install KeePassXC
+    #     allowPrerelease: true
+    #   settings:
+    #     id:     KeePassXCTeam.KeePassXC
+    #     source: winget
+
+    # LibreOffice
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installLibreOffice
+      directives:
+        description: Install LibreOffice
+        allowPrerelease: true
+      settings:
+        id:     TheDocumentFoundation.LibreOffice
+        source: winget
+
+    # AcrobatReader
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installAcrobatReader
+      directives:
+        description: Install Acrobat Reader
+        allowPrerelease: true
+      settings:
+        id:     Adobe.Acrobat.Reader.64-bit
+        source: winget
+
+    # PDFTKBuilder
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installPDFTKBuilder
+    #   directives:
+    #     description: Install PDFTKBuilder
+    #     allowPrerelease: true
+    #   settings:
+    #     id:     AngusJohnson.PDFTKBuilder
+    #     source: winget
+
+    # Pandoc
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installPandoc
+      directives:
+        description: Install Pandoc
+        allowPrerelease: true
+      settings:
+        id:     JohnMacFarlane.Pandoc
+        source: winget
+
+    # ImageMagick
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installImageMagick
+      directives:
+        description: Install ImageMagick
+        allowPrerelease: true
+      settings:
+        id:     ImageMagick.ImageMagick.Q16
+        source: winget
+
+    # Screenpresso
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installScreenpresso
+      directives:
+        description: Install Screenpresso
+        allowPrerelease: true
+      settings:
+        id:     Learnpulse.Screenpresso
+        source: winget
+
+    # ScreenToGif
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installScreenToGif
+      directives:
+        description: Install ScreenToGif
+        allowPrerelease: true
+      settings:
+        id:     NickeManarin.ScreenToGif
+        source: winget
+
+    # OneDrive
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installOneDrive
+      directives:
+        description: Install OneDrive
+        allowPrerelease: true
+      settings:
+        id:     Microsoft.OneDrive
+        source: winget
+
+    # GoogleDrive
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installGoogleDrive
+      directives:
+        description: Install GoogleDrive
+        allowPrerelease: true
+      settings:
+        id:     Google.Drive
+        source: winget
+
+    # Dropbox
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: installDropbox
+      directives:
+        description: Install Dropbox
+        allowPrerelease: true
+      settings:
+        id:     Dropbox.Dropbox
+        source: winget
+

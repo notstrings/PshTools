@@ -1,0 +1,16 @@
+﻿# PowerShell ISE
+*.issettings
+
+# Visual Studio Code
+.vscode/*
+
+# 設定/一時ファイル
+Config/*
+Monitor/*
+tool/*
+
+# 拡張子
+*.bak
+*.tmp
+*.log
+*.lnk

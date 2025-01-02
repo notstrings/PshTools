@@ -1,0 +1,40 @@
+﻿properties:
+  configurationVersion: 0.2.0
+  resources:
+    - resource: PSDscResources/Script
+      id: createShortcut
+      directives:
+        description: Create aaa shortcut
+      settings:
+        GetScript: |
+          return $true
+        TestScript: |
+          return (Test-Path -Path ([System.IO.Path]::Combine($env:HOMEDRIVE + $env:HOMEPATH, "Desktop", "aaa.lnk")))
+        SetScript: |
+          $tgtpath = ([System.IO.Path]::Combine($env:PROGRAMFILES, "aaa", "aaa.exe"))
+          $lnkpath = ([System.IO.Path]::Combine($env:HOMEDRIVE + $env:HOMEPATH, "Desktop", "aaa.lnk")))
+          if ($TargetPath) {
+              $WSH = New-Object -ComObject WScript.Shell
+              $lnk = $WSH.CreateShortcut($lnkpath)
+              $lnk.TargetPath = $tgtpath
+              $lnk.IconLocation = "$tgtpath, 0"
+              $lnk.Save()
+          }
+
+properties:
+  configurationVersion: 0.2.0
+  resources:
+    - resource: PSDscResources/Script
+      id: createExtend
+      directives:
+        description: test
+      settings:
+        GetScript: |
+          return $true
+        TestScript: |
+          return $false
+        SetScript: |
+          $srcpath = "C:/usr/aaa.zip"
+          $dstpath = "C:/usr/test"
+          $null = New-Item $dstpath -ItemType Directory -ErrorAction SilentlyContinue
+          $null = Start-Process -NoNewWindow -Wait -FilePath tar.exe -ArgumentList "-zvxf ""$srcpath"" -C ""$dstpath"""
