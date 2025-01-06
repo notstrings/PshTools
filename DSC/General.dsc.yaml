@@ -22,7 +22,7 @@ properties:
           KeepDisplayOn: true
           Mode: INDEFINITE
 
-    # 7zip
+    # 7zip ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install7zip
       directives:
@@ -31,7 +31,7 @@ properties:
         id: 7zip.7zip
         source: winget
 
-    # Chrome
+    # Chrome ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installChrome
       directives:
@@ -40,7 +40,7 @@ properties:
         id: Google.Chrome
         source: winget
 
-    # Thunderbird
+    # Thunderbird ※管理権限が必要
     # - resource: Microsoft.WinGet.DSC/WinGetPackage
     #   id: installThunderbird
     #   directives:
@@ -67,7 +67,7 @@ properties:
     #     id: FastCopy.IPMsg
     #     source: winget
 
-    # Zoom
+    # Zoom ※管理権限が必要
     # - resource: Microsoft.WinGet.DSC/WinGetPackage
     #   id: installZoom
     #   directives:
@@ -77,7 +77,7 @@ properties:
     #     id:     Zoom.Zoom
     #     source: winget
 
-    # MPC-BE
+    # MPC-BE ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installMPCBE
       directives:
@@ -87,7 +87,7 @@ properties:
         id:     MPC-BE.MPC-BE
         source: winget
 
-    # K-LiteCodecPack
+    # K-LiteCodecPack ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installKLiteCodecPack
       directives:
@@ -97,7 +97,7 @@ properties:
         id:     CodecGuide.K-LiteCodecPack.Full
         source: winget
 
-    # KeePassXC
+    # KeePassXC ※管理権限が必要
     # - resource: Microsoft.WinGet.DSC/WinGetPackage
     #   id: installKeePassXC
     #   directives:
@@ -107,7 +107,7 @@ properties:
     #     id:     KeePassXCTeam.KeePassXC
     #     source: winget
 
-    # LibreOffice
+    # LibreOffice ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installLibreOffice
       directives:
@@ -117,7 +117,7 @@ properties:
         id:     TheDocumentFoundation.LibreOffice
         source: winget
 
-    # AcrobatReader
+    # AcrobatReader ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installAcrobatReader
       directives:
@@ -127,35 +127,15 @@ properties:
         id:     Adobe.Acrobat.Reader.64-bit
         source: winget
 
-    # PDFTKBuilder
+    # CubePDFUtility ※管理権限が必要
     # - resource: Microsoft.WinGet.DSC/WinGetPackage
-    #   id: installPDFTKBuilder
+    #   id: installCubePDFUtility
     #   directives:
-    #     description: Install PDFTKBuilder
+    #     description: Install CubePDFUtility
     #     allowPrerelease: true
     #   settings:
-    #     id:     AngusJohnson.PDFTKBuilder
+    #     id:     CubeSoft.CubePDFUtility
     #     source: winget
-
-    # Pandoc
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      id: installPandoc
-      directives:
-        description: Install Pandoc
-        allowPrerelease: true
-      settings:
-        id:     JohnMacFarlane.Pandoc
-        source: winget
-
-    # ImageMagick
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      id: installImageMagick
-      directives:
-        description: Install ImageMagick
-        allowPrerelease: true
-      settings:
-        id:     ImageMagick.ImageMagick.Q16
-        source: winget
 
     # Screenpresso
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -167,7 +147,7 @@ properties:
         id:     Learnpulse.Screenpresso
         source: winget
 
-    # ScreenToGif
+    # ScreenToGif ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installScreenToGif
       directives:
@@ -177,7 +157,7 @@ properties:
         id:     NickeManarin.ScreenToGif
         source: winget
 
-    # OneDrive
+    # OneDrive ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installOneDrive
       directives:
@@ -187,7 +167,7 @@ properties:
         id:     Microsoft.OneDrive
         source: winget
 
-    # GoogleDrive
+    # GoogleDrive ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installGoogleDrive
       directives:
@@ -197,7 +177,7 @@ properties:
         id:     Google.Drive
         source: winget
 
-    # Dropbox
+    # Dropbox ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installDropbox
       directives:

@@ -4,11 +4,11 @@ properties:
   resources:
     # #########################################################################
 
-    # PowerShell
+    # PowerShell7 ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installPowerShell
       directives:
-        description: Install PowerShell
+        description: Install PowerShell7
       settings:
         id: Microsoft.PowerShell
         source: winget
@@ -22,7 +22,7 @@ properties:
         id: Microsoft.WindowsTerminal
         source: winget
 
-    # TeraTerm
+    # TeraTerm ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installTeraTerm
       directives:
@@ -69,15 +69,6 @@ properties:
         id: Microsoft.VisualStudioCode
         source: winget
 
-    # Doxygen
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      id: installDoxygen
-      directives:
-        description: Install Doxygen
-      settings:
-        id: DimitriVanHeesch.Doxygen
-        source: winget
-
     # DevToys
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installDevToys
@@ -89,7 +80,7 @@ properties:
 
     # #########################################################################
 
-    # VisualStudio 2022 Community
+    # VisualStudio 2022 Community ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installVisualStudio2022Community
       directives:
@@ -109,7 +100,7 @@ properties:
         components:
           - Microsoft.VisualStudio.Workload.ManagedDesktop
 
-    # AndroidStudio
+    # AndroidStudio ※管理権限が必要
     # - resource: Microsoft.WinGet.DSC/WinGetPackage
     #   id: installAndroidStudio
     #   directives:
@@ -129,11 +120,11 @@ properties:
 
     # #########################################################################
 
-    # Wireshark
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      id: installWireshark
-      directives:
-        description: Install Wireshark
-      settings:
-        id: WiresharkFoundation.Wireshark
-        source: winget
+    # Wireshark ※管理権限が必要
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: installWireshark
+    #   directives:
+    #     description: Install Wireshark
+    #   settings:
+    #     id: WiresharkFoundation.Wireshark
+    #     source: winget

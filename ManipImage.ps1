@@ -4,6 +4,8 @@
 
 # セットアップ
 function local:Setup() {
+    # 実行後にシェルを再起動する必要がある
+    Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     scoop install main/imagemagick
     scoop install main/ghostscript
 }
