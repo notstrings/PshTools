@@ -13,8 +13,14 @@
 
 # セットアップ
 function local:Setup() {
-    winget install Microsoft.NuGet
-    winget install GitHub.cli
+    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+    }
+    scoop bucket add extras
+    scoop install nuget
+    scoop install gh
+
+    # セットアップ先
     $ToolDir = [System.IO.Path]::Combine($PSScriptRoot, "tool")
     $null = New-Item $ToolDir -ItemType Directory -ErrorAction SilentlyContinue
 

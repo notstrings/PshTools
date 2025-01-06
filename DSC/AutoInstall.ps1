@@ -20,6 +20,8 @@ scoop install doxygen
 scoop install imagemagick
 scoop install ghostscript
 scoop install plantuml
+scoop install nuget
+scoop install gh
 
 # Winget
 winget configure --disable-interactivity "$($PSScriptRoot)\General.dsc.yaml"

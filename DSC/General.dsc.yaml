@@ -22,15 +22,6 @@ properties:
           KeepDisplayOn: true
           Mode: INDEFINITE
 
-    # 7zip ※管理権限が必要
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      id: install7zip
-      directives:
-        description: Install 7zip
-      settings:
-        id: 7zip.7zip
-        source: winget
-
     # Chrome ※管理権限が必要
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: installChrome
