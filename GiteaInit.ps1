@@ -71,10 +71,6 @@ function SetupGitea([string] $sPath, [PSCustomObject] $conf) {
 
 try {
 	$null = Write-Host "---GiteaInit---"
-	# 引数確認
-    if ($args.Length -eq 0) {
-        exit 1
-    }
 	# 設定取得
 	$ParamPath = "$($PSScriptRoot)\Config\GiteaInit.json"
     if ((Test-Path -LiteralPath $ParamPath) -eq $false) {
@@ -91,6 +87,10 @@ try {
 	if ($conf.GITEAURL -eq "" -or $conf.GITEAORG -eq "" -or $conf.GITEAKEY -eq "") {
 		exit 1
 	}
+	# 引数確認
+    if ($args.Length -eq 0) {
+        exit 1
+    }
 	# 処理実行
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
