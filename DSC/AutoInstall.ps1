@@ -19,6 +19,7 @@ scoop install pandoc
 scoop install doxygen
 scoop install imagemagick
 scoop install ghostscript
+scoop install qpdf
 scoop install plantuml
 scoop install nuget
 scoop install gh

@@ -10,6 +10,7 @@ function local:Setup() {
     scoop bucket add extras
     scoop install imagemagick
     scoop install ghostscript
+    scoop install qpdf
 }
 
 # ファイル・フォルダ名の処理
@@ -17,6 +18,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
     try {
         $IMPath = "magick.exe"
         $GSPath = "gswin64c.exe"
+        $QPPath = "qpdf.exe"
         # 変換実施
         # ・クソ長いが分割した所で結局大した意味もない
         switch ($Mode) {
@@ -193,6 +195,22 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                 ## 後始末
                 Remove-Item -LiteralPath ([System.IO.Path]::Combine($dname, "Conv", "Temp")) -Recurse -Force
             }
+            "PDF平坦化" {
+                foreach ($TargetPath in $TargetPaths) {
+                    $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
+                    $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
+                    $ename = [System.IO.Path]::GetExtension($TargetPath)
+                    if ($ename.ToLower() -eq ".pdf") {
+                        $srcpath = $TargetPath
+                        $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + ".pdf")
+                        $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
+                        $arg = ""
+                        $arg += " --flatten-annotations=all"                    # スタンプなどを平坦化
+                        $arg += " ""$srcpath"" ""$dstpath"""
+                        $null = Start-Process -NoNewWindow -Wait -FilePath """$QPPath""" -ArgumentList $arg
+                    }
+                }
+            }
             "PDF圧縮" {
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
@@ -281,7 +299,7 @@ try {
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
             -Options @("PNG変換", "リサイズ", "トリミング", "傾き補正", "注釈付記", "PDF変換個別",
-                       "PDF変換統合", "PDF圧縮", "PDFリサイズA3", "PDFリサイズA4", "PDF捨印生成")
+                       "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDFリサイズA3", "PDFリサイズA4", "PDF捨印生成")
     if ($ret[0] -eq "OK") {
         ManipImage $ret[1] $ret[2]
     }
