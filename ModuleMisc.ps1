@@ -1659,18 +1659,20 @@ function MoveTrush {
 
 function local:innerExpand([string]$DstPath, [string]$SrcPath) {
     # ユニーク名取得
-    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
+    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     # 展開
     $null = New-Item $sUniq -ItemType Directory -ErrorAction SilentlyContinue
     $null = Start-Process -NoNewWindow -Wait -FilePath tar.exe -ArgumentList "-zvxf ""$SrcPath"" -C ""$sUniq"""
+    return $sUniq
 }
 function local:innerCompress([string]$DstPath, [string]$SrcPath) {
     # ユニーク名取得
-    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
+    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     $sSrcD = [System.IO.Path]::GetDirectoryName($SrcPath)
     $sSrcF = [System.IO.Path]::GetFileName($SrcPath)
     # 圧縮
     $null = Start-Process -NoNewWindow -Wait -FilePath tar.exe -ArgumentList "-caf ""$sUniq"" -C ""$sSrcD"" ""$sSrcF"""
+    return $sUniq
 }
 
 <#
@@ -1699,7 +1701,7 @@ function ExtArc {
     )
     begin {}
     process {
-        innerExpand -DstPath $DstPath -SrcPath $SrcPath
+        $ret = innerExpand -DstPath $DstPath -SrcPath $SrcPath
         if ($All -eq $true){
             Get-ChildItem -LiteralPath $DstPath -File -Recurse |
             Where-Object { @(".zip") -contains $_.Extension } |
@@ -1707,10 +1709,11 @@ function ExtArc {
                 $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
                 $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
                 $ename = ""
-                ExtArc -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -All $All
+                $null = ExtArc -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -All $All
             } | Out-Null
         }
         $null = Remove-Item -LiteralPath $SrcPath -Force
+        return $ret
     }
     end {}
 }
@@ -1746,17 +1749,38 @@ function CmpArc {
 ## ############################################################################
 ## 7Zip
 
-function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
+function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, [string] $ZipPwd) {
     # ユニーク名取得
-    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
+    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     # 展開
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "x", """$SrcPath""", "-o""$sUniq""", "-aoa" -Wait
+    ## -aoa:展開先に同名ファイルがある場合上書き
+    ## -spe:抽出コマンドのルートフォルダーの重複を除去
+    $arg = " x ""$SrcPath"" -o""$sUniq"" -aoa -spe "
+    if ($ZipPwd -ne "") { 
+        $arg += " -p$ZipPwd"
+    }
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
+    return $sUniq
 }
-function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) {
+function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, [string] $ZipPwd, [int] $DivideSize, [bool] $DelSrc) {
     # ユニーク名取得
-    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
+    $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     # 圧縮
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList "a", "-tzip", """$sUniq""", """$SrcPath""", "-r", "-aoa" -Wait
+    ## -aoa :圧縮先に同名ファイルがある場合上書き
+    ## -r0  :指定ディレクトリとサブディレクトリのみ再帰処理 ※-rは兄弟ディレクトリも含む...初見で分かるわけねぇだろ、ソレ
+    ## -sdel:圧縮後にファイルを削除
+    $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 " 
+    if ($ZipPwd -ne "" ) {
+        $arg += " -p$ZipPwd"
+    }
+    if ($DivideSize -gt 0 ) {
+        $arg += " -v$($DivideSize)m"
+    }
+    if ($DelSrc -eq $true) { 
+        $arg += " -sdel"
+    }
+    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
+    return $sUniq
 }
 
 <#
@@ -1778,29 +1802,34 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath) 
     ``C:\temp\archive.zip``を``C:\temp\extracted``に展開します
 .NOTES
     依存
-    winget install 7zip.7zip
+    scoop install 7zip
 #>
 function ExtArc7Z {
     param (
-        [Parameter(Mandatory = $false)] [string] $ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $false)] [string] $ExePath = "7z.exe",
         [Parameter(Mandatory = $true)]  [string] $DstPath,
         [Parameter(Mandatory = $true)]  [string] $SrcPath,
-        [Parameter(Mandatory = $false)] [bool]   $All = $false
+        [Parameter(Mandatory = $false)] [bool]   $Recursive = $false,
+        [Parameter(Mandatory = $false)] [string] $ZipPwd = "",
+        [Parameter(Mandatory = $false)] [bool]   $DelSrc = $true
     )
     begin {}
     process {
-        innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath
-        if ($All -eq $true){
+        $ret = innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath -ZipPwd $ZipPwd
+        if ($Recursive -eq $true){
             Get-ChildItem -LiteralPath $DstPath -File -Recurse |
-            Where-Object { @(".zip", ".rar", ".7z") -contains $_.Extension } |
+            Where-Object { @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA") -contains ($_.Extension.ToUpper()) } |
             ForEach-Object {
                 $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
                 $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
                 $ename = ""
-                ExtArc7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -All $All
+                $null = ExtArc7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -Recursive $Recursive -ZipPwd $ZipPwd
             } | Out-Null
         }
+        if ($DelSrc -eq $true) {
         $null = Remove-Item -LiteralPath $SrcPath -Force
+    }
+        return $ret
     }
     end {}
 }
@@ -1822,17 +1851,21 @@ function ExtArc7Z {
     ``C:\temp\files``を``C:\temp\archive.zip``に圧縮します
 .NOTES
     依存
-    winget install 7zip.7zip
+    scoop install 7zip
 #>
 function CmpArc7Z {
     param (
-        [Parameter(Mandatory = $false)] [string] $ExePath = "$ENV:ProgramFiles\7-Zip\7z.exe",
+        [Parameter(Mandatory = $false)] [string] $ExePath = "7z.exe",
         [Parameter(Mandatory = $true)]  [string] $DstPath,
-        [Parameter(Mandatory = $true)]  [string] $SrcPath
+        [Parameter(Mandatory = $true)]  [string] $SrcPath,
+        [Parameter(Mandatory = $false)] [string] $ZipPwd = "",
+        [Parameter(Mandatory = $false)] [int]    $DivideSize = "0",
+        [Parameter(Mandatory = $false)] [bool]   $DelSrc = $true
     )
     begin {}
     process {
-        innerCmp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath
+        $ret = innerCmp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath -ZipPwd $ZipPwd -DivideSize $DivideSize -DelSrc $DelSrc
+        return $ret
     }
     end {}
 }
