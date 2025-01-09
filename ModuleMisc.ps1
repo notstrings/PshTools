@@ -661,50 +661,6 @@ function DiffContent {
 ## ############################################################################
 ## UI関連
 
-# GetConsoleWindow
-function local:GetConsoleWindow() {
-    Add-Type -Name FuncGetConsoleWindow -Namespace Win32Util -MemberDefinition '
-        [DllImport("Kernel32.dll")]
-        public static extern IntPtr GetConsoleWindow();
-    '
-    return [Win32Util.FuncGetConsoleWindow]::GetConsoleWindow()
-}
-
-# FindWindow
-function local:FindWindow($lpClassName, $lpWindowName) {
-    Add-Type -Name FuncFindWindow -Namespace Win32Util -MemberDefinition '
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-    '
-    return [Win32Util.FuncFindWindow]::FindWindow($lpClassName, $lpWindowName)
-}
-
-# SetWindowLong
-function local:SetWindowLong($hWnd, $nIndex, $dwNewLong) {
-    Add-Type -Name FuncSetWindowLong -Namespace Win32Util -MemberDefinition '
-        [DllImport("user32.dll")]
-        public static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-    '
-    return [Win32Util.FuncSetWindowLong]::SetWindowLong($hWnd, $nIndex, $dwNewLong)
-}
-
-# GetWindowLong
-function local:GetWindowLong($hWnd, $nIndex) {
-    Add-Type -Name FuncGetWindowLong -Namespace Win32Util -MemberDefinition '
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
-    '
-    return [Win32Util.FuncGetWindowLong]::GetWindowLong($hWnd, $nIndex)
-}
-
-# 指定フォームを呼び出し元コンソールウィンドウの子ウィンドウにする
-function local:SetConsoleChildForm([System.Windows.Forms.Form] $form) {
-    $console = GetConsoleWindow
-    if ($console -ne [IntPtr]::Zero) {
-        SetWindowLong $form.Handle -8  $console 
-    }
-}
-
 <#
 .SYNOPSIS
     問い合わせダイアログを表示します
@@ -723,10 +679,11 @@ function AskBox {
     )
     begin {}
     process {
-        $frm = New-Object Windows.Forms.Form
-        $frm.TopMost = $true
+        try {
+            $DUMY = New-Object Windows.Forms.Form
+            $DUMY.TopMost = $true
         $ret = [System.Windows.Forms.MessageBox]::Show( `
-            $frm, 
+                $DUMY, 
             $Message, `
             $Title, `
             [System.Windows.Forms.MessageBoxButtons]::YesNo, `
@@ -734,6 +691,9 @@ function AskBox {
             $Default `
         )
         return $ret
+        } finally {
+            if ($null -ne $DUMY) {$DUMY.Dispose()}
+        }
     }
     end {}
 }
@@ -756,10 +716,11 @@ function InfBox {
     )
     begin {}
     process {
-        $frm = New-Object Windows.Forms.Form
-        $frm.TopMost = $true
+        try {
+            $DUMY = New-Object Windows.Forms.Form
+            $DUMY.TopMost = $true
         $ret = [System.Windows.Forms.MessageBox]::Show( `
-            $frm, 
+                $DUMY, 
             $Message, `
             $Title, `
             [System.Windows.Forms.MessageBoxButtons]::OK, `
@@ -767,6 +728,9 @@ function InfBox {
             $Default `
         )
         return $ret
+        } finally {
+            if ($null -ne $DUMY) {$DUMY.Dispose()}
+        }
     }
     end {}
 }
@@ -795,14 +759,19 @@ function ShowFileDialog {
     )
     begin {}
     process {
+        try {
+            $DUMY = New-Object Windows.Forms.Form
+            $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.OpenFileDialog
         $FDlg.Title            = $Title
         $FDlg.InitialDirectory = $InitialDirectory
         $FDlg.Filter           = $Filter
         $FDlg.Multiselect      = $Multiselect
-        $null = SetConsoleChildForm $frmMain
-        $null = $frmMain.ShowDialog()
+            $null = $FDlg.ShowDialog($DUMY)
         return $FDlg.FileNames
+        } finally {
+            if ($null -ne $DUMY) {$DUMY.Dispose()}
+        }
     }
     end {}
 }
@@ -825,12 +794,17 @@ function ShowFolderDialog {
     )
     begin {}
     process {
+        try {
+            $DUMY = New-Object Windows.Forms.Form
+            $DUMY.TopMost = $true
         $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
         $FDlg.Description      = $Description
         $FDlg.InitialDirectory = $InitialDirectory
-        $null = SetConsoleChildForm $frmMain
-        $null = $frmMain.ShowDialog()
+            $null = $FDlg.ShowDialog($DUMY)
         return $FDlg.SelectedPath
+        } finally {
+            if ($null -ne $DUMY) {$DUMY.Dispose()}
+        }
     }
     end {}
 }
@@ -896,7 +870,6 @@ function ShowFileListDialog {
             Size          = New-Object System.Drawing.Size(480,320)
             Padding       = New-Object System.Windows.Forms.Padding(5)
         }
-        $null = SetConsoleChildForm $frmMain
 
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel -Property @{
             Dock     = [System.Windows.Forms.DockStyle]::Fill
@@ -945,6 +918,9 @@ function ShowFileListDialog {
         $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
         $null = $frmMain.Controls.Add($tlpMain)
 
+        $null = $frmMain.Add_Load({
+            $frmMain.BringToFront()
+        })
         $null = $lbxDD.Add_DragEnter({
             $_.Effect = "All"
         })
@@ -1016,7 +992,6 @@ function ShowFileListDialogWithOption {
             Size          = New-Object System.Drawing.Size(480,320)
             Padding       = New-Object System.Windows.Forms.Padding(5)
         }
-        $null = SetConsoleChildForm $frmMain
 
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel -Property @{
             Dock     = [System.Windows.Forms.DockStyle]::Fill
@@ -1088,6 +1063,9 @@ function ShowFileListDialogWithOption {
         $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
         $null = $frmMain.Controls.Add($tlpMain)
 
+        $null = $frmMain.Add_Load({
+            $frmMain.BringToFront()
+        })
         $null = $lbxDD.Add_DragEnter({
             $_.Effect = "All"
         })
@@ -1160,7 +1138,6 @@ function ShowSettingDialog {
             Size          = New-Object System.Drawing.Size(480,320)
             Padding       = New-Object System.Windows.Forms.Padding(5)
         }
-        $null = SetConsoleChildForm $frmMain
 
         $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel -Property @{
             Dock     = [System.Windows.Forms.DockStyle]::Fill
@@ -1201,6 +1178,10 @@ function ShowSettingDialog {
         $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
         $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
         $null = $frmMain.Controls.Add($tlpMain)
+
+        $null = $frmMain.Add_Load({
+            $frmMain.BringToFront()
+        })
 
         # フォーム表示
         $null = $frmMain.ShowDialog()
@@ -1290,6 +1271,7 @@ function RunInTaskTray {
                             try {
                                 $null = $Conf.Invoke()
                             } catch {
+                                $TrayIcon.BalloonTipIcon = "Error"
                                 $TrayIcon.BalloonTipText = $_.ToString()
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
@@ -1305,10 +1287,12 @@ function RunInTaskTray {
                             try {
                                 $rsl = $Exec.Invoke()
                             } catch {
+                                $TrayIcon.BalloonTipIcon = "Error"
                                 $TrayIcon.BalloonTipText = $_.ToString()
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
                             if ($rsl -ne "") {
+                                $TrayIcon.BalloonTipIcon = "Info"
                                 $TrayIcon.BalloonTipText = $rsl
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
@@ -1335,10 +1319,12 @@ function RunInTaskTray {
                             try {
                                 $rsl = $Exec.Invoke()
                             } catch {
+                                $TrayIcon.BalloonTipIcon = "Error"
                                 $TrayIcon.BalloonTipText = $_.ToString()
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
                             if ($rsl -ne "") {
+                                $TrayIcon.BalloonTipIcon = "Info"
                                 $TrayIcon.BalloonTipText = $rsl
                                 $TrayIcon.ShowBalloonTip(5000)
                             }
@@ -1421,7 +1407,7 @@ function ShowToast {
         $enctxt = $enctxt.Replace("__ARG2", $Message)
         $enctxt = $enctxt.Replace("__ARG3", $Detail)
         $enccmd = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($enctxt))
-        Start-Process "cmd.exe" -ArgumentList "/c start /min powershell -NoProfile -EncodedCommand $enccmd"
+        Start-Process -NoNewWindow "cmd.exe" -ArgumentList "/c start /min powershell -NoProfile -EncodedCommand $enccmd"
     }
 end {}
 }
