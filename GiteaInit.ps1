@@ -1,9 +1,55 @@
 ﻿$ErrorActionPreference = "Stop"
 
+. "$($PSScriptRoot)/ModuleMisc.ps1"
+
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+$ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
+
 # セットアップ
 function local:Setup() {
 	winget install "Git.Git"
 }
+
+## 設定関連 #######################################################################
+
+class Conf {
+    [string] $GITEAURL
+    [string] $GITEAORG
+    [string] $GITEAKEY
+}
+
+# 設定初期化
+function local:InitConf([string] $sPath) {
+    if ((Test-Path -LiteralPath $sPath) -eq $false) {
+        $conf = New-Object Conf -Property @{
+            GITEAURL = ""
+            GITEAORG = ""
+            GITEAKEY = ""
+        }
+        SaveConf $sPath $conf
+    }
+}
+# 設定書込
+function local:SaveConf([string] $sPath, [Conf] $conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
+    $conf | ConvertTo-Json | Out-File -FilePath $sPath
+}
+# 設定読出
+function local:LoadConf([string] $sPath) {
+    $json = Get-Content -Path $sPath | ConvertFrom-Json
+    $conf = GenClassByPSCustomObject ([Conf]) $json
+    return $conf
+}
+# 設定編集
+function local:EditConf([string] $sPath) {
+    $conf = LoadConf $ConfPath
+    $ret = ShowSettingDialog $Title $conf
+    if ($ret -eq "OK") {
+        SaveConf $ConfPath $conf
+    }
+}
+
+## 本体処理 #######################################################################
 
 # ローカルリポジトリ存在確認
 function local:IsGitInit([string] $sPath) {
@@ -70,25 +116,13 @@ function SetupGitea([string] $sPath, [PSCustomObject] $conf) {
 # $args = @("$($ENV:USERPROFILE)\Desktop\bbb")
 
 try {
-	$null = Write-Host "---GiteaInit---"
+	$null = Write-Host "---$Title---"
 	# 設定取得
-	$ParamPath = "$($PSScriptRoot)\Config\GiteaInit.json"
-    if ((Test-Path -LiteralPath $ParamPath) -eq $false) {
-		$conf = @{
-			GITEAURL = "";
-			GITEAORG = "";
-			GITEAKEY = "";
-		}
-        $null = New-Item ([System.IO.Path]::GetDirectoryName($ParamPath)) -ItemType Directory -ErrorAction SilentlyContinue
-		$conf | ConvertTo-Json | Out-File -FilePath $ParamPath
-		exit 1
-    }
-    $conf = Get-Content -Path $ParamPath | ConvertFrom-Json
-	if ($conf.GITEAURL -eq "" -or $conf.GITEAORG -eq "" -or $conf.GITEAKEY -eq "") {
-		exit 1
-	}
+    InitConf $ConfPath
+    $conf = LoadConf $ConfPath
 	# 引数確認
     if ($args.Length -eq 0) {
+        EditConf $ConfPath
         exit 1
     }
 	# 処理実行

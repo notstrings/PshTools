@@ -2,7 +2,8 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
-$Title = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+$ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 # セットアップ
 function local:Setup() {
@@ -26,32 +27,34 @@ class Conf {
     [int]            $DivideSize
 }
 
+# 設定初期化
+function local:InitConf([string] $sPath) {
+    if ((Test-Path -LiteralPath $sPath) -eq $false) {
+        $conf = New-Object Conf -Property @{
+            Encrypt = $false
+            DivideType = [enmDivideType]::None
+            DivideSize = 1
+        }
+        SaveConf $sPath $conf
+    }
+}
 # 設定書込
 function local:SaveConf([string] $sPath, [Conf] $conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
     $conf | ConvertTo-Json | Out-File -FilePath $sPath
 }
 # 設定読出
 function local:LoadConf([string] $sPath) {
-    # デフォ値生成※設定ファイル無しの場合
-    if ((Test-Path -LiteralPath $sPath) -eq $false) {
-        $conf = New-Object Conf -Property @{ Encrypt = $false; DivideType = [enmDivideType]::None; DivideSize = 1; }
-        $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
-        SaveConf $sPath $conf
-    }
-    # 設定読出
     $json = Get-Content -Path $sPath | ConvertFrom-Json
     $conf = GenClassByPSCustomObject ([Conf]) $json
     return $conf
 }
 # 設定編集
-function local:EditConf() {
-    # 設定読出
-    $conf = LoadConf "$($PSScriptRoot)\Config\ManipZip.json"
-    # 設定画面表示
+function local:EditConf([string] $sPath) {
+    $conf = LoadConf $ConfPath
     $ret = ShowSettingDialog $Title $conf
     if ($ret -eq "OK") {
-        # 設定書込
-        SaveConf "$($PSScriptRoot)\Config\ManipZip.json" $conf
+        SaveConf $ConfPath $conf
     }
 }
 
@@ -78,25 +81,24 @@ function local:DivideFile([string]$SrcPath, [int]$PartSizeMB) {
     $FileData = [System.IO.File]::ReadAllBytes($SrcPath)
     $FileSize = $FileData.Length
     $PartSize = $PartSizeMB * 1024 * 1024
+    $PartNum  = 0
     if ($FileSize -lt $PartSize) {
-        return 0
-    }
-    $PartNum = 1
-    while ($FileSize -gt 0) {
-        $dname = [System.IO.Path]::GetDirectoryName($SrcPath)
-        $fname = [System.IO.Path]::GetFileNameWithoutExtension($SrcPath)
-        $PartPath = [System.IO.Path]::Combine($dname, $fname + ".div.$("{0:D3}" -f $PartNum)")
-        $PartSize = [math]::Min($PartSize, $FileSize)
-        $PartData = $FileData[0..($PartSize - 1)]
-        [System.IO.File]::WriteAllBytes($PartPath, $PartData)
-        $FileData = $FileData[$PartSize..($FileSize - 1)]
-        $FileSize -= $PartSize
-        $PartNum  += 1
+        while ($FileSize -gt 0) {
+            $PartNum += 1
+            $dname = [System.IO.Path]::GetDirectoryName($SrcPath)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($SrcPath)
+            $PartPath = [System.IO.Path]::Combine($dname, $fname + ".div.$("{0:D3}" -f $PartNum)")
+            $PartSize = [math]::Min($PartSize, $FileSize)
+            $PartData = $FileData[0..($PartSize - 1)]
+            [System.IO.File]::WriteAllBytes($PartPath, $PartData)
+            $FileData = $FileData[$PartSize..($FileSize - 1)]
+            $FileSize -= $PartSize
+        }
     }
     return $PartNum
 }
 
-function local:ManipZip($sPath) {
+function local:ManipArchive($sPath) {
     if ((isArchive $sPath) -or (isDividedArchive $sPath)) {
         # 展開処理
         $dname = [System.IO.Path]::GetDirectoryName($sPath)
@@ -151,18 +153,19 @@ function local:ManipZip($sPath) {
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa")
 
 try {
-    $null = Write-Host "---ManipZip---"
+    $null = Write-Host "---ManipArchive---"
     # 設定取得
-    $conf = LoadConf "$($PSScriptRoot)\Config\ManipZip.json"
+    InitConf $ConfPath
+    $conf = LoadConf $ConfPath
     # 引数確認
     if ($args.Length -eq 0) {
-        EditConf
+        EditConf $ConfPath
         exit 1
     }
 	# 処理実行
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
-            ManipZip $arg
+            ManipArchive $arg
         }
     }
 } catch {
