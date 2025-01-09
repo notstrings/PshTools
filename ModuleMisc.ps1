@@ -1504,7 +1504,7 @@ function SendIPMsg {
     process {
         $Message = $Message.Replace("`r`n","\n")
         $Message = $Message.Replace("`n"  ,"\n")
-        Start-Process -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -NoNewWindow -Wait
+        Start-Process -NoNewWindow -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -Wait
     }
     end {}
 }
@@ -1745,7 +1745,7 @@ function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     if ($ZipPwd -ne "") { 
         $arg += " -p$ZipPwd"
     }
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
+    $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -ArgumentList $arg -Wait
     return $sUniq
 }
 function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, [string] $ZipPwd, [int] $DivideSize, [bool] $DelSrc) {
@@ -1765,7 +1765,7 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     if ($DelSrc -eq $true) { 
         $arg += " -sdel"
     }
-    $null = Start-Process -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
+    $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
     return $sUniq
 }
 
