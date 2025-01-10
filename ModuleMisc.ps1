@@ -99,6 +99,8 @@ function ConvertFromPSCO {
             if ($null -ne $InstProp) {
                 if ($InstProp.PropertyType.IsPrimitive) {
                     $inst.($InstProp.Name) = $PSCOData
+                } elseif (($InstProp.PropertyType.IsEnum)) {
+                    $inst.($InstProp.Name) = $PSCOData
                 } elseif (($InstProp.PropertyType.Name -eq "string") -or ($InstProp.PropertyType.Name -eq "datetime") -or ($InstProp.PropertyType.Name -eq "decimal")) {
                     $inst.($InstProp.Name) = $PSCOData
                 } elseif ($InstProp.PropertyType.IsArray) {
