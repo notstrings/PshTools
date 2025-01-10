@@ -37,7 +37,7 @@ function local:SaveConf([string] $sPath, [Conf] $conf) {
 # 設定読出
 function local:LoadConf([string] $sPath) {
     $json = Get-Content -Path $sPath | ConvertFrom-Json
-    $conf = GenClassByPSCustomObject ([Conf]) $json
+    $conf = ConvertFromPSCO ([Conf]) $json
     return $conf
 }
 # 設定編集

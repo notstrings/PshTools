@@ -72,33 +72,44 @@ function DeepCopyObj {
 
 <#
 .SYNOPSIS
-    PSCustomObjectで指定クラスを生成します
+    PSCustomObjectで指定クラスを変換します
 .DESCRIPTION
-    PSCustomObjectで指定クラスを生成します
+    PSCustomObjectで指定クラスを変換します
 .PARAMETER Type
-    生成インスタンスの形
+    変換インスタンスの形
 .PARAMETER Data
-    生成インスタンスのメンバに対応するPSCustomObject
+    変換インスタンスのメンバに対応するPSCustomObject
 .EXAMPLE
     # 指定クラスを生成して初期化するのに使う子
     $jcon = Get-Content -Path "config.json" | ConvertFrom-Json
-    $conf = GenClassByPSCustomObject ([Config]) $jcon 
-.NOTES
-    簡易実装
-    どうやらPowerShell7系?ではChangeTypeだけで十分らしい
-    [System.Convert]::ChangeType($psConf, ([Config]))
+    $conf = ConvertFromPSCO ([Config]) $jcon 
 #>
-function GenClassByPSCustomObject {
+function ConvertFromPSCO {
     param (
         [Parameter(Mandatory = $true)] [System.Type]   $Type,
-        [Parameter(Mandatory = $true)] [PSCustomObject]$Data
+        [Parameter(Mandatory = $true)] [PSCustomObject] $Data
     )
     begin {}
     process {
         $inst = New-Object -TypeName $Type.FullName
         $Data.PSObject.Properties | ForEach-Object {
-            if (Get-Member -InputObject $inst -Name $_.Name) {
-                $inst.($_.Name) = $_.Value
+            $PSCOName = $_.Name
+            $PSCOData = $_.Value
+            $InstProp = $Type.GetProperty($PSCOName)
+            if ($null -ne $InstProp) {
+                if ($InstProp.PropertyType.IsPrimitive) {
+                    $inst.($InstProp.Name) = $PSCOData
+                } elseif (($InstProp.PropertyType.Name -eq "string") -or ($InstProp.PropertyType.Name -eq "datetime") -or ($InstProp.PropertyType.Name -eq "decimal")) {
+                    $inst.($InstProp.Name) = $PSCOData
+                } elseif ($InstProp.PropertyType.IsArray) {
+                    $list = @()
+                    foreach ($elm in $PSCOData) {
+                        $list += ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $elm 
+                    }
+                    $inst.($InstProp.Name) = $list
+                } else {
+                    $inst.($InstProp.Name) = ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $PSCOData
+                }
             }
         }
         return $inst
@@ -1765,7 +1776,7 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     if ($DelSrc -eq $true) { 
         $arg += " -sdel"
     }
-    $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -WindowStyle Hidden -ArgumentList $arg -Wait
+    $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -ArgumentList $arg -Wait
     return $sUniq
 }
 

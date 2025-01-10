@@ -17,8 +17,8 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     $AppDOC = New-Object -ComObject Word.Application
                     $AppDOC.Visible = $true
                     $AppDOC.DisplayAlerts = 0 # wdAlertsNone
-                    $document = $AppDOC.Documents.Open($srcpath)
-                    $document.ExportAsFixedFormat(
+                    $null = $document = $AppDOC.Documents.Open($srcpath)
+                    $null = $document.ExportAsFixedFormat(
                         $dstpath,                   # 出力ファイル名
                         17,                         # wdExportFormatPDF
                         $false,                     # OpenAfterExport
@@ -36,11 +36,11 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     )
                 } finally {
                     if($null -ne $document){
-                        $document.Close(0)
+                        $null = $document.Close(0)
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
                     }
                     if($null -ne $AppDOC){
-                        $AppDOC.Quit()
+                        $null = $AppDOC.Quit()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppDOC)
                     }
                 }
@@ -51,8 +51,8 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     $AppXLS = New-Object -ComObject Excel.Application
                     $AppXLS.Visible = $true
                     $AppXLS.DisplayAlerts = $false
-                    $workbook = $AppXLS.Workbooks.Open($srcpath)
-                    $workbook.PrintOut(
+                    $null = $workbook = $AppXLS.Workbooks.Open($srcpath)
+                    $null = $workbook.PrintOut(
                         [System.Type]::Missing,     # 印刷開始ページ番号
                         [System.Type]::Missing,     # 印刷終了ページ番号
                         [System.Type]::Missing,     # 印刷部数
@@ -64,11 +64,11 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     )
                 } finally {
                     if($null -ne $workbook){
-                        $workbook.Close($false)
+                        $null = $workbook.Close($false)
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbook)
                     }
                     if($null -ne $AppXLS){
-                        $AppXLS.Quit()
+                        $null = $AppXLS.Quit()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppXLS)
                     }
                 }
@@ -80,19 +80,19 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     $AppPPT = New-Object -ComObject PowerPoint.Application
                     $AppPPT.Visible = -1 # msoTrue=-1 
                     $AppPPT.DisplayAlerts = $false
-                    $presentation = $AppPPT.Presentations.Open($srcpath)
-                    $presentation.SaveAs(
+                    $null = $presentation = $AppPPT.Presentations.Open($srcpath)
+                    $null = $presentation.SaveAs(
                         $dstpath,                   # FileName
                         32,                         # ppSaveAsPDF=32
                         -1                          # EmbedTrueTypeFonts
                     )
                 } finally {
                     if($null -ne $presentation){
-                        $presentation.Close()
+                        $null = $presentation.Close()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($presentation)
                     }
                     if($null -ne $AppPPT){
-                        $AppPPT.Quit()
+                        $null = $AppPPT.Quit()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppPPT)
                     }
                 }
@@ -102,8 +102,8 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                 try {
                     $AppVSD = New-Object -ComObject Visio.Application
                     $AppVSD.Visible = $true
-                    $document = $AppVSD.Documents.Open($srcpath)
-                    $document.ExportAsFixedFormat(
+                    $null = $document = $AppVSD.Documents.Open($srcpath)
+                    $null = $document.ExportAsFixedFormat(
                         1,                          # visFixedFormatPDF 
                         $dstpath,                   # 出力ファイル名
                         1,                          # 出力品質
@@ -111,11 +111,11 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     )
                 } finally {
                     if($null -ne $document){
-                        $document.Close()
+                        $null = $document.Close()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($document)
                     }
                     if($null -ne $AppVSD){
-                        $AppVSD.Quit()
+                        $null = $AppVSD.Quit()
                         $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppVSD)
                     }
                 }
