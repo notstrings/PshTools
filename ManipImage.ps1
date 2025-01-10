@@ -2,6 +2,8 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
 # セットアップ
 function local:Setup() {
     if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
@@ -12,6 +14,8 @@ function local:Setup() {
     scoop install ghostscript
     scoop install qpdf
 }
+
+## 本体 #######################################################################
 
 # ファイル・フォルダ名の処理
 function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
@@ -289,12 +293,14 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
     }
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
-    $null = Write-Host "---ManipImage---"
+    $null = Write-Host "---$Title---"
     $ret = ShowFileListDialogWithOption `
-            -Title "画像操作" `
+            -Title $Title `
             -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdfです`n※PDFは扱いが特殊ですんで一部無視されたりします" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `

@@ -2,6 +2,10 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
+
 function local:MkPshLnk([string] $TargetPath) {
     MakeLink   $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
     ConvPshEnc $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
@@ -28,12 +32,14 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
     [System.IO.File]::WriteAllLines($TargetPath, $txt, $Encoding)
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
-    $null = Write-Host "---MakeShortcut---"
+    $null = Write-Host "---$Title---"
     $ret = ShowFileListDialog `
-            -Title "ショートカットファイル生成" `
+            -Title $Title `
             -Message "対象PS1ファイルをドラッグ＆ドロップしてください" `
             -FileList $args `
             -FileFilter "\.ps1$"
@@ -50,4 +56,3 @@ try {
     $null = Write-Host $_.ScriptStackTrace
     $null = Write-Host "--------------"
 }
- 

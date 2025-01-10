@@ -14,7 +14,7 @@ function local:Setup() {
     scoop install 7zip
 }
 
-## 設定関連 #######################################################################
+## 設定 #######################################################################
 
 Enum enmDivideType {
     None = 0
@@ -58,7 +58,7 @@ function local:EditConf([string] $sPath) {
     }
 }
 
-## 本体処理 #######################################################################
+## 本体 #######################################################################
 
 # アーカイブファイル判定
 function isArchive($sPath) {
@@ -150,17 +150,19 @@ function local:ManipArchive($sPath) {
     }
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa")
 
 try {
-    $null = Write-Host "---ManipArchive---"
+    $null = Write-Host "---$Title---"
     # 設定取得
     InitConf $ConfPath
     $conf = LoadConf $ConfPath
     # 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         EditConf $ConfPath
-        exit 1
+        exit
     }
 	# 処理実行
     foreach ($arg in $args) {

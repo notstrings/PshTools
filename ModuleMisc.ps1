@@ -152,7 +152,7 @@ function RestrictTextZen() {
     )
     begin {}
     process {
-        $Text = [regex]::Replace($Text, "[$(Chars)]+",{ 
+        $Text = [regex]::Replace($Text, "[$Chars]+",{ 
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)

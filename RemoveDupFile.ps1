@@ -2,6 +2,10 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
+
 function local:RemoveDupFile([string[]] $Targets) {
     $hash = @{}
     $Targets | ForEach-Object {
@@ -33,12 +37,14 @@ function local:RemoveDupFile([string[]] $Targets) {
     }
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa", "$($ENV:USERPROFILE)\Desktop\新しいフォルダー\bbb")
 
 try {
-    $null = Write-Host "---ReduceDir---"
+    $null = Write-Host "---$Title---"
 	# 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         exit
     }
 	# 処理実行

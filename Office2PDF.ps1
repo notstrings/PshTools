@@ -1,5 +1,9 @@
 ﻿$ErrorActionPreference = "Stop"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
+
 function local:Office2PDF([System.IO.FileInfo] $Target) {
     foreach ($srcpath in $Target.FullName) {
         $dname = [System.IO.Path]::GetDirectoryName($srcpath)
@@ -123,12 +127,14 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
     }
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
-    $null = Write-Host "---Office2PDF---"
+    $null = Write-Host "---$Title---"
 	# 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         exit
     }
 	# 処理実行

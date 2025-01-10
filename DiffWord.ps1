@@ -1,5 +1,9 @@
 ﻿$ErrorActionPreference = "Stop"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
+
 function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     try {
         $AppDOC = New-Object -ComObject Word.Application
@@ -14,7 +18,7 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
             $DocLHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
             $DocRHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
         }
-        $AppDOC.CompareDocuments(
+        $null = $AppDOC.CompareDocuments(
             $DocLHS,        # OriginalDocument
             $DocRHS,        # RevisedDocument
             2,              # Destination wdCompareDestinationNew=2
@@ -32,11 +36,11 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         )
     } finally {
         if($null -ne $DocRHS){
-            $DocRHS.Close(0)
+            $null = $DocRHS.Close(0)
             $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($DocRHS)
         }
         if($null -ne $DocLHS){
-            $DocLHS.Close(0)
+            $null = $DocLHS.Close(0)
             $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($DocLHS)
         }
         # if($null -ne $AppDOC){ 
@@ -46,12 +50,14 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     }
 }
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.doc)", "$($ENV:USERPROFILE)\Desktop\新しいフォルダー\bbb.doc)")
+###############################################################################
+
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.docx", "$($ENV:USERPROFILE)\Desktop\新しいフォルダー\bbb.docx")
 
 try {
-    $null = Write-Host "---DiffWord---"
+    $null = Write-Host "---$Title---"
 	# 引数確認
-    if ($args.Length -eq 1) {
+    if ($args.Count -ne 2) {
         exit
     }
 	# 処理実行

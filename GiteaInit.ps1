@@ -10,7 +10,7 @@ function local:Setup() {
 	winget install "Git.Git"
 }
 
-## 設定関連 #######################################################################
+## 設定 #######################################################################
 
 class Conf {
     [string] $GITEAURL
@@ -49,7 +49,7 @@ function local:EditConf([string] $sPath) {
     }
 }
 
-## 本体処理 #######################################################################
+## 本体 #########################################################################
 
 # ローカルリポジトリ存在確認
 function local:IsGitInit([string] $sPath) {
@@ -113,6 +113,8 @@ function SetupGitea([string] $sPath, [PSCustomObject] $conf) {
 	GitSetRemote $sPath "http://$URL/$ORG/$Repository.git"
 }
 
+## 本体 #######################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\bbb")
 
 try {
@@ -121,9 +123,9 @@ try {
     InitConf $ConfPath
     $conf = LoadConf $ConfPath
 	# 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         EditConf $ConfPath
-        exit 1
+        exit
     }
 	# 処理実行
     foreach ($arg in $args) {

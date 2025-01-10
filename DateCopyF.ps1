@@ -2,6 +2,10 @@
 
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
+
 function local:DateCopyFile([System.IO.FileInfo] $Target) {
     $spath = $Target.FullName
     $dname = [System.IO.Path]::GetDirectoryName($spath)
@@ -22,12 +26,14 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
     CopyItemWithUniqName $spath $dpath
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
-    $null = Write-Host "---DateCopy---"
+    $null = Write-Host "---$Title---"
 	# 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         exit
     }
 	# 処理実行

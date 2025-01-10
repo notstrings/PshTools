@@ -10,10 +10,11 @@ function local:Setup() {
 	winget install "FastCopy.IPMsg"
 }
 
-## 設定関連 #######################################################################
+## 設定 #######################################################################
 
 class Conf {
     [ConfChild[]] $ConfChild
+    [System.ComponentModel.Description("変更の適用に再起動が必要")]
     [int]         $Interval
 }
 class ConfChild {
@@ -55,9 +56,8 @@ function local:EditConf([string] $sPath) {
         SaveConf $sPath $conf
     }
 }
-# EditConf
 
-## 監視処理 #######################################################################
+## 本体 #######################################################################
 
 function local:FolderMonitor() {
     $Message = ""
@@ -130,11 +130,15 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 }
 # FolderMonitor
 
+###############################################################################
+
 try {
-    $null = Write-Host "---FolderMonitor---"
+    $null = Write-Host "---$Title---"
+    # 設定取得
     InitConf $ConfPath
     $crnt = LoadConf $ConfPath
-    RunInTaskTray $Title 0x0000ff { EditConf } { FolderMonitor } ($crnt.Interval)
+	# 処理実行
+    RunInTaskTray $Title 0x0000ff { EditConf $ConfPath } { FolderMonitor } ($crnt.Interval)
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message

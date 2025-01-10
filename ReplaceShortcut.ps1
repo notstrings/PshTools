@@ -3,6 +3,9 @@
 $ErrorActionPreference = "Stop"
 
 $WSH = New-Object -ComObject WScript.Shell
+$Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+
+## 本体 #######################################################################
 
 # 文字置換(大文字小文字を区別しない)
 function local:ReplaceIgnoreCase([string] $text, [string] $from, [string] $to) {
@@ -148,12 +151,14 @@ function local:ReplacePath([string] $FilePath) {
     return $fname
 }
 
+###############################################################################
+
 # $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
-    $null = Write-Host "---ReplaceShortcut---"
+    $null = Write-Host "---$Title---"
 	# 引数確認
-    if ($args.Length -eq 0) {
+    if ($args.Count -eq 0) {
         exit
     }
 	# 処理実行
