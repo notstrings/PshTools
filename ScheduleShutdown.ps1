@@ -18,7 +18,6 @@ switch (
     1 { shutdown /s /t  3600 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
     2 { shutdown /s /t 10800 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
     3 { shutdown /s /t 18000 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
-    3 { shutdown /s /t 18000 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
-    3 { shutdown /s /t 28800 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
-    4 { shutdown /a }
+    4 { shutdown /s /t 28800 /c "$($fullname)によるシャットダウン予約" /f /d p:0:0 }
+    5 { shutdown /a }
 }
