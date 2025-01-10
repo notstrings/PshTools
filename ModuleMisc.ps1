@@ -106,7 +106,15 @@ function ConvertFromPSCO {
                 } elseif ($InstProp.PropertyType.IsArray) {
                     $list = @()
                     foreach ($elm in $PSCOData) {
-                        $list += ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $elm 
+                        if ($InstProp.PropertyType.GetElementType().IsPrimitive) {
+                            $list += $elm
+                        } elseif (($InstProp.PropertyType.GetElementType().IsEnum)) {
+                            $list += $elm
+                        } elseif (($InstProp.PropertyType.GetElementType().Name -eq "string") -or ($InstProp.PropertyType.GetElementType().Name -eq "datetime") -or ($InstProp.PropertyType.GetElementType().Name -eq "decimal")) {
+                            $list += $elm
+                        } else {
+                        	$list += ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $elm 
+                    	}
                     }
                     $inst.($InstProp.Name) = $list
                 } else {
