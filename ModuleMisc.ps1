@@ -1368,7 +1368,7 @@ function ShowToast {
         $enctxt = $enctxt.Replace("__ARG2", $Message)
         $enctxt = $enctxt.Replace("__ARG3", $Detail)
         $enccmd = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($enctxt))
-        Start-Process -NoNewWindow "cmd.exe" -ArgumentList "/c start /min powershell -NoProfile -EncodedCommand $enccmd"
+        Start-Process -NoNewWindow "powershell.exe" -ArgumentList "-NoProfile -EncodedCommand $enccmd"
     }
 end {}
 }
