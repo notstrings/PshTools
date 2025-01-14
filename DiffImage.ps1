@@ -1,5 +1,7 @@
 ﻿$ErrorActionPreference = "Stop"
 
+. "$($PSScriptRoot)/ModuleMisc.ps1"
+
 $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
