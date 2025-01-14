@@ -42,7 +42,7 @@ function DeepCopyObj {
             return $inst
         } elseif ($Data -is [System.Management.Automation.PSCustomObject]) {
             $inst = [PSCustomObject]@{}
-            foreach ($prop in $Data.psobject.Properties) {
+            foreach ($prop in $Data.PSObject.Properties) {
                 $inst | Add-Member -MemberType NoteProperty -Name $prop.Name -Value (DeepCopyObj $prop.Value)
             }
             return $inst
@@ -78,7 +78,7 @@ function DeepCopyObj {
 #>
 function ConvertFromPSCO {
     param (
-        [Parameter(Mandatory = $true)] [System.Type]   $Type,
+        [Parameter(Mandatory = $true)] [System.Type]    $Type,
         [Parameter(Mandatory = $true)] [PSCustomObject] $Data
     )
     begin {}
@@ -100,10 +100,10 @@ function ConvertFromPSCO {
             return $inst
         } elseif ($Type.IsClass -and -not $Type.IsValueType) {
             $inst = New-Object -TypeName $Type.FullName
-            $Data.Keys | ForEach-Object {
-                $prop = $Type.GetProperty($_)
+            $Data.PSObject.Properties | ForEach-Object {
+                $prop = $Type.GetProperty($_.Name)
                 if ($prop -ne $null -and $prop.CanRead -and $prop.CanWrite) {
-                    $inst.$_ = ConvertFromPSCO -Type $Type.GetProperty($_).PropertyType -Data $Data.$_
+                    $inst.($_.Name) = ConvertFromPSCO -Type $Type.GetProperty($_.Name).PropertyType -Data $Data.($_.Name)
                 }
             }
             return $inst
@@ -615,54 +615,6 @@ Function AutoGuessEncodingByteSimple {
         } else {
             return [System.Text.Encoding]::GetEncoding("UTF-8")
         }
-    }
-    end {}
-}
-
-<#
-.SYNOPSIS
-    2つのテキストファイルの内容を比較し結果を取得します
-.DESCRIPTION
-    指定された2つのテキストファイルの内容を比較して
-    両方のファイルに存在する行と左右片側にのみ存在する行を配列として返します
-.PARAMETER LHSPath
-    比較対象の左側のファイルのパスを指定します
-.PARAMETER RHSPath
-    比較対象の右側のファイルのパスを指定します
-.PARAMETER Encoding
-    ファイルのエンコーディングを指定します
-.EXAMPLE
-    $ret = DiffContent -LHSPath "file1.txt" -RHSPath "file2.txt" -Encoding ([System.Text.Encoding]::GetEncoding("Shift_JIS"))
-    $ret[0] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 両方のファイルに存在する行
-    $ret[1] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 左側のファイルにのみ存在する行の配列
-    $ret[2] | ForEach-Object { Write-Host "Line" $_.ReadCount $_ } # 右側のファイルにのみ存在する行の配列
-.NOTES
-    PowerShell5互換のためエンコーディングを文字指定する必要がある
-#>
-function DiffContent {
-    param (
-        [Parameter(Mandatory=$true)]  [string]$LHSPath,
-        [Parameter(Mandatory=$true)]  [string]$RHSPath,
-        [Parameter(Mandatory=$false)] [string]$Encoding = "UTF8"
-    )
-    begin {}
-    process {
-        $Both = @()
-        $LHSOnly = @()
-        $RHSOnly = @()
-        $LHS = @(Get-Content $LHSPath -Encoding $Encoding)
-        $RHS = @(Get-Content $RHSPath -Encoding $Encoding)
-        Compare-Object -ReferenceObject $LHS -DifferenceObject $RHS -IncludeEqual |
-        ForEach-Object {
-            if($_.SideIndicator -eq "<=") {
-                $LHSOnly += $_.InputObject
-            } elseif ($_.SideIndicator -eq "=>") {
-                $RHSOnly += $_.InputObject
-            } elseif ($_.SideIndicator -eq "==") {
-                $Both += $_.InputObject
-            }
-        } | Out-Null
-        return $Both, $LHSOnly, $RHSOnly
     }
     end {}
 }
@@ -1650,7 +1602,8 @@ function MoveTrush {
 
 ## ############################################################################
 ## Zip
-## ・Expand-Archiveは日本語が化けるのでWindows標準機能のtarでどうにかする
+## ・Windows環境自体のセットアップ用
+## ・Expand-ArchiveはマルチバイトがゴミなのでWindows標準機能のtarでどうにかする
 
 function local:innerExpand([string]$DstPath, [string]$SrcPath) {
     # ユニーク名取得

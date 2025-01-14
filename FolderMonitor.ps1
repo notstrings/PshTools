@@ -60,22 +60,19 @@ function local:EditConf([string] $sPath) {
 ## 本体 #######################################################################
 
 function local:FolderMonitor() {
-    $Message = ""
+    $Result = ""
     # 更新検出
     $conf = LoadConf $ConfPath
     $conf.ConfChild | ForEach-Object {
         $MonitorName = $_.MonName
         $MonitorPath = $_.MonPath
         if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
-            $Result = CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
-            if ($Result){
-                $Message += "$($MonitorName)\n$($MonitorPath)\n$($Result)"
-            }
+            $Result += CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
         }
     }
     # 結果表示
-    if ("" -ne $Message ){
-        SendIPMsg -Message $Message
+    if ("" -ne $Result ){
+        SendIPMsg -Message $Result
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
@@ -94,19 +91,24 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 
     # 昨今の監視フォルダ状況差分を確認
     if (Test-Path $PrevPath){
-        # ファイル名＋更新日時の差分が監視フォルダ変更の全体像で...
-        # ・追加は前回リストに無い差分
-        # ・削除は今回リストに無い差分
-        # ・更新は更新日時のみの差分
-        $Diff = DiffContent -LHSPath $PrevPath -RHSPath $CrntPath -Encoding "OEM"  # PowerShell5互換のためエンコーディングを文字指定
-        $LHSOnlyCSV = ($Diff[1] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
-        $RHSOnlyCSV = ($Diff[2] -join "`r`n") | ConvertFrom-Csv -Header "FullName", "LastModifyDate"
-        if ($LHSOnlyCSV.Length -eq 0){$LHSOnlyCSV = ""}
-        if ($RHSOnlyCSV.Length -eq 0){$RHSOnlyCSV = ""}
+        # ファイル名と変更日時の差分を抽出
+        $PrevAllCSV = @(Import-Csv -LiteralPath $PrevPath -Encoding "OEM") # PowerShell5互換のためエンコーディングを文字指定
+        $CrntAllCSV = @(Import-Csv -LiteralPath $CrntPath -Encoding "OEM") # PowerShell5互換のためエンコーディングを文字指定
+        $PrevDifCSV = @()
+        $CrntDifCSV = @()
+        Compare-Object -ReferenceObject $PrevAllCSV -DifferenceObject $CrntAllCSV -Property FullName, LastWriteTime |
+        ForEach-Object {
+            if($_.SideIndicator -eq "<=") {
+                $PrevDifCSV += [PSCustomObject]@{FullName = $_.FullName; LastWriteTime = $_.LastWriteTime}
+            } elseif ($_.SideIndicator -eq "=>") {
+                $CrntDifCSV += [PSCustomObject]@{FullName = $_.FullName; LastWriteTime = $_.LastWriteTime}
+            }
+        } | Out-Null
+        # ファイル名差分だけで絞り込んで追加/削除/変更を識別
         $ModFile = @()
         $DelFile = @()
         $AddFile = @()
-        Compare-Object -ReferenceObject $LHSOnlyCSV -DifferenceObject $RHSOnlyCSV -IncludeEqual -Property FullName |
+        Compare-Object -ReferenceObject $PrevDifCSV -DifferenceObject $CrntDifCSV -IncludeEqual -Property FullName |
         ForEach-Object {
             if($null -ne $_.FullName -and "FullName" -ne $_.FullName){
                 if($_.SideIndicator -eq "<=") {
@@ -118,9 +120,13 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
                 }
             }
         } | Out-Null
-        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
-        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
-        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.\'))\n" } | Out-Null
+        # 結果出力
+        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
+        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
+        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
+        if ($Ret -ne ""){
+            $Ret = "---\nMonitorName:$MonitorName\nMonitorPath:$MonitorPath\n" + $Ret
+        }
     }
 
     # 現在のフォルダ状況を過去のフォルダ状況とする
