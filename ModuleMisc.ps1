@@ -1822,8 +1822,8 @@ function ExtArc7Z {
             } | Out-Null
         }
         if ($DelSrc -eq $true) {
-        $null = Remove-Item -LiteralPath $SrcPath -Force
-    }
+            $null = Remove-Item -LiteralPath $SrcPath -Force
+        }
         return $ret
     }
     end {}
