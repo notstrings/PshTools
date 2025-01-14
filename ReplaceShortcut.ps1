@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$WSH = New-Object -ComObject WScript.Shell
+$WSH      = New-Object -ComObject WScript.Shell
 $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 
 ## 本体 #######################################################################

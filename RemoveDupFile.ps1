@@ -50,16 +50,16 @@ function local:RemoveDupFile([string[]] $Targets) {
     $hash = @{}
     switch ($conf.CompareMode) {
         "Name" {
-    $Targets | ForEach-Object {
-        Get-ChildItem -LiteralPath $_ -File |
-        ForEach-Object {
-            $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
-            if (-not $hash.ContainsKey($uniqkey)){
-                $hash[$uniqkey] = @()
+            $Targets | ForEach-Object {
+                Get-ChildItem -LiteralPath $_ -File |
+                ForEach-Object {
+                    $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+                    if (-not $hash.ContainsKey($uniqkey)){
+                        $hash[$uniqkey] = @()
+                    }
+                    $hash[$uniqkey] += $_
+                }
             }
-            $hash[$uniqkey] += $_
-        }
-    }
         }
         "MD5" {
             $Targets | ForEach-Object {

@@ -79,10 +79,10 @@ function local:Reduce([string]$Target, [bool]$isDir) {
         ## 空フォルダ
         if ($conf.RemBlankFolder -eq $true){
             if (@(Get-ChildItem -LiteralPath $Target -File     ).Length -eq 0 -and
-            @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
+                @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
                 MoveTrush -Path $Target
-            return
-        }
+                return
+            }
         }
         ## 孤立フォルダ(引き上げ)
         if ($conf.RedOrphanFolder -eq $true){
