@@ -18,53 +18,45 @@ Add-Type -AssemblyName System.Drawing
 #>
 function DeepCopyObj {
     param (
-        [Parameter(Mandatory = $true)] [object] $obj
+        [Parameter(Mandatory = $true)] [object] $Data
     )
     begin {}
     process {
-        if ($null -eq $obj) {
-            # Null の場合
+        if ($null -eq $Data) {
             return $null
-        } elseif ($obj.GetType().IsPrimitive) {
-            # プリミティブ型の場合
-            return $obj
-        } elseif ($obj -is [string] -or $obj -is [datetime] -or $obj -is [decimal]) {
-            # 文字列/DateTime/Decimal
-            return $obj
-        } elseif ($obj -is [hashtable]) {
-            # ハッシュテーブル
-            $ret = @{}
-            foreach ($key in $obj.Keys) {
-                $ret[$key] = DeepCopyObj $obj[$key] 
+        } elseif ($Data.GetType().IsPrimitive) {
+            return $Data
+        } elseif ($Data -is [string] -or $Data -is [datetime] -or $Data -is [decimal]) {
+            return $Data
+        } elseif ($Data -is [hashtable]) {
+            $inst = @{}
+            foreach ($key in $Data.Keys) {
+                $inst[$key] = DeepCopyObj $Data[$key] 
             }
-            return $ret
-        } elseif ($obj -is [array]) {
-            # 配列
-            $ret = @()
-            foreach ($item in $obj) {
-                $ret += DeepCopyObj $item 
+            return $inst
+        } elseif ($Data -is [array]) {
+            $inst = @()
+            foreach ($item in $Data) {
+                $inst += DeepCopyObj $item
             }
-            return $ret
-        } elseif ($obj -is [System.Management.Automation.PSCustomObject]) {
-            # PSCustomObject
-            $ret = [PSCustomObject]@{}
-            foreach ($prop in $obj.psobject.Properties) {
-                $ret | Add-Member -MemberType NoteProperty -Name $prop.Name -Value (DeepCopyObj $prop.Value)
+            return $inst
+        } elseif ($Data -is [System.Management.Automation.PSCustomObject]) {
+            $inst = [PSCustomObject]@{}
+            foreach ($prop in $Data.psobject.Properties) {
+                $inst | Add-Member -MemberType NoteProperty -Name $prop.Name -Value (DeepCopyObj $prop.Value)
             }
-            return $ret
-        } elseif ($obj.GetType().IsClass -and -not $obj.GetType().IsValueType) {
-            # カスタムオブジェクト
-            $typ = $obj.GetType()
-            $ret = New-Object -TypeName $typ.FullName
-            foreach ($prop in $typ.GetProperties()){
+            return $inst
+        } elseif ($Data.GetType().IsClass -and -not $Data.GetType().IsValueType) {
+            $type = $Data.GetType()
+            $inst = New-Object -TypeName $type.FullName
+            foreach ($prop in $type.GetProperties()){
                 if ($prop.CanRead -and $prop.CanWrite) {
-                    $prop.SetValue($ret, $prop.GetValue($obj))
+                    $prop.SetValue($inst, $prop.GetValue($Data))
                 }
             }
-            return $ret
+            return $inst
         } else {
-            # その他(ENUMとか？)
-            return $obj
+            return $Data
         }
     }
     end {}
@@ -72,17 +64,17 @@ function DeepCopyObj {
 
 <#
 .SYNOPSIS
-    PSCustomObjectで指定クラスを変換します
+    PSCustomObjectを指定クラスに変換します
 .DESCRIPTION
-    PSCustomObjectで指定クラスを変換します
+    PSCustomObjectを指定クラスに変換します
 .PARAMETER Type
-    変換インスタンスの形
+    変換インスタンスの型
 .PARAMETER Data
     変換インスタンスのメンバに対応するPSCustomObject
 .EXAMPLE
     # 指定クラスを生成して初期化するのに使う子
-    $jcon = Get-Content -Path "config.json" | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Config]) $jcon 
+    $json = Get-Content -Path "config.json" | ConvertFrom-Json
+    $conf = ConvertFromPSCO ([Config]) $json 
 #>
 function ConvertFromPSCO {
     param (
@@ -91,38 +83,34 @@ function ConvertFromPSCO {
     )
     begin {}
     process {
+        if ($null -eq $Data) {
+            return $null
+        }
+        if ($Type.IsPrimitive) {
+            return $Data
+        } elseif ($Type.IsEnum) {
+            return $Data
+        } elseif (($Type.Name -eq "string") -or ($Type.Name -eq "datetime") -or ($Type.Name -eq "decimal")) {
+            return $Data
+        } elseif ($Type.IsArray) {
+            $inst = @()
+            foreach ($elm in $Data) {
+                $inst += ConvertFromPSCO -Type $Type.GetElementType() -Data $elm
+            }
+            return $inst
+        } elseif ($Type.IsClass -and -not $Type.IsValueType) {
         $inst = New-Object -TypeName $Type.FullName
-        $Data.PSObject.Properties | ForEach-Object {
-            $PSCOName = $_.Name
-            $PSCOData = $_.Value
-            $InstProp = $Type.GetProperty($PSCOName)
-            if ($null -ne $InstProp) {
-                if ($InstProp.PropertyType.IsPrimitive) {
-                    $inst.($InstProp.Name) = $PSCOData
-                } elseif (($InstProp.PropertyType.IsEnum)) {
-                    $inst.($InstProp.Name) = $PSCOData
-                } elseif (($InstProp.PropertyType.Name -eq "string") -or ($InstProp.PropertyType.Name -eq "datetime") -or ($InstProp.PropertyType.Name -eq "decimal")) {
-                    $inst.($InstProp.Name) = $PSCOData
-                } elseif ($InstProp.PropertyType.IsArray) {
-                    $list = @()
-                    foreach ($elm in $PSCOData) {
-                        if ($InstProp.PropertyType.GetElementType().IsPrimitive) {
-                            $list += $elm
-                        } elseif (($InstProp.PropertyType.GetElementType().IsEnum)) {
-                            $list += $elm
-                        } elseif (($InstProp.PropertyType.GetElementType().Name -eq "string") -or ($InstProp.PropertyType.GetElementType().Name -eq "datetime") -or ($InstProp.PropertyType.GetElementType().Name -eq "decimal")) {
-                            $list += $elm
-                        } else {
-                        	$list += ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $elm 
+            $Data.Keys | ForEach-Object {
+                $prop = $Type.GetProperty($_)
+                if ($prop -ne $null -and $prop.CanRead -and $prop.CanWrite) {
+                    $inst.$_ = ConvertFromPSCO -Type $Type.GetProperty($_).PropertyType -Data $Data.$_
                     	}
                     }
-                    $inst.($InstProp.Name) = $list
+            return $inst
                 } else {
-                    $inst.($InstProp.Name) = ConvertFromPSCO -Type $InstProp.PropertyType.GetElementType() -Data $PSCOData
+            return $Data
                 }
-            }
-        }
-        return $inst
+        return $null
     }
     end {}    
 }
