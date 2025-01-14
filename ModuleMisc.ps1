@@ -1321,7 +1321,6 @@ function RunInTaskTray {
 .DESCRIPTION
     トーストを表示する
     PowerShell5/7系どっちでも特に問題なく表示できる
-    ...最終的にcmd頼りとか流石PowerShell
 .PARAMETER Title
     タイトル
 .PARAMETER Message
@@ -1379,6 +1378,10 @@ end {}
 .DESCRIPTION
     指定されたMailアカウントを使用してメールを送信します
     送信元/送信先/CC/BCC/件名/本文/添付ファイルを指定してメールを送信できます
+.PARAMETER Subject
+    メールの件名です
+.PARAMETER Body
+    メールの本文です
 .PARAMETER From
     送信元のメールアドレスです
 .PARAMETER To
@@ -1387,45 +1390,39 @@ end {}
     CCに追加するメールアドレスです
 .PARAMETER BCC
     BCCに追加するメールアドレスです
-.PARAMETER Subject
-    メールの件名です
-.PARAMETER Body
-    メールの本文です
-.PARAMETER SSL
-    SSLを使用可否です
-.PARAMETER AttachmentPath
+.PARAMETER Attachment
     添付ファイルのパスです
 .PARAMETER SMTPServer
     SMTPサーバーのホスト名です
 .PARAMETER SMTPPort
     SMTPサーバーのポート番号です
-.PARAMETER UID
+.PARAMETER SMTPSSL
+    SMTPサーバーのSSL使用可否です
+.PARAMETER SMTPUID
     GmailアカウントのユーザーIDです
-.PARAMETER PWD
+.PARAMETER SMTPPWD
     Gmailアカウントのパスワードです
-.EXAMPLE
-    SendMail -From "example@gmail.com" -To "recipient@example.com" -Subject "Test Email" -Body "This is a test email." -UID "example" -PWD "yourpassword"
 #>
 function SendMail {
     param (
+        [Parameter(Mandatory = $true)]  [string]   $Subject,
+        [Parameter(Mandatory = $true)]  [string]   $Body,
         [Parameter(Mandatory = $true)]  [string]   $From,
         [Parameter(Mandatory = $true)]  [string]   $To,
         [Parameter(Mandatory = $false)] [string[]] $CC = @(),
         [Parameter(Mandatory = $false)] [string[]] $BCC = @(),
-        [Parameter(Mandatory = $true)]  [string]   $Subject,
-        [Parameter(Mandatory = $true)]  [string]   $Body,
-        [Parameter(Mandatory = $false)] [boolean]  $SSL = $true,
-        [Parameter(Mandatory = $false)] [string]   $AttachmentPath = "",
+        [Parameter(Mandatory = $false)] [string[]] $Attachment = @(),
         [Parameter(Mandatory = $false)] [string]   $SMTPServer = "smtp.gmail.com",
         [Parameter(Mandatory = $false)] [int]      $SMTPPort = 587,
-        [Parameter(Mandatory = $true)]  [string]   $UID,
-        [Parameter(Mandatory = $true)]  [string]   $PWD
+        [Parameter(Mandatory = $false)] [boolean]  $SMTPSSL = $true,
+        [Parameter(Mandatory = $true)]  [string]   $SMTPUID,
+        [Parameter(Mandatory = $true)]  [string]   $SMTPPWD
     )
     begin {}
     process {
         $SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, $SMTPPort)
-        $SMTPClient.EnableSsl = $SSL
-        $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($UID,$PWD)
+        $SMTPClient.EnableSsl = $SMTPSSL
+        $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($SMTPUID, $SMTPPWD)
         $Mail = New-Object Net.Mail.MailMessage($From,$To,$Subject,$Body)
         $CC | ForEach-Object {
             $Mail.CC.Add($_)
@@ -1433,9 +1430,8 @@ function SendMail {
         $BCC | ForEach-Object {
             $Mail.BCC.Add($_)
         }
-        if ($AttachmentPath -ne ""){
-            $Attachment = New-Object Net.Mail.Attachment($AttachmentPath)
-            $Mail.Attachments.Add($Attachment)
+        $Attachment | ForEach-Object {
+            $Mail.Attachments.Add((New-Object Net.Mail.Attachment($_)))
         }
         $SMTPClient.Send($Mail)
     }
