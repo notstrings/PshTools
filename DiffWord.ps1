@@ -43,7 +43,7 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
             $null = $DocLHS.Close(0)
             $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($DocLHS)
         }
-        # if($null -ne $AppDOC){ 
+        # if($null -ne $AppDOC){
         #     $AppDOC.Quit(); $AppDOC = $null
         #     $null = [System.Runtime.Interopservices.Marshal]::ReleaseComObject($AppDOC)
         # }

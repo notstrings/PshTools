@@ -22,7 +22,7 @@ D&Dでパス指定したい場合は``MakePowerShell*.ps1``でバッチかショ
 * ファイル・フォルダ名に日付が含まれている場合、その部分を``YYYYMMDD``に直す
   * YYYY-MM-DD or YYYY.MM.DD
   * YYYY年MM月DD日
-  * 和暦YY-MM-DD or 和暦YY.MM.DD 
+  * 和暦YY-MM-DD or 和暦YY.MM.DD
   * 和暦YY年MM月DD日
   * YY-MM-DD or YY.MM.DD※1
   * YY年MM月DD日※1

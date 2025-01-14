@@ -77,7 +77,7 @@ function local:RemoveDupFile([string[]] $Targets) {
     $hash.Values | ForEach-Object {
         $_ |
         Sort-Object -Property Length -Descending |
-        Select-Object -Skip 1 | ForEach-Object { 
+        Select-Object -Skip 1 | ForEach-Object {
             MoveTrush -Path $_.FullName
         }
     }

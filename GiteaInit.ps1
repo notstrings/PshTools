@@ -108,7 +108,7 @@ function SetupGitea([string] $sPath, [PSCustomObject] $conf) {
 
 	# ローカルリポジトリ作成＆関連付け
 	if ( (IsGitInit $sPath) -eq $false){
-		GitInit $sPath 
+		GitInit $sPath
 	}
 	GitSetRemote $sPath "http://$URL/$ORG/$Repository.git"
 }

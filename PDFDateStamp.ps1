@@ -101,7 +101,7 @@ function local:MakePDFDateStamp {
         $procInfo.RedirectStandardInput = $true
         $procInfo.RedirectStandardOutput = $false
         $proc = [System.Diagnostics.Process]::Start($procInfo)
-        if ($proc) { 
+        if ($proc) {
             $proc.StandardInput.Write($text)
             $proc.StandardInput.Close()
             $proc.WaitForExit()
@@ -156,7 +156,7 @@ function local:AnnotatePDFStamp {
     process {
         # 入力ファイルを開く
         $pdfrdr = [PdfSharp.Pdf.IO.PdfReader]::Open([string]$sSrcPath, [PdfSharp.Pdf.IO.PdfDocumentOpenMode]::Import)
-    
+
         # 制御対象ページを解釈
         # ・利便性のために最終ページを0ページ目として指定する事ができるようにしておく
         $pagecount = $pdfrdr.pagecount
@@ -166,12 +166,12 @@ function local:AnnotatePDFStamp {
         $lTgtPageStt = [System.Math]::Min($lTgtPageStt, $pagecount)
         $lTgtPageEnd = [System.Math]::Max($lTgtPageEnd, 1)
         $lTgtPageEnd = [System.Math]::Min($lTgtPageEnd, $pagecount)
-    
+
         # 描画本体
         $pdfstm = [PdfSharp.Drawing.XPdfForm]::FromFile([string]$sStumpPath)
         $pdfdoc = New-Object PdfSharp.Pdf.PdfDocument
         for ($idx = 1; $idx -le $pagecount; $idx++) {
-            $page = $pdfdoc.AddPage($pdfrdr.Pages[$idx - 1]) 
+            $page = $pdfdoc.AddPage($pdfrdr.Pages[$idx - 1])
             if (($idx -ge $lTgtPageStt) -And ($idx -le $lTgtPageEnd)) {
                 # 出力座標を当該ページレイアウトに合わせる
                 $gfx = [PdfSharp.Drawing.XGraphics]::FromPdfPage($page)
@@ -208,7 +208,7 @@ try {
     $null = Write-Host "---PDFDateStamp---"
     $sTmpPath = [System.IO.Path]::GetTempFileName()
     MakePDFDateStamp $sTmpPath $sTopTxt $sMdlTxt $sBtmTxt
-    AnnotatePDFStamp $sSrcPath $sDstPath $lTgtPageStt $lTgtPageEnd $sTmpPath $dStumpPosX $dStumpPosY $dStumpPosSZ 
+    AnnotatePDFStamp $sSrcPath $sDstPath $lTgtPageStt $lTgtPageEnd $sTmpPath $dStumpPosX $dStumpPosY $dStumpPosSZ
 }
 catch {
     $null = Write-Host "---例外発生---"

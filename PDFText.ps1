@@ -75,7 +75,7 @@ function local:AnnotatePDFText {
     process {
         # 入力ファイルを開く
         $pdfrdr = [PdfSharp.Pdf.IO.PdfReader]::Open([string]$sSrcPath, [PdfSharp.Pdf.IO.PdfDocumentOpenMode]::Import)
-    
+
         # 制御対象ページを解釈
         # ・利便性のために最終ページを0ページ目として指定する事ができるようにしておく
         $pagecount = $pdfrdr.pagecount
@@ -85,7 +85,7 @@ function local:AnnotatePDFText {
         $lTgtPageStt = [System.Math]::Min($lTgtPageStt, $pagecount)
         $lTgtPageEnd = [System.Math]::Max($lTgtPageEnd, 1)
         $lTgtPageEnd = [System.Math]::Min($lTgtPageEnd, $pagecount)
-    
+
         # 描画本体
         $pdfdoc = New-Object PdfSharp.Pdf.PdfDocument
         $pdffnt = [PdfSharp.Drawing.XFont]::new("Yu Mincho", $dAnnTextSize)
@@ -131,7 +131,7 @@ function local:AnnotatePDFText {
 
 try {
     $null = Write-Host "---PDFText---"
-    AnnotatePDFText $sSrcPath $sDstPath $lTgtPageStt $lTgtPageEnd $sAnnText $dAnnTextSize $sAnnTextColor $dAnnTextPosX $dAnnTextPosY 
+    AnnotatePDFText $sSrcPath $sDstPath $lTgtPageStt $lTgtPageEnd $sAnnText $dAnnTextSize $sAnnTextColor $dAnnTextPosX $dAnnTextPosY
 }
 catch {
     $null = Write-Host "---例外発生---"

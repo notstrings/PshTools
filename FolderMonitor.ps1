@@ -69,13 +69,13 @@ function local:FolderMonitor() {
         if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
             $Result = CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
             if ($Result){
-                $Message += "$($MonitorName)\n$($MonitorPath)\n$($Result)" 
+                $Message += "$($MonitorName)\n$($MonitorPath)\n$($Result)"
             }
         }
     }
     # 結果表示
     if ("" -ne $Message ){
-        SendIPMsg -Message $Message 
+        SendIPMsg -Message $Message
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
@@ -88,10 +88,10 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($CrntPath)) -ItemType Directory -ErrorAction SilentlyContinue
 
     # 現在の監視フォルダ状況を取得
-    Get-ChildItem $MonitorPath -File -Recurse | 
+    Get-ChildItem $MonitorPath -File -Recurse |
     Select-Object FullName, LastWriteTime |
     Export-Csv -Path $CrntPath -NoTypeInformation -Encoding "OEM" # PowerShell5互換のためエンコーディングを文字指定
-    
+
     # 昨今の監視フォルダ状況差分を確認
     if (Test-Path $PrevPath){
         # ファイル名＋更新日時の差分が監視フォルダ変更の全体像で...
@@ -112,7 +112,7 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
                 if($_.SideIndicator -eq "<=") {
                     $DelFile += $_.FullName
                 } elseif ($_.SideIndicator -eq "=>") {
-                    $AddFile += $_.FullName 
+                    $AddFile += $_.FullName
                 } elseif ($_.SideIndicator -eq "==") {
                     $ModFile += $_.FullName
                 }

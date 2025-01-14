@@ -78,7 +78,7 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                 # ・PowerPoint2010の場合やたらと不安定だが...まぁ無理もねぇかと放置
                 try {
                     $AppPPT = New-Object -ComObject PowerPoint.Application
-                    $AppPPT.Visible = -1 # msoTrue=-1 
+                    $AppPPT.Visible = -1 # msoTrue=-1
                     $AppPPT.DisplayAlerts = $false
                     $null = $presentation = $AppPPT.Presentations.Open($srcpath)
                     $null = $presentation.SaveAs(
@@ -104,7 +104,7 @@ function local:Office2PDF([System.IO.FileInfo] $Target) {
                     $AppVSD.Visible = $true
                     $null = $document = $AppVSD.Documents.Open($srcpath)
                     $null = $document.ExportAsFixedFormat(
-                        1,                          # visFixedFormatPDF 
+                        1,                          # visFixedFormatPDF
                         $dstpath,                   # 出力ファイル名
                         1,                          # 出力品質
                         0                           # ページ範囲

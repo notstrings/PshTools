@@ -24,7 +24,7 @@ function local:ReplaceIgnoreCaseMap([string] $text, [PSCustomObject] $map) {
 
 # ファイル
 function local:CleanupShortcutFile([System.IO.FileInfo] $Target) {
-    CleanupShortcut $Target.FullName 
+    CleanupShortcut $Target.FullName
 }
 
 # フォルダ
@@ -55,7 +55,7 @@ function local:CleanupShortcut([string] $TargetName) {
     } finally {
         Set-Location -LiteralPath $PSScriptRoot
     }
-    $srcpath = $lnk.TargetPath  
+    $srcpath = $lnk.TargetPath
     $srcwork = $lnk.WorkingDirectory
     # 不要ショートカットファイル
     if ( [System.IO.Path]::GetDirectoryName($TargetName) -eq $srcpath ) {
@@ -70,7 +70,7 @@ function local:CleanupShortcut([string] $TargetName) {
         $lnk.TargetPath = $srcwork
         $lnk.WorkingDirectory = $srcpath
         $lnk.Save()
-        $srcpath = $lnk.TargetPath  
+        $srcpath = $lnk.TargetPath
         $srcwork = $lnk.WorkingDirectory
     }
     # リンク切れ確認
@@ -92,7 +92,7 @@ function local:CleanupShortcut([string] $TargetName) {
     # 代替候補パス確認
     if ( ($srcpath -eq $dstpath) -and ($srcwork -eq $dstwork) ) {
         $null = Write-Host "失敗`t代替先不変`t""$TargetName""" -ForegroundColor Yellow
-        return 
+        return
     }
     if ( ($dstpath -eq "") -and ($dstwork -eq "") ) {
         $null = Write-Host "失敗`t代替先不正(ターゲット無/ワーキング無)`t""$TargetName""" -ForegroundColor Yellow
@@ -142,8 +142,8 @@ function local:ReplacePath([string] $FilePath) {
     # 単純なマッピング
     # ※ここでは文字列長は勝手に判断するので気にしなくていい
     $map = @{
-        "\\serv0001\xxx\yyyy" = "\\serv0001\zzz\yyyy"; 
-        "\\serv0002\xxx\yyyy" = "\\serv0001\zzz\yyyy"; 
+        "\\serv0001\xxx\yyyy" = "\\serv0001\zzz\yyyy";
+        "\\serv0002\xxx\yyyy" = "\\serv0001\zzz\yyyy";
     }
     $fname = ReplaceIgnoreCaseMap $fname $map
     # より複雑な制御

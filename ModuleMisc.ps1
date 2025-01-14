@@ -31,7 +31,7 @@ function DeepCopyObj {
         } elseif ($Data -is [hashtable]) {
             $inst = @{}
             foreach ($key in $Data.Keys) {
-                $inst[$key] = DeepCopyObj $Data[$key] 
+                $inst[$key] = DeepCopyObj $Data[$key]
             }
             return $inst
         } elseif ($Data -is [array]) {
@@ -74,7 +74,7 @@ function DeepCopyObj {
 .EXAMPLE
     # 指定クラスを生成して初期化するのに使う子
     $json = Get-Content -Path "config.json" | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Config]) $json 
+    $conf = ConvertFromPSCO ([Config]) $json
 #>
 function ConvertFromPSCO {
     param (
@@ -99,20 +99,20 @@ function ConvertFromPSCO {
             }
             return $inst
         } elseif ($Type.IsClass -and -not $Type.IsValueType) {
-        $inst = New-Object -TypeName $Type.FullName
+            $inst = New-Object -TypeName $Type.FullName
             $Data.Keys | ForEach-Object {
                 $prop = $Type.GetProperty($_)
                 if ($prop -ne $null -and $prop.CanRead -and $prop.CanWrite) {
                     $inst.$_ = ConvertFromPSCO -Type $Type.GetProperty($_).PropertyType -Data $Data.$_
-                    	}
-                    }
-            return $inst
-                } else {
-            return $Data
                 }
+            }
+            return $inst
+        } else {
+            return $Data
+        }
         return $null
     }
-    end {}    
+    end {}
 }
 
 ## ############################################################################
@@ -161,7 +161,7 @@ function RestrictTextZen() {
     )
     begin {}
     process {
-        $Text = [regex]::Replace($Text, "[$Chars]+",{ 
+        $Text = [regex]::Replace($Text, "[$Chars]+",{
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Narrow)
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
@@ -187,7 +187,7 @@ function RestrictTextHan() {
     )
     begin {}
     process {
-        $Text = [regex]::Replace($Text, "[ｦ-ﾟ]+",{ 
+        $Text = [regex]::Replace($Text, "[ｦ-ﾟ]+",{
             param($match)
             return [Microsoft.VisualBasic.Strings]::StrConv($match, [Microsoft.VisualBasic.VbStrConv]::Wide)
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
@@ -201,9 +201,9 @@ function local:FormatDate([datetime] $Date, [string] $Format) {
     $info = New-Object CultureInfo("ja-jp", $true)
     $info.DateTimeFormat.Calendar = New-Object System.Globalization.JapaneseCalendar
     if ($Format.Contains("g")) {
-        $Date.ToString($Format, $info)    
+        $Date.ToString($Format, $info)
     } else {
-        $Date.ToString($Format)    
+        $Date.ToString($Format)
     }
 }
 
@@ -241,17 +241,17 @@ function RestrictTextDate {
             param($match)
             $name = $match.Value.ToUpper()
             $name = $name.Replace(".","-")
-            $date = [DateTime]::ParseExact($name, "yyyy-M-d", $null) 
+            $date = [DateTime]::ParseExact($name, "yyyy-M-d", $null)
             if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## YYYY年MM月DD日
         $Text = [regex]::Replace($Text, "(?<![0-9]+)(19|20)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
             param($match)
             $name = $match.Value.ToUpper()
-            $date = [DateTime]::ParseExact($name, "yyyy年M月d日", $null) 
+            $date = [DateTime]::ParseExact($name, "yyyy年M月d日", $null)
             if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-        ## 和暦YY-MM-DD or 和暦YY.MM.DD 
+        ## 和暦YY-MM-DD or 和暦YY.MM.DD
         $Text = [regex]::Replace($Text, "(令和|\bR|平成|\bH|昭和|\bS|明治|\bM|大正|\bT)(\d{1,2})([.-])([1-9]|0[1-9]|1[0-2])(\3)([1-9]|0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
             param($match)
             $name = $match.Value.ToUpper()
@@ -261,7 +261,7 @@ function RestrictTextDate {
             $name = $name.Replace("S","昭和")
             $name = $name.Replace("M","明治")
             $name = $name.Replace("T","大正")
-            $date = [DateTime]::ParseExact($name, "gy-M-d", $info) 
+            $date = [DateTime]::ParseExact($name, "gy-M-d", $info)
             if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## 和暦YY年MM月DD日
@@ -273,7 +273,7 @@ function RestrictTextDate {
             $name = $name.Replace("S","昭和")
             $name = $name.Replace("M","明治")
             $name = $name.Replace("T","大正")
-            $date = [DateTime]::ParseExact($name, "gy年M月d日", $info) 
+            $date = [DateTime]::ParseExact($name, "gy年M月d日", $info)
             if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         # 年号省略の場合は表記年度と参照年度が一致する場合だけ処理
@@ -284,9 +284,9 @@ function RestrictTextDate {
                 $name = $match.Value.ToUpper()
                 $name = $name.Replace(".","-")
                 $nameyy = ($RefDate.Year).ToString().Substring(0,2) + $name
-                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy-M-d", $null) 
+                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy-M-d", $null)
                 $namegg = $RefDate.ToString("ggg", $info) + $name
-                $dategg = [DateTime]::ParseExact($namegg, "gggy-M-d", $info) 
+                $dategg = [DateTime]::ParseExact($namegg, "gggy-M-d", $info)
                 if( ($dateyy) -and ($RefDate.Year -eq $dateyy.Year) ){
                     return (FormatDate $dateyy $Format)
                 }elseif( ($dategg) -and ($RefDate.Year -eq $dategg.Year) ){
@@ -301,9 +301,9 @@ function RestrictTextDate {
                 $name = $match.Value.ToUpper()
                 $name = $name.Replace(".","-")
                 $nameyy = ($RefDate.Year).ToString().Substring(0,2) + $name
-                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy年M月d日", $null) 
+                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy年M月d日", $null)
                 $namegg = $RefDate.ToString("ggg", $info) + $name
-                $dategg = [DateTime]::ParseExact($namegg, "gy年M月d日", $info) 
+                $dategg = [DateTime]::ParseExact($namegg, "gy年M月d日", $info)
                 if( ($dateyy) -and ($RefDate.Year -eq $dateyy.Year) ){
                     return (FormatDate $dateyy $Format)
                 }elseif( ($dategg) -and ($RefDate.Year -eq $dategg.Year) ){
@@ -338,13 +338,13 @@ function TryConvertRoma2Kana {
     begin {}
     process {
         $RomajiMapA = @{
-            "Â"= "Aー"; "Î"= "Iー"; "Ûー"= "U"; "Ê"= "Eー"; "Ô"= "Oー"; 
-            "Ā"= "Aー"; "Ī"= "Iー"; "Ūー"= "U"; "Ē"= "Eー"; "Ō"= "Oー"; 
-            "nn"= "ん"; 
+            "Â"= "Aー"; "Î"= "Iー"; "Ûー"= "U"; "Ê"= "Eー"; "Ô"= "Oー";
+            "Ā"= "Aー"; "Ī"= "Iー"; "Ūー"= "U"; "Ē"= "Eー"; "Ō"= "Oー";
+            "nn"= "ん";
             "qa"= "っq"; "qi"= "っq"; "qu"= "っq"; "qe"= "っq"; "qo"= "っq";
-            "kk"= "っk"; "ss"= "っs"; "tt"= "っt"; "qn"= "っn"; "hh"= "っh"; 
-            "mm"= "っm"; "yy"= "っy"; "rr"= "っr"; "ww"= "っw"; "gg"= "っg"; 
-            "zz"= "っz"; "dd"= "っd"; "bb"= "っb"; "pp"= "っp"; "tc"= "っc"; 
+            "kk"= "っk"; "ss"= "っs"; "tt"= "っt"; "qn"= "っn"; "hh"= "っh";
+            "mm"= "っm"; "yy"= "っy"; "rr"= "っr"; "ww"= "っw"; "gg"= "っg";
+            "zz"= "っz"; "dd"= "っd"; "bb"= "っb"; "pp"= "っp"; "tc"= "っc";
             "ff"= "っf"; "jj"= "っj";
         }
         $RomajiMapB = @{
@@ -379,7 +379,7 @@ function TryConvertRoma2Kana {
             "tva"= "とぁ"; "tvi"= "とぃ"; "tvu"= "とゅ"; "tve"= "とぇ"; "tvo"= "とぉ";
             "dva"= "どぁ"; "dvi"= "どぃ"; "dvu"= "どゅ"; "dve"= "どぇ"; "dvo"= "どぉ";
             "va" = "ゔぁ"; "vi" = "ゔぃ"; "vu" = "ゔ";   "ve" = "ゔぇ"; "vo" = "ゔぉ";
-            "a" = "あ"; "i" = "い"; "u" = "う"; "e" = "え"; "o" = "お"; 
+            "a" = "あ"; "i" = "い"; "u" = "う"; "e" = "え"; "o" = "お";
             "ka"= "か"; "ki"= "き"; "ku"= "く"; "ke"= "け"; "ko"= "こ";
             "sa"= "さ"; "si"= "し"; "su"= "す"; "se"= "せ"; "so"= "そ";
             "ta"= "た"; "ti"= "ち"; "tu"= "つ"; "te"= "て"; "to"= "と";
@@ -395,7 +395,7 @@ function TryConvertRoma2Kana {
             "ba"= "ば"; "bi"= "び"; "bu"= "ぶ"; "be"= "べ"; "bo"= "ぼ";
             "pa"= "ぱ"; "pi"= "ぴ"; "pu"= "ぷ"; "pe"= "ぺ"; "po"= "ぽ";
             "xa"= "ぁ"; "xi"= "ぃ"; "xu"= "ぅ"; "xe"= "ぇ"; "xo"= "ぉ";
-            "n"= "ん" 
+            "n"= "ん"
         }
         $keys = $RomajiMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
         foreach ($key in $keys) {
@@ -432,7 +432,7 @@ function TryConvertKana2Roma {
     begin {}
     process {
         $KanaMapA = @{
-            "ん"= "nn"; 
+            "ん"= "nn";
             "っ"= "tt";
         }
         $KanaMapB = @{
@@ -464,7 +464,7 @@ function TryConvertKana2Roma {
             "とぁ"= "tva"; "とぃ"= "tvi"; "とゅ"= "tvu"; "とぇ"= "tve"; "とぉ"= "tvo";
             "どぁ"= "dva"; "どぃ"= "dvi"; "どゅ"= "dvu"; "どぇ"= "dve"; "どぉ"= "dvo";
             "ゔぁ"= "va";  "ゔぃ"= "vi";  "ゔ"= "vu";    "ゔぇ"= "ve";  "ゔぉ"= "vo";
-            "あ"= "a";  "い"= "i";  "う"= "u";  "え"= "e";  "お"= "o"; 
+            "あ"= "a";  "い"= "i";  "う"= "u";  "え"= "e";  "お"= "o";
             "か"= "ka"; "き"= "ki"; "く"= "ku"; "け"= "ke"; "こ"= "ko";
             "さ"= "sa"; "し"= "si"; "す"= "su"; "せ"= "se"; "そ"= "so";
             "た"= "ta"; "ち"= "ti"; "つ"= "tu"; "て"= "te"; "と"= "to";
@@ -491,14 +491,14 @@ function TryConvertKana2Roma {
             $value = $KanaMapB[$key]
             $Text = $Text -replace $key, $value
         }
-        $Text = $Text -replace "Aー", "Â" 
-        $Text = $Text -replace "Iー", "Î" 
-        $Text = $Text -replace "Uー", "U" 
-        $Text = $Text -replace "Eー", "Ê" 
-        $Text = $Text -replace "Oー", "Ô" 
+        $Text = $Text -replace "Aー", "Â"
+        $Text = $Text -replace "Iー", "Î"
+        $Text = $Text -replace "Uー", "U"
+        $Text = $Text -replace "Eー", "Ê"
+        $Text = $Text -replace "Oー", "Ô"
         return $Text
     }
-    end {} 
+    end {}
 }
 
 <#
@@ -691,15 +691,15 @@ function AskBox {
         try {
             $DUMY = New-Object Windows.Forms.Form
             $DUMY.TopMost = $true
-        $ret = [System.Windows.Forms.MessageBox]::Show( `
-                $DUMY, 
-            $Message, `
-            $Title, `
-            [System.Windows.Forms.MessageBoxButtons]::YesNo, `
-            [System.Windows.Forms.MessageBoxIcon]::Question, `
-            $Default `
-        )
-        return $ret
+            $ret = [System.Windows.Forms.MessageBox]::Show( `
+                $DUMY,
+                $Message, `
+                $Title, `
+                [System.Windows.Forms.MessageBoxButtons]::YesNo, `
+                [System.Windows.Forms.MessageBoxIcon]::Question, `
+                $Default `
+            )
+            return $ret
         } finally {
             if ($null -ne $DUMY) {$DUMY.Dispose()}
         }
@@ -728,15 +728,15 @@ function InfBox {
         try {
             $DUMY = New-Object Windows.Forms.Form
             $DUMY.TopMost = $true
-        $ret = [System.Windows.Forms.MessageBox]::Show( `
-                $DUMY, 
-            $Message, `
-            $Title, `
-            [System.Windows.Forms.MessageBoxButtons]::OK, `
-            [System.Windows.Forms.MessageBoxIcon]::Information, `
-            $Default `
-        )
-        return $ret
+            $ret = [System.Windows.Forms.MessageBox]::Show( `
+                $DUMY,
+                $Message, `
+                $Title, `
+                [System.Windows.Forms.MessageBoxButtons]::OK, `
+                [System.Windows.Forms.MessageBoxIcon]::Information, `
+                $Default `
+            )
+            return $ret
         } finally {
             if ($null -ne $DUMY) {$DUMY.Dispose()}
         }
@@ -771,13 +771,13 @@ function ShowFileDialog {
         try {
             $DUMY = New-Object Windows.Forms.Form
             $DUMY.TopMost = $true
-        $FDlg = New-Object System.Windows.Forms.OpenFileDialog
-        $FDlg.Title            = $Title
-        $FDlg.InitialDirectory = $InitialDirectory
-        $FDlg.Filter           = $Filter
-        $FDlg.Multiselect      = $Multiselect
+            $FDlg = New-Object System.Windows.Forms.OpenFileDialog
+            $FDlg.Title            = $Title
+            $FDlg.InitialDirectory = $InitialDirectory
+            $FDlg.Filter           = $Filter
+            $FDlg.Multiselect      = $Multiselect
             $null = $FDlg.ShowDialog($DUMY)
-        return $FDlg.FileNames
+            return $FDlg.FileNames
         } finally {
             if ($null -ne $DUMY) {$DUMY.Dispose()}
         }
@@ -806,11 +806,11 @@ function ShowFolderDialog {
         try {
             $DUMY = New-Object Windows.Forms.Form
             $DUMY.TopMost = $true
-        $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
-        $FDlg.Description      = $Description
-        $FDlg.InitialDirectory = $InitialDirectory
+            $FDlg = New-Object System.Windows.Forms.FolderBrowserDialog
+            $FDlg.Description      = $Description
+            $FDlg.InitialDirectory = $InitialDirectory
             $null = $FDlg.ShowDialog($DUMY)
-        return $FDlg.SelectedPath
+            return $FDlg.SelectedPath
         } finally {
             if ($null -ne $DUMY) {$DUMY.Dispose()}
         }
@@ -856,7 +856,7 @@ function local:AddFileList([System.Windows.Forms.ListBox] $ListBox, [string[]] $
     初期リスト
 .EXAMPLE
     # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
-    $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt") 
+    $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt")
     if ($result[0] -eq "OK") {
         foreach ($file in $result[1]) {
             Write-Host $file
@@ -1178,7 +1178,7 @@ function ShowSettingDialog {
             UseVisualStyleBackColor = $true
             DialogResult            = [Windows.Forms.DialogResult]::Cancel
         }
-        
+
         $null = $pnlBody.Controls.Add($grdProp)
         $null = $pnlTail.Controls.Add($btnOK)
         $null = $pnlTail.Controls.Add($btnCancel)
@@ -1263,7 +1263,7 @@ function RunInTaskTray {
                 try {
                     # コンテキスト作成
                     $AppCtxt = New-Object System.Windows.Forms.ApplicationContext
-    
+
                     # タスクトレイアイコン作成
                     $TrayIcon = [System.Windows.Forms.NotifyIcon]@{
                         Icon            = GenTaskTrayIcon($Color)
@@ -1318,7 +1318,7 @@ function RunInTaskTray {
                         $AppCtxt.ExitThread()
                     })
                     $TrayIcon.ContextMenuStrip.Items.Add($ExitMenu) > $null
-                    
+
                     # インターバル
                     if ($Interval -gt 0){
                         $TrayTimer = New-Object Windows.Forms.Timer
@@ -1344,15 +1344,15 @@ function RunInTaskTray {
                         $TrayTimer.Enabled = $true
                         $TrayTimer.Start()
                     }
-    
+
                     # タスクトレイアイコン登録
                     $TrayIcon.Visible = $true
                     [System.Windows.Forms.Application]::Run($AppCtxt) > $null
                     $TrayIcon.Visible = $false
                     $TrayTimer.Stop()
                 } finally {
-                    if($TrayTimer){$TrayTimer.Dispose()} 
-                    if($TrayIcon ){$TrayIcon.Dispose()} 
+                    if($TrayTimer){$TrayTimer.Dispose()}
+                    if($TrayIcon ){$TrayIcon.Dispose()}
                     if($mutex    ){$mutex.ReleaseMutex()}
                 }
             }
@@ -1381,8 +1381,8 @@ function RunInTaskTray {
 #>
 function ShowToast {
     param (
-        [Parameter(Mandatory = $true)] [string] $Title, 
-        [Parameter(Mandatory = $true)] [string] $Message, 
+        [Parameter(Mandatory = $true)] [string] $Title,
+        [Parameter(Mandatory = $true)] [string] $Message,
         [Parameter(Mandatory = $true)] [string] $Detail
     )
     begin {}
@@ -1471,9 +1471,9 @@ function SendMail {
     )
     begin {}
     process {
-        $SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, $SMTPPort) 
-        $SMTPClient.EnableSsl = $SSL 
-        $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($UID,$PWD) 
+        $SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, $SMTPPort)
+        $SMTPClient.EnableSsl = $SSL
+        $SMTPClient.Credentials = New-Object System.Net.NetworkCredential($UID,$PWD)
         $Mail = New-Object Net.Mail.MailMessage($From,$To,$Subject,$Body)
         $CC | ForEach-Object {
             $Mail.CC.Add($_)
@@ -1524,7 +1524,7 @@ function SendIPMsg {
 # ユニーク名取得
 function GenUniqName {
     param (
-        [string] $Path, 
+        [string] $Path,
         [bool]   $isDir
     )
     begin {}
@@ -1576,7 +1576,7 @@ function CopyItemWithUniqName {
             # 進捗表示
             $index = 0
             $count = @(Get-ChildItem $SrcPath -Recurse).Count
-            Copy-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru -Recurse | 
+            Copy-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru -Recurse |
             ForEach-Object {
                 Write-Progress "$fname" -PercentComplete (($index / $count)*100)
                 if ($index -lt $count){ $index += 1 }
@@ -1613,7 +1613,7 @@ function MoveItemWithUniqName {
             # 進捗表示
             $index = 0
             $count = @(Get-ChildItem $SrcPath -Recurse).Count
-            Move-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru | 
+            Move-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru |
             ForEach-Object {
                 Write-Progress "$fname" -PercentComplete (($index / $count)*100)
                 if ($index -lt $count){ $index += 1 }
@@ -1751,7 +1751,7 @@ function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     ## -aoa:展開先に同名ファイルがある場合上書き
     ## -spe:抽出コマンドのルートフォルダーの重複を除去
     $arg = " x ""$SrcPath"" -o""$sUniq"" -aoa -spe "
-    if ($ZipPwd -ne "") { 
+    if ($ZipPwd -ne "") {
         $arg += " -p$ZipPwd"
     }
     $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -ArgumentList $arg -Wait
@@ -1764,14 +1764,14 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     ## -aoa :圧縮先に同名ファイルがある場合上書き
     ## -r0  :指定ディレクトリとサブディレクトリのみ再帰処理 ※-rは兄弟ディレクトリも含む...初見で分かるわけねぇだろ、ソレ
     ## -sdel:圧縮後にファイルを削除
-    $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 " 
+    $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 "
     if ($ZipPwd -ne "" ) {
         $arg += " -p$ZipPwd"
     }
     if ($DivideSize -gt 0 ) {
         $arg += " -v$($DivideSize)m"
     }
-    if ($DelSrc -eq $true) { 
+    if ($DelSrc -eq $true) {
         $arg += " -sdel"
     }
     $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -ArgumentList $arg -Wait
@@ -1882,9 +1882,9 @@ function CmpArc7Z {
 #>
 function DownloadGitHubLatest {
     param (
-        [Parameter(Mandatory = $true)]  [string]$RepOwner, 
-        [Parameter(Mandatory = $true)]  [string]$RepName, 
-        [Parameter(Mandatory = $true)]  [string]$FileName, 
+        [Parameter(Mandatory = $true)]  [string]$RepOwner,
+        [Parameter(Mandatory = $true)]  [string]$RepName,
+        [Parameter(Mandatory = $true)]  [string]$FileName,
         [Parameter(Mandatory = $false)] [string]$OutputDirectory = $PSScriptRoot
     )
     begin {}

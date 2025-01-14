@@ -112,7 +112,7 @@ function local:ManipArchive($sPath) {
                 return
             }
         }
-        ExtArc7Z -SrcPath $sExtSrcPath -DstPath $sExtDstPath -DelSrc $false 
+        ExtArc7Z -SrcPath $sExtSrcPath -DstPath $sExtDstPath -DelSrc $false
     } else {
         # 圧縮処理
         $dname = [System.IO.Path]::GetDirectoryName($sPath)
