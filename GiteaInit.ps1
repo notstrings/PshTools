@@ -16,7 +16,7 @@ Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 Invoke-Expression -Command @"
-	class GiteaInitConfFile {
+	class GiteaInitConf {
 		[string] `$GITEAURL
 		[string] `$GITEAORG
 		[string] `$GITEAKEY
@@ -26,7 +26,7 @@ Invoke-Expression -Command @"
 # 設定初期化
 function local:InitConfFile([string] $Path) {
 	if ((Test-Path -LiteralPath $Path) -eq $false) {
-		$Conf = New-Object GiteaInitConfFile -Property @{
+		$Conf = New-Object GiteaInitConf -Property @{
 			GITEAURL = ""
 			GITEAORG = ""
 			GITEAKEY = ""
@@ -35,14 +35,14 @@ function local:InitConfFile([string] $Path) {
     }
 }
 # 設定書込
-function local:SaveConfFile([string] $Path, [GiteaInitConfFile] $Conf) {
+function local:SaveConfFile([string] $Path, [GiteaInitConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
     $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
 function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $Conf = ConvertFromPSCO ([GiteaInitConfFile]) $json
+    $Conf = ConvertFromPSCO ([GiteaInitConf]) $json
     return $Conf
 }
 # 設定編集
