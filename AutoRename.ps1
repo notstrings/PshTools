@@ -12,37 +12,37 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 
 Invoke-Expression -Command @"
-class AutoRenameConf {
-    [string] `$Format
-}
+    class AutoRenameConf {
+        [string] `$Format
+    }
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
+function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object AutoRenameConf -Property @{
+        $Conf = New-Object AutoRenameConf -Property @{
             Format = "yyyyMMdd"
         }
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [AutoRenameConf] $conf) {
+function local:SaveConfFile([string] $Path, [AutoRenameConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([AutoRenameConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([AutoRenameConf]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
@@ -67,6 +67,8 @@ function local:AutoRenameDir([System.IO.DirectoryInfo] $Target) {
 # ファイル・フォルダ名の処理
 function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $isDir) {
     try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
         # 修正前名称
         $srcpath = $TargetPath
         # 修正後名称
@@ -82,7 +84,7 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
         }
         $fname = RestrictTextZen    -Text $fname -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
         $fname = RestrictTextHan    -Text $fname
-        $fname = RestrictTextDate   -Text $fname -Format $conf.Format -RefDate $TargetDate
+        $fname = RestrictTextDate   -Text $fname -Format $Conf.Format -RefDate $TargetDate
         $fname = RestrictTextBlank  -Text $fname
         $dstpath = [System.IO.Path]::Combine($dname, $fname + $ename)
         # 必要があればリネーム
@@ -105,12 +107,11 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
 	# 引数確認
     if ($args.Count -eq 0) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行

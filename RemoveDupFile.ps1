@@ -12,80 +12,87 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 
 Invoke-Expression -Command @"
-Enum enmCompareMode {
-    Name = 0
-    MD5  = 1
-}
-class RemoveDupConf {
-    [enmCompareMode] `$CompareMode
-}
+    Enum enmCompareMode {
+        Name = 0
+        MD5  = 1
+    }
+    class RemoveDupConf {
+        [enmCompareMode] `$CompareMode
+    }
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
+function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object RemoveDupConf -Property @{
+        $Conf = New-Object RemoveDupConf -Property @{
             CompareMode = [enmCompareMode]::Name
         }
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [RemoveDupConf] $conf) {
+function local:SaveConfFile([string] $Path, [RemoveDupConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([RemoveDupConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([RemoveDupConf]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
 ## 本体 #######################################################################
 
 function local:RemoveDupFile([string[]] $Targets) {
-    $hash = @{}
-    switch ($conf.CompareMode) {
-        "Name" {
-            $Targets | ForEach-Object {
-                Get-ChildItem -LiteralPath $_ -File |
-                ForEach-Object {
-                    $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
-                    if (-not $hash.ContainsKey($uniqkey)){
-                        $hash[$uniqkey] = @()
+    try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
+        # 本体処理
+        $hash = @{}
+        switch ($Conf.CompareMode) {
+            "Name" {
+                $Targets | ForEach-Object {
+                    Get-ChildItem -LiteralPath $_ -File |
+                    ForEach-Object {
+                        $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
+                        if (-not $hash.ContainsKey($uniqkey)){
+                            $hash[$uniqkey] = @()
+                        }
+                        $hash[$uniqkey] += $_
                     }
-                    $hash[$uniqkey] += $_
+                }
+            }
+            "MD5" {
+                $Targets | ForEach-Object {
+                    Get-ChildItem -LiteralPath $_ -File |
+                    ForEach-Object {
+                        $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
+                        if (-not $hash.ContainsKey($uniqkey)){
+                            $hash[$uniqkey] = @()
+                        }
+                        $hash[$uniqkey] += $_
+                    }
                 }
             }
         }
-        "MD5" {
-            $Targets | ForEach-Object {
-                Get-ChildItem -LiteralPath $_ -File |
-                ForEach-Object {
-                    $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
-                    if (-not $hash.ContainsKey($uniqkey)){
-                        $hash[$uniqkey] = @()
-                    }
-                    $hash[$uniqkey] += $_
-                }
+        $hash.Values | ForEach-Object {
+            $_ |
+            Sort-Object -Property Length -Descending |
+            Select-Object -Skip 1 | ForEach-Object {
+                MoveTrush -Path $_.FullName
             }
         }
-    }
-    $hash.Values | ForEach-Object {
-        $_ |
-        Sort-Object -Property Length -Descending |
-        Select-Object -Skip 1 | ForEach-Object {
-            MoveTrush -Path $_.FullName
-        }
+    } catch {
+        $null = Write-Host "Error:" $_.Exception.Message
     }
 }
 
@@ -95,12 +102,11 @@ function local:RemoveDupFile([string[]] $Targets) {
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
 	# 引数確認
     if ($args.Length -eq 0) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行

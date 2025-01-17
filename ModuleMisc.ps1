@@ -15,6 +15,9 @@ Add-type -AssemblyName System.Windows.Forms
     オブジェクトをディープコピー
 .PARAMETER Text
     対象オブジェクト
+.NOTES
+    クラスのメンバ変数ではなくプロパティを対象にしていますので
+    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
 #>
 function DeepCopyObj {
     param (
@@ -70,11 +73,10 @@ function DeepCopyObj {
 .PARAMETER Type
     変換インスタンスの型
 .PARAMETER Data
-    変換インスタンスのメンバに対応するPSCustomObject
-.EXAMPLE
-    # 指定クラスを生成して初期化するのに使う子
-    $json = Get-Content -Path "config.json" | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Config]) $json
+    変換インスタンスのプロパティに対応するPSCustomObject
+.NOTES
+    クラスのメンバ変数ではなくプロパティを対象にしていますので
+    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
 #>
 function ConvertFromPSCO {
     param (
@@ -1067,6 +1069,7 @@ function ShowFileListDialogWithOption {
     Add-Type -AssemblyName "System.ComponentModel"          # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
     Add-Type -AssemblyName "System.Drawing"                 # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
     Add-Type -AssemblyName "System.Windows.Forms.Design"    # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
+    Invoke-Expression -Command @"
     class AppSettings {
         [System.ComponentModel.Description("名前")]
         [string]$AppName
@@ -1085,6 +1088,7 @@ function ShowFileListDialogWithOption {
         # [System.ComponentModel.TypeConverter(([System.ComponentModel.ExpandableObjectConverter]))]
         # [ChildNode] elm
     }
+    "@
     $settings = [AppSettings]@{
         AppName = "My Application"
         Version = 1
@@ -1092,7 +1096,7 @@ function ShowFileListDialogWithOption {
         LogFilePath = "C:\app.log"
         LogLevel = [System.Diagnostics.SourceLevels]::Information
     }
-    $edit = DeepCopyObj $settings
+    $edit = ConvertFromPSCO ([AutoRenameConf]) $settings
     $ret = ShowSettingDialog "Title" $edit
     if ($ret -eq "OK") {
         $edit

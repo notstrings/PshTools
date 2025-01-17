@@ -15,43 +15,42 @@ function local:Setup() {
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
-
 Invoke-Expression -Command @"
-class GiteaInitConf {
-    [string] `$GITEAURL
-    [string] `$GITEAORG
-    [string] `$GITEAKEY
-}
+	class GiteaInitConfFile {
+		[string] `$GITEAURL
+		[string] `$GITEAORG
+		[string] `$GITEAKEY
+	}
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
-    if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object GiteaInitConf -Property @{
-            GITEAURL = ""
-            GITEAORG = ""
-            GITEAKEY = ""
-        }
-        SaveConf $Path $conf
+function local:InitConfFile([string] $Path) {
+	if ((Test-Path -LiteralPath $Path) -eq $false) {
+		$Conf = New-Object GiteaInitConfFile -Property @{
+			GITEAURL = ""
+			GITEAORG = ""
+			GITEAKEY = ""
+		}
+		SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [GiteaInitConf] $conf) {
+function local:SaveConfFile([string] $Path, [GiteaInitConfFile] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([GiteaInitConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([GiteaInitConfFile]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
@@ -101,22 +100,28 @@ function local:GiteaInit([string] $URL, [string] $ORG, [string] $Repository, [st
 		-Body (	[System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json @{Name = "$Repository"} )) )
 }
 
-function SetupGitea([string] $Path, [PSCustomObject] $conf) {
-	# Giteaリポジトリ作成
-	$Repository = [System.IO.Path]::GetFileName($Path)
-	if (($Repository -match "[^a-zA-Z0-9-]")) {
-		Write-Host "フォルダ名は英数ハイフンのみ使用可能"
-		return
-	}
-	if ( (IsGiteaInit $conf.GITEAURL $conf.GITEAORG $Repository $conf.GITEAKEY) -eq $false){
-		GiteaInit $conf.GITEAURL $conf.GITEAORG $Repository $conf.GITEAKEY
-	}
-
-	# ローカルリポジトリ作成＆関連付け
-	if ( (IsGitInit $Path) -eq $false){
-		GitInit $Path
-	}
-	GitSetRemote $Path "http://$URL/$ORG/$Repository.git"
+function local:SetupGitea([string] $Path) {
+	try {
+		# 設定取得
+		$Conf = LoadConfFile $ConfPath
+		# Giteaリポジトリ作成
+		$Repository = [System.IO.Path]::GetFileName($Path)
+		if (($Repository -match "[^a-zA-Z0-9-]")) {
+			Write-Host "フォルダ名は英数ハイフンのみ使用可能"
+			return
+		}
+		if ( (IsGiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY) -eq $false){
+			GiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY
+		}
+	
+		# ローカルリポジトリ作成＆関連付け
+		if ( (IsGitInit $Path) -eq $false){
+			GitInit $Path
+		}
+		GitSetRemote $Path "http://$URL/$ORG/$Repository.git"
+    } catch {
+        $null = Write-Host "Error:" $_.Exception.Message
+    }
 }
 
 ## 本体 #######################################################################
@@ -125,19 +130,18 @@ function SetupGitea([string] $Path, [PSCustomObject] $conf) {
 
 try {
 	$null = Write-Host "---$Title---"
-	# 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
 	# 引数確認
     if ($args.Count -eq 0) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                SetupGitea $arg $conf
+                SetupGitea $arg
             }
         }
     }

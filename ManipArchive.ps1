@@ -21,46 +21,46 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 
 Invoke-Expression -Command @"
-Enum enmDivideType {
-    None = 0
-    New  = 1
-    Old  = 2
-}
-class ManipArchiveConf {
-    [bool]           `$Encrypt
-    [enmDivideType]  `$DivideType
-    [int]            `$DivideSize
-}
+    Enum enmDivideType {
+        None = 0
+        New  = 1
+        Old  = 2
+    }
+    class ManipArchiveConf {
+        [bool]           `$Encrypt
+        [enmDivideType]  `$DivideType
+        [int]            `$DivideSize
+    }
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
+function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object ManipArchiveConf -Property @{
+        $Conf = New-Object ManipArchiveConf -Property @{
             Encrypt = $false
             DivideType = [enmDivideType]::None
             DivideSize = 1
         }
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [ManipArchiveConf] $conf) {
+function local:SaveConfFile([string] $Path, [ManipArchiveConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([ManipArchiveConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([ManipArchiveConf]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
@@ -105,54 +105,61 @@ function local:DivideFile([string]$SrcPath, [int]$PartSizeMB) {
 }
 
 function local:ManipArchive($Path) {
-    if ((isArchive $Path) -or (isDividedArchive $Path)) {
-        # 展開処理
-        $dname = [System.IO.Path]::GetDirectoryName($Path)
-        $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-        $ename = [System.IO.Path]::GetExtension($Path)
-        $sExtSrcPath = $Path
-        $sExtDstPath = [System.IO.Path]::Combine($dname, $fname)
-        if (isDividedArchive $sExtSrcPath) {
-            if ($ename -ne ".001") {
-                Write-Host "$($Path)は分割圧縮ファイルの先頭ではありません"
-                return
+    try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
+        # 本体処理
+        if ((isArchive $Path) -or (isDividedArchive $Path)) {
+            # 展開処理
+            $dname = [System.IO.Path]::GetDirectoryName($Path)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+            $ename = [System.IO.Path]::GetExtension($Path)
+            $sExtSrcPath = $Path
+            $sExtDstPath = [System.IO.Path]::Combine($dname, $fname)
+            if (isDividedArchive $sExtSrcPath) {
+                if ($ename -ne ".001") {
+                    Write-Host "$($Path)は分割圧縮ファイルの先頭ではありません"
+                    return
+                }
             }
-        }
-        ExtArc7Z -SrcPath $sExtSrcPath -DstPath $sExtDstPath -DelSrc $false
-    } else {
-        # 圧縮処理
-        $dname = [System.IO.Path]::GetDirectoryName($Path)
-        $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-        $sCmpSrcPath = $Path
-        $sCmpDstPath = [System.IO.Path]::Combine($dname, $fname + ".zip")
+            ExtArc7Z -SrcPath $sExtSrcPath -DstPath $sExtDstPath -DelSrc $false
+        } else {
+            # 圧縮処理
+            $dname = [System.IO.Path]::GetDirectoryName($Path)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+            $sCmpSrcPath = $Path
+            $sCmpDstPath = [System.IO.Path]::Combine($dname, $fname + ".zip")
 
-        $ZipPwd = ""
-        if ($conf.Encrypt -eq $true) {
-            $ZipPwd = GetRandomPassword
-        }
-        switch ($conf.DivideType) {
-            "None" { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
-            "New"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd -DivideSize $conf.DivideSize -DelSrc $false }
-            "Old"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
-        }
-        $dname = [System.IO.Path]::GetDirectoryName($sCmpDstPath)
-        $fname = [System.IO.Path]::GetFileNameWithoutExtension($sCmpDstPath)
-        $sCmpBatPath = [System.IO.Path]::Combine($dname, $fname + ".bat")
-        $sCmpPwdPath = [System.IO.Path]::Combine($dname, $fname + ".txt")
-        if (($conf.DivideType -eq [enmDivideType]::Old) -and ($conf.DivideSize -gt 0)) {
-            ## 旧式分割圧縮
-            if (DivideFile $sCmpDstPath $conf.DivideSize) {
-                Remove-Item $sCmpDstPath -Force
-                $sCmd = ""
-                $sCmd += "@echo off`r`n"
-                $sCmd += "copy /b ""$($fname).div.*"" ""$($fname).zip"""
-                Set-Content -LiteralPath $sCmpBatPath -Value $sCmd -Encoding "OEM"
+            $ZipPwd = ""
+            if ($Conf.Encrypt -eq $true) {
+                $ZipPwd = GetRandomPassword
+            }
+            switch ($Conf.DivideType) {
+                "None" { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
+                "New"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd -DivideSize $Conf.DivideSize -DelSrc $false }
+                "Old"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
+            }
+            $dname = [System.IO.Path]::GetDirectoryName($sCmpDstPath)
+            $fname = [System.IO.Path]::GetFileNameWithoutExtension($sCmpDstPath)
+            $sCmpBatPath = [System.IO.Path]::Combine($dname, $fname + ".bat")
+            $sCmpPwdPath = [System.IO.Path]::Combine($dname, $fname + ".txt")
+            if (($Conf.DivideType -eq [enmDivideType]::Old) -and ($Conf.DivideSize -gt 0)) {
+                ## 旧式分割圧縮
+                if (DivideFile $sCmpDstPath $Conf.DivideSize) {
+                    Remove-Item $sCmpDstPath -Force
+                    $sCmd = ""
+                    $sCmd += "@echo off`r`n"
+                    $sCmd += "copy /b ""$($fname).div.*"" ""$($fname).zip"""
+                    Set-Content -LiteralPath $sCmpBatPath -Value $sCmd -Encoding "OEM"
+                }
+            }
+            if ($Conf.Encrypt -eq $true) {
+                Set-Clipboard $ZipPwd
+                Set-Content -Path $sCmpPwdPath -Value $ZipPwd -Encoding "OEM"
             }
         }
-        if ($conf.Encrypt -eq $true) {
-            Set-Clipboard $ZipPwd
-            Set-Content -Path $sCmpPwdPath -Value $ZipPwd -Encoding "OEM"
-        }
+    } catch {
+        $null = Write-Host "Error:" $_.Exception.Message
     }
 }
 
@@ -162,12 +169,11 @@ function local:ManipArchive($Path) {
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
     # 引数確認
     if ($args.Count -eq 0) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行

@@ -12,50 +12,50 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 
 Invoke-Expression -Command @"
-Enum enmGravityType {
-    NorthWest = 0
-    North     = 1
-    NorthEast = 2
-    West      = 3
-    Center    = 4
-    East      = 5
-    SouthWest = 6
-    South     = 7
-    SouthEast = 8
-}
-class DiffImageConf {
-    [bool]            `$FitSize
-    [enmGravityType]  `$Align
-}
+    Enum enmGravityType {
+        NorthWest = 0
+        North     = 1
+        NorthEast = 2
+        West      = 3
+        Center    = 4
+        East      = 5
+        SouthWest = 6
+        South     = 7
+        SouthEast = 8
+    }
+    class DiffImageConf {
+        [bool]            `$FitSize
+        [enmGravityType]  `$Align
+    }
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
+function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object DiffImageConf -Property @{
+        $Conf = New-Object DiffImageConf -Property @{
             FitSize = $true
             Align   = [enmGravityType]::Center
         }
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [DiffImageConf] $conf) {
+function local:SaveConfFile([string] $Path, [DiffImageConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([DiffImageConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([DiffImageConf]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
@@ -71,14 +71,17 @@ function local:Setup() {
 
 function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
+        # 本体処理
         $IMPath = "magick.exe"
         $LSrcPath = $LHS.FullName
         $RSrcPath = $RHS.FullName
         $opt1 = ""
-        if ($conf.FitSize -eq $true) {
+        if ($Conf.FitSize -eq $true) {
             $opt1 += "-resize 800x800 "
         }
-        $opt2 = $conf.Align.ToString()
+        $opt2 = $Conf.Align.ToString()
         if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
             $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""tempLHS.png"""
             $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""tempRHS.png"""
@@ -88,6 +91,8 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         }
         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""tempLHS.png"" ""tempRHS.png"" -compose Multiply -gravity $opt2 -composite ""diff.png"""
         $null = Start-Process -NoNewWindow -Wait -FilePath "mspaint.exe" -ArgumentList "diff.png"
+    } catch {
+        $null = Write-Host "Error:" $_.Exception.Message
     } finally {
         $null = Remove-Item -Path @("diff.png", "tempLHS.png", "tempRHS.png") -Force
     }
@@ -99,12 +104,11 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
 	# 引数確認
     if ($args.Count -ne 2) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行

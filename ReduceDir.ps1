@@ -12,45 +12,45 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
 
 Invoke-Expression -Command @"
-class ReduceDirConf {
-    [string[]] `$RemFolders
-    [string[]] `$RemFiles
-    [string[]] `$RemExts
-    [bool]     `$RemBlankFolder
-    [bool]     `$RedOrphanFolder
-}
+    class ReduceDirConf {
+        [string[]] `$RemFolders
+        [string[]] `$RemFiles
+        [string[]] `$RemExts
+        [bool]     `$RemBlankFolder
+        [bool]     `$RedOrphanFolder
+    }
 "@
 
 # 設定初期化
-function local:InitConf([string] $Path) {
+function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
-        $conf = New-Object ReduceDirConf -Property @{
+        $Conf = New-Object ReduceDirConf -Property @{
             RemFolders      = @()
             RemFiles        = @("Thumbs.db",".DS_Store")
             RemExts         = @(".bak",".tmp")
             RemBlankFolder  = $true
             RedOrphanFolder = $false
         }
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $Path, [ReduceDirConf] $conf) {
+function local:SaveConfFile([string] $Path, [ReduceDirConf] $Conf) {
     $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $Path
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $Path) {
+function local:LoadConfFile([string] $Path) {
     $json = Get-Content -Path $Path | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([ReduceDirConf]) $json
-    return $conf
+    $Conf = ConvertFromPSCO ([ReduceDirConf]) $json
+    return $Conf
 }
 # 設定編集
-function local:EditConf([string] $Title, [string] $Path) {
-    $conf = LoadConf $Path
-    $ret = ShowSettingDialog $Title $conf
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
     if ($ret -eq "OK") {
-        SaveConf $Path $conf
+        SaveConfFile $Path $Conf
     }
 }
 
@@ -74,54 +74,61 @@ function local:ReduceDir([System.IO.DirectoryInfo] $Target) {
 
 # 整理
 function local:Reduce([string]$Target, [bool]$isDir) {
-    if ($isDir) {
-        # フォルダ
-        ## 不要フォルダ
-        $remfolders = $conf.RemFolders | ForEach-Object {$_.ToLower()}
-        if ($remfolders -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
-            MoveTrush -Path $Target
-            return
-        }
-        ## 空フォルダ
-        if ($conf.RemBlankFolder -eq $true){
-            if (@(Get-ChildItem -LiteralPath $Target -File     ).Length -eq 0 -and
-                @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
+    try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
+        # 本体処理
+        if ($isDir) {
+            # フォルダ
+            ## 不要フォルダ
+            $remfolders = $Conf.RemFolders | ForEach-Object {$_.ToLower()}
+            if ($remfolders -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
+                MoveTrush -Path $Target
+                return
+            }
+            ## 空フォルダ
+            if ($Conf.RemBlankFolder -eq $true){
+                if (@(Get-ChildItem -LiteralPath $Target -File     ).Length -eq 0 -and
+                    @(Get-ChildItem -LiteralPath $Target -Directory).Length -eq 0 ) {
+                    MoveTrush -Path $Target
+                    return
+                }
+            }
+            ## 孤立フォルダ(引き上げ)
+            if ($Conf.RedOrphanFolder -eq $true){
+                if (@(Get-ChildItem -Path ([System.IO.Path]::Combine($Target, "..")) -File     ).Length -eq 0 -and
+                    @(Get-ChildItem -Path ([System.IO.Path]::Combine($Target, "..")) -Directory).Length -eq 1 ) {
+                    $dup = ([System.IO.Path]::Combine($Target, [System.IO.Path]::GetFileName($Target)))
+                    if (Test-Path -LiteralPath $dup) {
+                        $tmp = GenUniqName ($dup + "_") $true
+                        Move-Item   -LiteralPath $dup $tmp -Force
+                        Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
+                        MoveTrush   -Path $Target
+                        Move-Item   -LiteralPath $tmp $dup -Force
+                    } else {
+                        Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
+                        MoveTrush   -Path $Target
+                    }
+                    return
+                }
+            }
+        } else {
+            # ファイル名
+            ## 不要ファイル
+            $remfiles = $Conf.RemFiles | ForEach-Object {$_.ToLower()}
+            if ($remfiles -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
+                MoveTrush -Path $Target
+                return
+            }
+            ## 不要拡張子
+            $remexts = $Conf.RemExts | ForEach-Object {$_.ToLower()}
+            if ($remexts -contains ([System.IO.Path]::GetExtension($Target).ToLower())) {
                 MoveTrush -Path $Target
                 return
             }
         }
-        ## 孤立フォルダ(引き上げ)
-        if ($conf.RedOrphanFolder -eq $true){
-            if (@(Get-ChildItem -Path ([System.IO.Path]::Combine($Target, "..")) -File     ).Length -eq 0 -and
-                @(Get-ChildItem -Path ([System.IO.Path]::Combine($Target, "..")) -Directory).Length -eq 1 ) {
-                $dup = ([System.IO.Path]::Combine($Target, [System.IO.Path]::GetFileName($Target)))
-                if (Test-Path -LiteralPath $dup) {
-                    $tmp = GenUniqName ($dup + "_") $true
-                    Move-Item   -LiteralPath $dup $tmp -Force
-                    Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
-                    MoveTrush   -Path $Target
-                    Move-Item   -LiteralPath $tmp $dup -Force
-                } else {
-                    Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
-                    MoveTrush   -Path $Target
-                }
-                return
-            }
-        }
-    } else {
-        # ファイル名
-        ## 不要ファイル
-        $remfiles = $conf.RemFiles | ForEach-Object {$_.ToLower()}
-        if ($remfiles -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
-            MoveTrush -Path $Target
-            return
-        }
-        ## 不要拡張子
-        $remexts = $conf.RemExts | ForEach-Object {$_.ToLower()}
-        if ($remexts -contains ([System.IO.Path]::GetExtension($Target).ToLower())) {
-            MoveTrush -Path $Target
-            return
-        }
+    } catch {
+        $null = Write-Host "Error:" $_.Exception.Message
     }
 }
 
@@ -131,12 +138,11 @@ function local:Reduce([string]$Target, [bool]$isDir) {
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定取得
-    InitConf $ConfPath
-    $conf = LoadConf $ConfPath
+    # 設定初期化
+    InitConfFile $ConfPath
 	# 引数確認
     if ($args.Length -eq 0) {
-        EditConf $Title $ConfPath
+        EditConfFile $Title $ConfPath
         exit
     }
 	# 処理実行
