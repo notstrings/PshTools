@@ -1,9 +1,11 @@
 ﻿## ############################################################################
 ## とりあえずの関数置き場
 
-Add-Type -AssemblyName "Microsoft.VisualBasic"
-Add-type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.ComponentModel
+Add-type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Windows.Forms.Design
 
 ## ############################################################################
 ## オブジェクト操作
@@ -1064,13 +1066,26 @@ function ShowFileListDialogWithOption {
 .PARAMETER Setting
     設定対象オブジェクト(クラスインスタンスを想定)
 .EXAMPLE
+    Add-Type -AssemblyName "System.ComponentModel"          # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
+    Add-Type -AssemblyName "System.Drawing"                 # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
+    Add-Type -AssemblyName "System.Windows.Forms.Design"    # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
     class AppSettings {
         [System.ComponentModel.Description("名前")]
         [string]$AppName
         [int]$Version
         [bool]$AutoUpdate
+
+        # ファイル/フォルダパスの場合
+        [System.ComponentModel.Editor(([System.Windows.Forms.Design.FileNameEditor]), ([System.Drawing.Design.UITypeEditor]))]
+        # [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))] # フォルダの場合
         [string]$LogFilePath
+
+        # Enumはコンボになる
         [System.Diagnostics.SourceLevels]$LogLevel
+
+        # 子要素に直接クラスがある場合は展開用の属性が必要だが子要素がクラスの配列の場合はこんなことしなくていい
+        # [System.ComponentModel.TypeConverter(([System.ComponentModel.ExpandableObjectConverter]))]
+        # [ChildNode] elm
     }
     $settings = [AppSettings]@{
         AppName = "My Application"

@@ -21,6 +21,7 @@ class ConfChild {
     [System.ComponentModel.Description("監視名称")]
     [string]$MonName
     [System.ComponentModel.Description("監視位置")]
+    [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))]
     [string]$MonPath
 }
 
