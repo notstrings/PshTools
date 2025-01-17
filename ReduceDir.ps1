@@ -7,44 +7,50 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 ## 設定 #######################################################################
 
-class Conf {
-    [string[]] $RemFolders
-    [string[]] $RemFiles
-    [string[]] $RemExts
-    [bool]     $RemBlankFolder
-    [bool]     $RedOrphanFolder
+Add-Type -AssemblyName System.ComponentModel
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms.Design
+
+Invoke-Expression -Command @"
+class ReduceDirConf {
+    [string[]] `$RemFolders
+    [string[]] `$RemFiles
+    [string[]] `$RemExts
+    [bool]     `$RemBlankFolder
+    [bool]     `$RedOrphanFolder
 }
+"@
 
 # 設定初期化
-function local:InitConf([string] $sPath) {
-    if ((Test-Path -LiteralPath $sPath) -eq $false) {
-        $conf = New-Object Conf -Property @{
+function local:InitConf([string] $Path) {
+    if ((Test-Path -LiteralPath $Path) -eq $false) {
+        $conf = New-Object ReduceDirConf -Property @{
             RemFolders      = @()
             RemFiles        = @("Thumbs.db",".DS_Store")
             RemExts         = @(".bak",".tmp")
             RemBlankFolder  = $true
             RedOrphanFolder = $false
         }
-        SaveConf $sPath $conf
+        SaveConf $Path $conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $sPath, [Conf] $conf) {
-    $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $sPath
+function local:SaveConf([string] $Path, [ReduceDirConf] $conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
+    $conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $sPath) {
-    $json = Get-Content -Path $sPath | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Conf]) $json
+function local:LoadConf([string] $Path) {
+    $json = Get-Content -Path $Path | ConvertFrom-Json
+    $conf = ConvertFromPSCO ([ReduceDirConf]) $json
     return $conf
 }
 # 設定編集
-function local:EditConf([string] $sPath) {
-    $conf = LoadConf $ConfPath
+function local:EditConf([string] $Title, [string] $Path) {
+    $conf = LoadConf $Path
     $ret = ShowSettingDialog $Title $conf
     if ($ret -eq "OK") {
-        SaveConf $ConfPath $conf
+        SaveConf $Path $conf
     }
 }
 
@@ -130,7 +136,7 @@ try {
     $conf = LoadConf $ConfPath
 	# 引数確認
     if ($args.Length -eq 0) {
-        EditConf $ConfPath
+        EditConf $Title $ConfPath
         exit
     }
 	# 処理実行

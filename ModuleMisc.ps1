@@ -3,9 +3,7 @@
 
 Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.ComponentModel
 Add-type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Windows.Forms.Design
 
 ## ############################################################################
 ## オブジェクト操作
@@ -104,7 +102,7 @@ function ConvertFromPSCO {
             $inst = New-Object -TypeName $Type.FullName
             $Data.PSObject.Properties | ForEach-Object {
                 $prop = $Type.GetProperty($_.Name)
-                if ($prop -ne $null -and $prop.CanRead -and $prop.CanWrite) {
+                if ($null -ne $prop -and $prop.CanRead -and $prop.CanWrite) {
                     $inst.($_.Name) = ConvertFromPSCO -Type $Type.GetProperty($_.Name).PropertyType -Data $Data.($_.Name)
                 }
             }
@@ -1287,8 +1285,8 @@ function RunInTaskTray {
                     $TrayIcon.ContextMenuStrip.Items.Add($ExitMenu) > $null
 
                     # インターバル
+                    $TrayTimer = New-Object Windows.Forms.Timer
                     if ($Interval -gt 0){
-                        $TrayTimer = New-Object Windows.Forms.Timer
                         $TrayTimer.Add_Tick({
                             $TrayTimer.Stop()
                             $rsl = ""

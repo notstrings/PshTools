@@ -12,49 +12,55 @@ function local:Setup() {
 
 ## 設定 #######################################################################
 
-class Conf {
-    [ConfChild[]] $ConfChild
+Add-Type -AssemblyName System.ComponentModel
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms.Design
+
+Invoke-Expression -Command @"
+class FolderMonitorConf {
+    [MonitorTarget[]] `$MonitorTargets
     [System.ComponentModel.Description("変更の適用に再起動が必要")]
-    [int]         $Interval
+    [int] `$Interval
 }
-class ConfChild {
+class MonitorTarget {
     [System.ComponentModel.Description("監視名称")]
-    [string]$MonName
+    [string] `$MonName
     [System.ComponentModel.Description("監視位置")]
-    [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))]
-    [string]$MonPath
+    [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))] # 単体で見るとエラー
+    [string] `$MonPath
 }
+"@
 
 # 設定初期化
-function local:InitConf([string] $sPath) {
-    if ((Test-Path -LiteralPath $sPath) -eq $false) {
-        $child1 = New-Object ConfChild -Property @{MonName = "Mon01"; MonPath = ""}
-        $child2 = New-Object ConfChild -Property @{MonName = "Mon02"; MonPath = ""}
-        $child3 = New-Object ConfChild -Property @{MonName = "Mon03"; MonPath = ""}
-        $conf = New-Object Conf -Property @{
-            ConfChild = @($child1, $child2, $child3)
+function local:InitConf([string] $Path) {
+    if ((Test-Path -LiteralPath $Path) -eq $false) {
+        $child1 = New-Object MonitorTarget -Property @{MonName = "Mon01"; MonPath = ""}
+        $child2 = New-Object MonitorTarget -Property @{MonName = "Mon02"; MonPath = ""}
+        $child3 = New-Object MonitorTarget -Property @{MonName = "Mon03"; MonPath = ""}
+        $conf = New-Object FolderMonitorConf -Property @{
+            MonitorTargets = @($child1, $child2, $child3)
             Interval = (5*60*1000)
         }
-        SaveConf $sPath $conf
+        SaveConf $Path $conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $sPath, [Conf] $conf) {
-    $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $sPath
+function local:SaveConf([string] $Path, [FolderMonitorConf] $conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
+    $conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $sPath) {
-    $json = Get-Content -Path $sPath | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Conf]) $json
+function local:LoadConf([string] $Path) {
+    $json = Get-Content -Path $Path | ConvertFrom-Json
+    $conf = ConvertFromPSCO ([FolderMonitorConf]) $json
     return $conf
 }
 # 設定編集
-function local:EditConf([string] $sPath) {
-    $conf = LoadConf $sPath
+function local:EditConf([string] $Title, [string] $Path) {
+    $conf = LoadConf $Path
     $ret = ShowSettingDialog $Title $conf
     if ($ret -eq "OK") {
-        SaveConf $sPath $conf
+        SaveConf $Path $conf
     }
 }
 
@@ -64,7 +70,7 @@ function local:FolderMonitor() {
     $Result = ""
     # 更新検出
     $conf = LoadConf $ConfPath
-    $conf.ConfChild | ForEach-Object {
+    $conf.MonitorTargets | ForEach-Object {
         $MonitorName = $_.MonName
         $MonitorPath = $_.MonPath
         if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
@@ -145,7 +151,7 @@ try {
     InitConf $ConfPath
     $crnt = LoadConf $ConfPath
 	# 処理実行
-    RunInTaskTray $Title 0x0000ff { EditConf $ConfPath } { FolderMonitor } ($crnt.Interval)
+    RunInTaskTray $Title 0x0000ff { EditConf $Title $ConfPath } { FolderMonitor } $crnt.Interval
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message

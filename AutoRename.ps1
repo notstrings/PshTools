@@ -7,36 +7,42 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 ## 設定 #######################################################################
 
-class Conf {
-    [string] $Format
+Add-Type -AssemblyName System.ComponentModel
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms.Design
+
+Invoke-Expression -Command @"
+class AutoRenameConf {
+    [string] `$Format
 }
+"@
 
 # 設定初期化
-function local:InitConf([string] $sPath) {
-    if ((Test-Path -LiteralPath $sPath) -eq $false) {
-        $conf = New-Object Conf -Property @{
+function local:InitConf([string] $Path) {
+    if ((Test-Path -LiteralPath $Path) -eq $false) {
+        $conf = New-Object AutoRenameConf -Property @{
             Format = "yyyyMMdd"
         }
-        SaveConf $sPath $conf
+        SaveConf $Path $conf
     }
 }
 # 設定書込
-function local:SaveConf([string] $sPath, [Conf] $conf) {
-    $null = New-Item ([System.IO.Path]::GetDirectoryName($sPath)) -ItemType Directory -ErrorAction SilentlyContinue
-    $conf | ConvertTo-Json | Out-File -FilePath $sPath
+function local:SaveConf([string] $Path, [AutoRenameConf] $conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
+    $conf | ConvertTo-Json | Out-File -FilePath $Path
 }
 # 設定読出
-function local:LoadConf([string] $sPath) {
-    $json = Get-Content -Path $sPath | ConvertFrom-Json
-    $conf = ConvertFromPSCO ([Conf]) $json
+function local:LoadConf([string] $Path) {
+    $json = Get-Content -Path $Path | ConvertFrom-Json
+    $conf = ConvertFromPSCO ([AutoRenameConf]) $json
     return $conf
 }
 # 設定編集
-function local:EditConf([string] $sPath) {
-    $conf = LoadConf $ConfPath
+function local:EditConf([string] $Title, [string] $Path) {
+    $conf = LoadConf $Path
     $ret = ShowSettingDialog $Title $conf
     if ($ret -eq "OK") {
-        SaveConf $ConfPath $conf
+        SaveConf $Path $conf
     }
 }
 
@@ -104,7 +110,7 @@ try {
     $conf = LoadConf $ConfPath
 	# 引数確認
     if ($args.Count -eq 0) {
-        EditConf $ConfPath
+        EditConf $Title $ConfPath
         exit
     }
 	# 処理実行
