@@ -16,6 +16,7 @@ Invoke-Expression -Command @"
         [bool] `$RestrictDate
         [string] `$RestrictDateFormat
         [bool] `$RestrictBlank
+        [bool] `$RemoveBracket
     }
 "@
 
@@ -28,6 +29,7 @@ function local:InitConfFile([string] $Path) {
             RestrictDate = $true
             RestrictDateFormat = "yyyyMMdd"
             RestrictBlank = $true
+            RemoveBracket = $false
         }
         SaveConfFile $Path $Conf
     }
@@ -99,6 +101,9 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
         }
         if ($Conf.RestrictBlank -eq $true) {
             $fname = RestrictTextBlank  -Text $fname
+        }
+        if ($Conf.RemoveBracket -eq $true) {
+            $fname = RemoveAllBrackets  -Text $fname # ファイル名が重複すると自分で括弧付けるんだが、まぁあれば便利
         }
         $dstpath = [System.IO.Path]::Combine($dname, $fname + $ename)
         # 必要があればリネーム
