@@ -22,9 +22,19 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
             if ($ename.ToLower() -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
+                $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + "chcp 65001" + "`r`n"
                 $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + "popd" + "`r`n"
+            }
+        }
+        "PSH7 CUI" {
+            if ($ename.ToLower() -eq ".ps1") {
+                $text = ""
+                $text = $text + "@echo off" + "`r`n"
+                $text = $text + "chcp 65001 > nul" + "`r`n"
+                $text = $text + "pushd %~dp0" + "`r`n"
+                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -32,9 +42,19 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
             if ($ename.ToLower() -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
+                $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + "chcp 65001" + "`r`n"
                 $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + "popd" + "`r`n"
+            }
+        }
+        "PSH7 GUI" {
+            if ($ename.ToLower() -eq ".ps1") {
+                $text = ""
+                $text = $text + "@echo off" + "`r`n"
+                $text = $text + "chcp 65001 > nul" + "`r`n"
+                $text = $text + "pushd %~dp0" + "`r`n"
+                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -42,9 +62,9 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
             if ($ename.ToLower() -eq ".ps1") {
                 $text = ""
                 $text = $text + "@echo off" + "`r`n"
+                $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + "chcp 65001" + "`r`n"
-                $text = $text + "start ""$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell_ise.exe"" -NoProfile -File ""$relpath"" %*" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell_ise.exe"" -File ""$relpath"" -NoProfile" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -69,7 +89,7 @@ try {
             -Message "対象ファイルをドラッグ＆ドロップしてください" `
             -FileList $args `
             -FileFilter "\.(ps1|dsc|yaml)$" `
-            -Options @("PSH5 CUI", "PSH5 GUI", "PSH5 ISE")
+            -Options @("PSH5 CUI", "PSH7 CUI", "PSH5 GUI", "PSH7 GUI", "PSH5 ISE")
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
