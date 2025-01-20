@@ -1516,19 +1516,13 @@ function GenUniqName {
 
 <#
 .SYNOPSIS
-    ファイルを重複しないファイル名にして複製します
-.DESCRIPTION
-    ファイルを重複しないファイル名にして複製します
+    ファイル・フォルダを進捗表示付きで複製します
 .PARAMETER SrcPath
     複製元のファイルまたはフォルダのパス
 .PARAMETER DstPath
     複製先のファイルまたはフォルダのパス
-.EXAMPLE
-    MoveItemWithUniqName -SrcPath "C:\Temp\test.txt" -DstPath "C:\Temp\test.txt" -isDir $false
-    "C:\Temp\test.txt"を"C:\Temp\test.txt"に複製します
-    "C:\Temp\test.txt"が既に存在する場合は"C:\Temp\test (1).txt"に複製します
 #>
-function CopyItemWithUniqName {
+function CopyItemWithProgress {
     param (
         [Parameter(Mandatory = $true)] [string] $SrcPath,
         [Parameter(Mandatory = $true)] [string] $DstPath
@@ -1536,16 +1530,14 @@ function CopyItemWithUniqName {
     begin {}
     process {
         if ($SrcPath -ne $DstPath) {
-            # ユニーク名取得
-            $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
-            # 進捗表示
             $index = 0
             $count = @(Get-ChildItem $SrcPath -Recurse).Count
-            Copy-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru -Recurse |
+            Copy-Item -LiteralPath $SrcPath -Destination $DstPath -PassThru -Recurse |
             ForEach-Object {
                 Write-Progress "$fname" -PercentComplete (($index / $count)*100)
                 if ($index -lt $count){ $index += 1 }
             } | Out-Null
+            Write-Progress "$fname" -Completed
         }
     }
     end {}
@@ -1565,7 +1557,7 @@ function CopyItemWithUniqName {
     "C:\Temp\test.txt"を"C:\Temp\test.txt"に移動します
     "C:\Temp\test.txt"が既に存在する場合は"C:\Temp\test (1).txt"に移動します
 #>
-function MoveItemWithUniqName {
+function MoveItemWithProgress {
     param (
         [Parameter(Mandatory = $true)] [string] $SrcPath,
         [Parameter(Mandatory = $true)] [string] $DstPath
@@ -1573,16 +1565,14 @@ function MoveItemWithUniqName {
     begin {}
     process {
         if ($SrcPath -ne $DstPath) {
-            # ユニーク名取得
-            $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($SrcPath))
-            # 進捗表示
             $index = 0
             $count = @(Get-ChildItem $SrcPath -Recurse).Count
-            Move-Item -LiteralPath $SrcPath -Destination $sUniq -PassThru |
+            Move-Item -LiteralPath $SrcPath -Destination $DstPath -PassThru |
             ForEach-Object {
                 Write-Progress "$fname" -PercentComplete (($index / $count)*100)
                 if ($index -lt $count){ $index += 1 }
             } | Out-Null
+            Write-Progress "$fname" -Completed
         }
     }
     end {}
