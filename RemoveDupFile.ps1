@@ -10,7 +10,6 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
-
 Invoke-Expression -Command @"
     Enum enmCompareMode {
         Name = 0
@@ -61,7 +60,7 @@ function local:RemoveDupFile([string[]] $Targets) {
         switch ($Conf.CompareMode) {
             "Name" {
                 $Targets | ForEach-Object {
-                    Get-ChildItem -LiteralPath $_ -File |
+                    Get-ChildItem -LiteralPath $_ -File -Recurse |
                     ForEach-Object {
                         $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
                         if (-not $hash.ContainsKey($uniqkey)){
@@ -73,7 +72,7 @@ function local:RemoveDupFile([string[]] $Targets) {
             }
             "MD5" {
                 $Targets | ForEach-Object {
-                    Get-ChildItem -LiteralPath $_ -File |
+                    Get-ChildItem -LiteralPath $_ -File -Recurse |
                     ForEach-Object {
                         $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
                         if (-not $hash.ContainsKey($uniqkey)){
