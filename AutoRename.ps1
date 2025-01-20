@@ -10,10 +10,13 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
-
 Invoke-Expression -Command @"
     class AutoRenameConf {
-        [string] `$Format
+        [bool] `$RestrictZen
+        [bool] `$RestrictHan
+        [bool] `$RestrictDate
+        [string] `$RestrictDateFormat
+        [bool] `$RestrictBlank
     }
 "@
 
@@ -21,7 +24,11 @@ Invoke-Expression -Command @"
 function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
         $Conf = New-Object AutoRenameConf -Property @{
-            Format = "yyyyMMdd"
+            RestrictZen = $true
+            RestrictHan = $true
+            RestrictDate = $true
+            RestrictDateFormat = "yyyyMMdd"
+            RestrictBlank = $true
         }
         SaveConfFile $Path $Conf
     }
@@ -82,18 +89,27 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
             $fname = [System.IO.Path]::GetFileName($dstpath)
             $ename = ""
         }
-        $fname = RestrictTextZen    -Text $fname -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
-        $fname = RestrictTextHan    -Text $fname
-        $fname = RestrictTextDate   -Text $fname -Format $Conf.Format -RefDate $TargetDate
-        $fname = RestrictTextBlank  -Text $fname
+        if ($Conf.RestrictZen -eq $true) {
+            $fname = RestrictTextZen    -Text $fname -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
+        }
+        if ($Conf.RestrictHan -eq $true) {
+            $fname = RestrictTextHan    -Text $fname
+        }
+        if ($Conf.RestrictDate -eq $true) {
+            $fname = RestrictTextDate   -Text $fname -Format $Conf.RestrictDateFormat -RefDate $TargetDate
+        }
+        if ($Conf.RestrictBlank -eq $true) {
+            $fname = RestrictTextBlank  -Text $fname
+        }
         $dstpath = [System.IO.Path]::Combine($dname, $fname + $ename)
         # 必要があればリネーム
         if ($fname -ne "") {
             if ($srcpath -ne $dstpath) {
+                $uniq = GenUniqName $dstpath $isDir
                 $null = Write-Host "---"
                 $null = Write-Host "src : $srcpath"
-                $null = Write-Host "dst : $dstpath"
-                $null = MoveItemWithUniqName $srcpath $dstpath
+                $null = Write-Host "dst : $uniq"
+                $null = MoveItemWithProgress $srcpath $uniq
             }
         }
     } catch {
