@@ -88,7 +88,7 @@ try {
             -Title $Title `
             -Message "対象ファイルをドラッグ＆ドロップしてください" `
             -FileList $args `
-            -FileFilter "\.(ps1|dsc|yaml)$" `
+            -FileFilter "\.(ps1)$" `
             -Options @("PSH5 CUI", "PSH7 CUI", "PSH5 GUI", "PSH7 GUI", "PSH5 ISE")
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
