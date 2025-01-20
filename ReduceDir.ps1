@@ -9,7 +9,6 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms.Design
 Invoke-Expression -Command @"
     class ReduceDirConf {
         [string[]] `$RemFolders

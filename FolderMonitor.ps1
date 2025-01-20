@@ -14,7 +14,6 @@ function local:Setup() {
 
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms.Design
 Invoke-Expression -Command @"
     class FolderMonitorConf {
         [MonitorTarget[]] `$MonitorTargets
@@ -25,7 +24,6 @@ Invoke-Expression -Command @"
         [System.ComponentModel.Description("監視名称")]
         [string] `$MonName
         [System.ComponentModel.Description("監視位置")]
-        [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))] # 単体で見るとエラー
         [string] `$MonPath
     }
 "@

@@ -1066,9 +1066,9 @@ function ShowFileListDialogWithOption {
 .PARAMETER Setting
     設定対象オブジェクト(クラスインスタンスを想定)
 .EXAMPLE
-    Add-Type -AssemblyName "System.ComponentModel"          # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
-    Add-Type -AssemblyName "System.Drawing"                 # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
-    Add-Type -AssemblyName "System.Windows.Forms.Design"    # ファイルダイアログ用(このモジュールでは最初に実行済みなので不要)
+    Add-Type -AssemblyName "System.ComponentModel"          # 
+    Add-Type -AssemblyName "System.Drawing"                 # 
+    Add-Type -AssemblyName "System.Windows.Forms.Design"    # PowerShell5では使えないorz
     Invoke-Expression -Command @"
     class AppSettings {
         [System.ComponentModel.Description("名前")]
@@ -1076,9 +1076,9 @@ function ShowFileListDialogWithOption {
         [int]$Version
         [bool]$AutoUpdate
 
-        # ファイル/フォルダパスの場合
-        [System.ComponentModel.Editor(([System.Windows.Forms.Design.FileNameEditor]), ([System.Drawing.Design.UITypeEditor]))]
-        # [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))] # フォルダの場合
+        # ファイル/フォルダパスの場合※PowerShell7以降用
+        # [System.ComponentModel.Editor(([System.Windows.Forms.Design.FileNameEditor]), ([System.Drawing.Design.UITypeEditor]))]    # ファイルの場合
+        # [System.ComponentModel.Editor(([System.Windows.Forms.Design.FolderNameEditor]), ([System.Drawing.Design.UITypeEditor]))]  # フォルダの場合
         [string]$LogFilePath
 
         # Enumはコンボになる

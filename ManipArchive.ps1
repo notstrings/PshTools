@@ -18,7 +18,6 @@ function local:Setup() {
 
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms.Design
 Invoke-Expression -Command @"
     Enum enmDivideType {
         None = 0
