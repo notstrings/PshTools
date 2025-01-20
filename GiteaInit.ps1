@@ -112,7 +112,6 @@ function local:SetupGitea([string] $Path) {
 		if ( (IsGiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY) -eq $false){
 			GiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY
 		}
-	
 		# ローカルリポジトリ作成＆関連付け
 		if ( (IsGitInit $Path) -eq $false){
 			GitInit $Path
