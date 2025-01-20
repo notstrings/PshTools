@@ -583,7 +583,7 @@ Function AutoGuessEncodingByteSimple {
         foreach ($elm in [System.Text.Encoding]::GetEncodings()) {
             $oAmb = $elm.GetEncoding().GetPreamble()
             if ($oAmb.Length -gt 0 ) {
-                if (Compare-Object $TxtData[0..($oAmb.Length - 1)] $oAmb -IncludeEqual -ExcludeDifferent) {
+                if (Compare-Object $TextData[0..($oAmb.Length - 1)] $oAmb -IncludeEqual -ExcludeDifferent) {
                     return $elm.GetEncoding()
                 }
             }
@@ -593,21 +593,21 @@ Function AutoGuessEncodingByteSimple {
         # ・スコアリングせずソレっぽい位置を数えるように変更
         # ・末尾のややこしい処理は移植面倒なのでバッサリ破棄
         # 元々の処理が推定だし単発スクリプトならコレで良いでしょ多分
-        $SJISCount = 0..($TxtData.Length - 2) | Where-Object {
-            $b1 = $TxtData[$_ + 0]
-            $b2 = $TxtData[$_ + 1]
+        $SJISCount = 0..($TextData.Length - 2) | Where-Object {
+            $b1 = $TextData[$_ + 0]
+            $b2 = $TextData[$_ + 1]
             ((0x81 -le $b1 -and $b1 -le 0x9F) -or (0xE0 -le $b1 -and $b1 -le 0xFC)) -and
             ((0x40 -le $b2 -and $b2 -le 0x7E) -or (0x80 -le $b2 -and $b2 -le 0xFC))
         }
-        $EUCJCount = 0..($TxtData.Length - 2) | Where-Object {
-            $b1 = $TxtData[$_ + 0]
-            $b2 = $TxtData[$_ + 1]
+        $EUCJCount = 0..($TextData.Length - 2) | Where-Object {
+            $b1 = $TextData[$_ + 0]
+            $b2 = $TextData[$_ + 1]
             (((0xA1 -le $b1 -and $b1 -le 0xFE) -and (0xA1 -le $b2 -and $b2 -le 0xFE)) -or
              ((0x8E -eq $b1)                   -and (0xA1 -le $b2 -and $b2 -le 0xDF)))
         }
-        $UTF8Count = 0..($TxtData.Length - 2) | Where-Object {
-            $b1 = $TxtData[$_ + 0]
-            $b2 = $TxtData[$_ + 1]
+        $UTF8Count = 0..($TextData.Length - 2) | Where-Object {
+            $b1 = $TextData[$_ + 0]
+            $b2 = $TextData[$_ + 1]
             (0xC0 -le $b1 -and $b1 -le 0xDF) -and (0x80 -le $b2 -and $b2 -le 0xBF)
         }
         if ($SJISCount.Count -gt $EUCJCount.Count -and $SJISCount.Count -gt $UTF8Count.Count) {
