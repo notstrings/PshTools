@@ -5,12 +5,19 @@
 $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
+function local:Setup() {
+    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+    }
+    scoop bucket add extras
+    scoop install imagemagick
+}
+
 ## 設定 #######################################################################
 
 Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms.Design
-
 Invoke-Expression -Command @"
     Enum enmGravityType {
         NorthWest = 0
@@ -61,14 +68,6 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 
 ## 本体 #######################################################################
 
-function local:Setup() {
-    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-    }
-    scoop bucket add extras
-    scoop install imagemagick
-}
-
 function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     try {
         # 設定取得
@@ -77,24 +76,29 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         $IMPath = "magick.exe"
         $LSrcPath = $LHS.FullName
         $RSrcPath = $RHS.FullName
+        $TempPath = [System.IO.Path]::Combine($env:TEMP, "PSHTools_" + [System.Guid]::NewGuid().Guid)
+        $null = New-Item $TempPath -ItemType Directory -ErrorAction SilentlyContinue
+        $TempLHS = [System.IO.Path]::Combine($TempPath, "tempLHS.png")
+        $TempRHS = [System.IO.Path]::Combine($TempPath, "tempRHS.png")
+        $TempRSL = [System.IO.Path]::Combine($TempPath, "diff.png")
         $opt1 = ""
         if ($Conf.FitSize -eq $true) {
             $opt1 += "-resize 800x800 "
         }
         $opt2 = $Conf.Align.ToString()
         if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""tempLHS.png"""
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""tempRHS.png"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""$TempLHS"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""$TempRHS"""
         } else {
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""tempLHS.png"""
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""tempRHS.png"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""$TempLHS"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""$TempRHS"""
         }
-        $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""tempLHS.png"" ""tempRHS.png"" -compose Multiply -gravity $opt2 -composite ""diff.png"""
-        $null = Start-Process -NoNewWindow -Wait -FilePath "mspaint.exe" -ArgumentList "diff.png"
+        $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$TempLHS"" ""$TempRHS"" -compose Multiply -gravity $opt2 -composite ""$TempRSL"""
+        $null = Start-Process -NoNewWindow -Wait -FilePath "mspaint.exe" -ArgumentList "$TempRSL"
     } catch {
         $null = Write-Host "Error:" $_.Exception.Message
     } finally {
-        $null = Remove-Item -Path @("diff.png", "tempLHS.png", "tempRHS.png") -Force
+        $null = Remove-Item -Path $TempPath -Force -Recurse
     }
 }
 
