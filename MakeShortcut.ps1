@@ -6,30 +6,48 @@ $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 
 ## 本体 #######################################################################
 
-function local:MkPshLnk([string] $TargetPath) {
-    MakeLink   $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
-    ConvPshEnc $TargetPath ([System.Text.Encoding]::GetEncoding("UTF-8"))
-}
-
-function local:MakeLink([string] $TargetPath, [System.Text.Encoding] $Encoding) {
+function local:MkLink([string] $TargetPath, [string] $Mode) {
     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
     $ename = [System.IO.Path]::GetExtension($TargetPath)
-    $abspath = [System.IO.Path]::Combine($dname, $fname + $ename)
-    $dstpath = [System.IO.Path]::Combine($dname, $fname + ".lnk")
-    $WSH = New-Object -ComObject WScript.Shell
-    $lnk = $WSH.CreateShortCut($dstpath)
-    $lnk.TargetPath       = """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"""
-    $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
-    $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$abspath"""
-    $lnk.WorkingDirectory = """$dname"""
-    $null = $lnk.Save()
-}
-
-function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding) {
-    $enc = AutoGuessEncodingFileSimple $TargetPath
-    $txt = [System.IO.File]::ReadAllLines($TargetPath, $enc)
-    [System.IO.File]::WriteAllLines($TargetPath, $txt, $Encoding)
+    $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
+    switch ($Mode) {
+        "Current" { $lnkpath = [System.IO.Path]::Combine($dname, $fname + ".lnk") }
+        "SendTo"  { $lnkpath = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\SendTo", $fname + ".lnk")  }
+        "StartUp" { $lnkpath = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\Start Menu\Programs\Startup", $fname + ".lnk") }
+    }
+    switch ($ename.ToLower()) {
+        ".exe" {
+            $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
+            $WSH = New-Object -ComObject WScript.Shell
+            $lnk = $WSH.CreateShortCut($lnkpath)
+            $lnk.TargetPath       = "$exepath"
+            $lnk.IconLocation     = "$exepath"
+            $lnk.Arguments        = ""
+            $lnk.WorkingDirectory = """$dname"""
+            $null = $lnk.Save()
+        }
+        ".bat" {
+            $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
+            $WSH = New-Object -ComObject WScript.Shell
+            $lnk = $WSH.CreateShortCut($lnkpath)
+            $lnk.TargetPath       = "cmd.exe"
+            $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\Imageres.dll, 262"
+            $lnk.Arguments        = "/C ""$exepath"""
+            $lnk.WorkingDirectory = """$dname"""
+            $null = $lnk.Save()
+        }
+        ".ps1" {
+            $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
+            $WSH = New-Object -ComObject WScript.Shell
+            $lnk = $WSH.CreateShortCut($lnkpath)
+            $lnk.TargetPath       = """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"""
+            $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
+            $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$exepath"""
+            $lnk.WorkingDirectory = """$dname"""
+            $null = $lnk.Save()
+        }
+    }
 }
 
 ###############################################################################
@@ -38,15 +56,16 @@ function local:ConvPshEnc([string] $TargetPath, [System.Text.Encoding] $Encoding
 
 try {
     $null = Write-Host "---$Title---"
-    $ret = ShowFileListDialog `
+    $ret = ShowFileListDialogWithOption `
             -Title $Title `
-            -Message "対象PS1ファイルをドラッグ＆ドロップしてください" `
+            -Message "対象ファイル(exe/bat/ps1)をドラッグ＆ドロップしてください" `
             -FileList $args `
-            -FileFilter "\.ps1$"
+            -FileFilter "\.(exe|bat|ps1)$" `
+            -Options @("Current", "SendTo", "StartUp")
     if ($ret[0] -eq "OK") {
-        foreach ($elm in $ret[1]) {
+        foreach($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                MkPshLnk $elm
+                MkLink $elm $ret[2]
             }
         }
     }
