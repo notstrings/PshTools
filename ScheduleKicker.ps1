@@ -75,7 +75,7 @@ function local:ScheduleKicker() {
 function local:CheckTime([datetime] $PrevRunTime, [datetime] $CrntRunTime, [string] $CheckTime) {
     $Ret = $false
     $TargetTime = [datetime]::ParseExact($CheckTime, "HH:mm", $null)
-    if ($PrevRunTime.TimeOfDay -le $TargetTime.TimeOfDay -and $CrntRunTime.TimeOfDay -ge $TargetTime.TimeOfDay) {
+    if ($PrevRunTime.TimeOfDay -le $TargetTime.TimeOfDay -and $CrntRunTime.TimeOfDay -gt $TargetTime.TimeOfDay) {
         $Ret = $true
     }
     return $Ret
