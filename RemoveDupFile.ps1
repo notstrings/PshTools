@@ -14,8 +14,15 @@ Invoke-Expression -Command @"
         Name = 0
         MD5  = 1
     }
+    Enum enmReduceMode {
+        New   = 0
+        Old   = 1
+        Small = 2
+        Large = 3
+    }
     class RemoveDupConf {
         [enmCompareMode] `$CompareMode
+        [enmReduceMode]  `$ReduceMode
     }
 "@
 
@@ -24,6 +31,7 @@ function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
         $Conf = New-Object RemoveDupConf -Property @{
             CompareMode = [enmCompareMode]::Name
+            ReduceMode  = [enmReduceMode]::New
         }
         SaveConfFile $Path $Conf
     }
@@ -50,47 +58,84 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 
 ## 本体 #######################################################################
 
-function local:RemoveDupFile([string[]] $Targets) {
-    try {
-        # 設定取得
-        $Conf = LoadConfFile $ConfPath
-        # 本体処理
-        $hash = @{}
-        switch ($Conf.CompareMode) {
-            "Name" {
-                $Targets | ForEach-Object {
-                    Get-ChildItem -LiteralPath $_ -File -Recurse |
-                    ForEach-Object {
-                        $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
-                        if (-not $hash.ContainsKey($uniqkey)){
-                            $hash[$uniqkey] = @()
-                        }
-                        $hash[$uniqkey] += $_
-                    }
-                }
+function local:ReduceDupFile([string[]] $Targets) {
+    # 設定取得
+    $Conf = LoadConfFile $ConfPath
+    # 本体処理
+    $Hash = @{}
+    foreach ($Target in $Targets) {
+        if (Test-Path -LiteralPath $Target) {
+            if ([System.IO.Directory]::Exists($Target)) {
+                MakeHashDir  $Hash (Get-Item $Target) $Conf.CompareMode
+            } else {
+                MakeHashFile $Hash (Get-Item $Target) $Conf.CompareMode
             }
-            "MD5" {
-                $Targets | ForEach-Object {
-                    Get-ChildItem -LiteralPath $_ -File -Recurse |
-                    ForEach-Object {
-                        $uniqkey = Get-FileHash -LiteralPath $_.FullName -Algorithm MD5
-                        if (-not $hash.ContainsKey($uniqkey)){
-                            $hash[$uniqkey] = @()
-                        }
-                        $hash[$uniqkey] += $_
-                    }
+        }
+    }
+    RemoveDupFile $Hash $Conf.ReduceMode
+}
+function local:MakeHashDir([hashtable] $Hash, [System.IO.DirectoryInfo] $Target, [enmCompareMode] $CompareMode) {
+    Get-ChildItem -LiteralPath $Target.FullName -File -Recurse | ForEach-Object {
+        MakeHashFile $Hash $_ $CompareMode
+    }
+}
+function local:MakeHashFile([hashtable] $Hash, [System.IO.FileInfo] $Target, [enmCompareMode] $CompareMode) {
+    switch ($CompareMode) {
+        "Name" {
+            $uniqkey = [System.IO.Path]::GetFileNameWithoutExtension($Target.FullName)
+            $uniqkey = RestrictTextZen   -Text $uniqkey -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
+            $uniqkey = RestrictTextHan   -Text $uniqkey
+            $uniqkey = RestrictTextBlank -Text $uniqkey
+            $uniqkey = RemoveAllBrackets -Text $uniqkey
+            $uniqkey = $uniqkey.ToLower()
+        }
+        "MD5" {
+            $uniqkey = Get-FileHash -LiteralPath $Target.FullName -Algorithm MD5
+        }
+    }
+    if (-not $Hash.ContainsKey($uniqkey)){
+        $Hash[$uniqkey] = @()
+    }
+    $Hash[$uniqkey] += $Target
+}
+function local:RemoveDupFile([hashtable] $Hash, [enmReduceMode] $ReduceMode) {
+    switch ($ReduceMode) {
+        "New" {
+            $Hash.Values | ForEach-Object {
+                $_ | 
+                Sort-Object -Property LastWriteTime -Descending |
+                Select-Object -Skip 1 | ForEach-Object {
+                    MoveTrush -Path $_.FullName
                 }
             }
         }
-        $hash.Values | ForEach-Object {
-            $_ |
-            Sort-Object -Property Length -Descending |
-            Select-Object -Skip 1 | ForEach-Object {
-                MoveTrush -Path $_.FullName
+        "Old" {
+            $Hash.Values | ForEach-Object {
+                $_ | 
+                Sort-Object -Property LastWriteTime |
+                Select-Object -Skip 1 | ForEach-Object {
+                    MoveTrush -Path $_.FullName
+                }
             }
         }
-    } catch {
-        $null = Write-Host "Error:" $_.Exception.Message
+        "Small" {
+            $Hash.Values | ForEach-Object {
+                $_ | 
+                Sort-Object -Property Length |
+                Select-Object -Skip 1 | ForEach-Object {
+                    MoveTrush -Path $_.FullName
+                }
+            }
+        }
+        "Large" {
+            $Hash.Values | ForEach-Object {
+                $_ | 
+                Sort-Object -Property Length -Descending |
+                Select-Object -Skip 1 | ForEach-Object {
+                    MoveTrush -Path $_.FullName
+                }
+            }
+        }
     }
 }
 
@@ -108,7 +153,7 @@ try {
         exit
     }
 	# 処理実行
-    RemoveDupFile $args
+    ReduceDupFile $args
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message
