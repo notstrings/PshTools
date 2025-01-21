@@ -90,7 +90,7 @@ try {
 	# 処理実行
     $global:CrntRunTime = Get-Date
     $global:PrevRunTime = Get-Date
-    RunInTaskTray $Title 0x00ff00 { EditConfFile $Title $ConfPath } { ScheduleKicker } (1000)
+    RunInTaskTray $Title 0x00ff00 { EditConfFile $Title $ConfPath } { ScheduleKicker } (30 * 1000)
 } catch {
     $null = Write-Host "---例外発生---"
     $null = Write-Host $_.Exception.Message
