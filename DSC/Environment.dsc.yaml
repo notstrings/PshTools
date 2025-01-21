@@ -3,13 +3,13 @@ properties:
   configurationVersion: 0.2.0
   resources:
     # DNSアドレス設定※要管理権限
-    # - resource: NetworkingDSC/DnsServerAddress
-    #  id: SetupDNSAddr
-    #  directives:
-    #    description: Setup DNS address
-    #  settings:
-    #    InterfaceAlias : 'イーサネット'
-    #    Address :
-    #      - '192.168.1.1'
-    #      - '8.8.8.8'
-    #    AddressFamily : 'IPv4'
+    - resource: NetworkingDSC/DnsServerAddress
+     id: SetupDNSAddr
+     directives:
+       description: Setup DNS address
+     settings:
+       InterfaceAlias : 'イーサネット'
+       Address :
+         - '192.168.1.1'
+         - '8.8.8.8'
+       AddressFamily : 'IPv4'

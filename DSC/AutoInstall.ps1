@@ -20,7 +20,7 @@ Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 # Find-Module -Name FileContentDsc -Repository PSGallery | Install-Module
 
 # DSC実行
-winget configure --disable-interactivity "$($PSScriptRoot)\Environment.dsc.yaml"
+# winget configure --disable-interactivity "$($PSScriptRoot)\Environment.dsc.yaml"
 winget configure --disable-interactivity "$($PSScriptRoot)\Packages.dsc.yaml"
 
 # RoboCopy
