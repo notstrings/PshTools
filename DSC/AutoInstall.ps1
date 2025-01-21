@@ -9,7 +9,26 @@ if (isInAdmin -eq $false) {
     exit 0
 }
 
-# Scoop
+## WinGet #####################################################################
+
+# PSGalleryを信頼する
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+
+# DSC Modulesをインストール
+# Find-Module -Name NetworkingDSC  -Repository PSGallery | Install-Module
+# Find-Module -Name 7ZipArchiveDsc -Repository PSGallery | Install-Module
+# Find-Module -Name FileContentDsc -Repository PSGallery | Install-Module
+
+# DSC実行
+winget configure --disable-interactivity "$($PSScriptRoot)\Environment.dsc.yaml"
+winget configure --disable-interactivity "$($PSScriptRoot)\Packages.dsc.yaml"
+
+# RoboCopy
+# robocopy "Source" "Destination" /MIR /FFT /DCOPY:DAT /R:3 /W:5 /NFL /NP /XJ 
+# robocopy "Source" "Destination" /MIR /FFT /DCOPY:DAT /R:3 /W:5 /NFL /NP /XJ 
+
+## Scoop ######################################################################
+
 if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
     Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 }
@@ -23,7 +42,3 @@ scoop install qpdf
 scoop install plantuml
 scoop install nuget
 scoop install gh
-
-# Winget
-winget configure --disable-interactivity "$($PSScriptRoot)\General.dsc.yaml"
-winget configure --disable-interactivity "$($PSScriptRoot)\Develop.dsc.yaml"

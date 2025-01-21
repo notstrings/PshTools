@@ -24,7 +24,7 @@ function local:MkLink([string] $TargetPath, [string] $Mode) {
             $lnk.TargetPath       = "$exepath"
             $lnk.IconLocation     = "$exepath"
             $lnk.Arguments        = ""
-            $lnk.WorkingDirectory = """$dname"""
+            $lnk.WorkingDirectory = "$dname"
             $null = $lnk.Save()
         }
         ".bat" {
@@ -34,17 +34,17 @@ function local:MkLink([string] $TargetPath, [string] $Mode) {
             $lnk.TargetPath       = "cmd.exe"
             $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\Imageres.dll, 262"
             $lnk.Arguments        = "/C ""$exepath"""
-            $lnk.WorkingDirectory = """$dname"""
+            $lnk.WorkingDirectory = "$dname"
             $null = $lnk.Save()
         }
         ".ps1" {
             $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
             $WSH = New-Object -ComObject WScript.Shell
             $lnk = $WSH.CreateShortCut($lnkpath)
-            $lnk.TargetPath       = """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"""
+            $lnk.TargetPath       = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
             $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
             $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$exepath"""
-            $lnk.WorkingDirectory = """$dname"""
+            $lnk.WorkingDirectory = "$dname"
             $null = $lnk.Save()
         }
     }
