@@ -99,13 +99,13 @@ function local:Reduce([string]$Target, [bool]$isDir) {
                     $dup = ([System.IO.Path]::Combine($Target, [System.IO.Path]::GetFileName($Target)))
                     if (Test-Path -LiteralPath $dup) {
                         $tmp = GenUniqName ($dup + "_") $true
-                        Move-Item   -LiteralPath $dup $tmp -Force
-                        Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
-                        MoveTrush   -Path $Target
-                        Move-Item   -LiteralPath $tmp $dup -Force
+                        Move-Item -LiteralPath $dup $tmp -Force
+                        Move-Item -Path ($Target+"/*") ($Target+"/..") -Force
+                        MoveTrush -Path $Target
+                        Move-Item -LiteralPath $tmp $dup -Force
                     } else {
-                        Move-Item   -Path ($Target+"/*") ($Target+"/..") -Force
-                        MoveTrush   -Path $Target
+                        Move-Item -Path ($Target+"/*") ($Target+"/..") -Force
+                        MoveTrush -Path $Target
                     }
                     return
                 }

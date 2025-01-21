@@ -91,19 +91,19 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
             $ename = ""
         }
         if ($Conf.RestrictZen -eq $true) {
-            $fname = RestrictTextZen    -Text $fname -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
+            $fname = RestrictTextZen   -Text $fname -Chars "Ａ-Ｚａ-ｚ０-９　（）［］｛｝"
         }
         if ($Conf.RestrictHan -eq $true) {
-            $fname = RestrictTextHan    -Text $fname
+            $fname = RestrictTextHan   -Text $fname
         }
         if ($Conf.RestrictDate -eq $true) {
-            $fname = RestrictTextDate   -Text $fname -Format $Conf.RestrictDateFormat -RefDate $TargetDate
+            $fname = RestrictTextDate  -Text $fname -Format $Conf.RestrictDateFormat -RefDate $TargetDate
         }
         if ($Conf.RestrictBlank -eq $true) {
-            $fname = RestrictTextBlank  -Text $fname
+            $fname = RestrictTextBlank -Text $fname
         }
         if ($Conf.RemoveBracket -eq $true) {
-            $fname = RemoveAllBrackets  -Text $fname # ファイル名が重複すると自分で括弧付けるんだが、まぁあれば便利
+            $fname = RemoveAllBrackets -Text $fname # ファイル名が重複すると自分で括弧付けるんだが、まぁあれば便利
         }
         $dstpath = [System.IO.Path]::Combine($dname, $fname + $ename)
         # 必要があればリネーム
