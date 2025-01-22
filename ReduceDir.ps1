@@ -79,10 +79,12 @@ function local:Reduce([string]$Target, [bool]$isDir) {
         if ($isDir) {
             # フォルダ
             ## 不要フォルダ
-            $remfolders = $Conf.RemFolders | ForEach-Object {$_.ToLower()}
-            if ($remfolders -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
-                MoveTrush -Path $Target
-                return
+            if ($null -ne $Conf.RemFolders){
+                $remfolders = $Conf.RemFolders | ForEach-Object {$_.ToLower()}
+                if ($remfolders -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
+                    MoveTrush -Path $Target
+                    return
+                }
             }
             ## 空フォルダ
             if ($Conf.RemBlankFolder -eq $true){
@@ -113,16 +115,20 @@ function local:Reduce([string]$Target, [bool]$isDir) {
         } else {
             # ファイル名
             ## 不要ファイル
-            $remfiles = $Conf.RemFiles | ForEach-Object {$_.ToLower()}
-            if ($remfiles -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
-                MoveTrush -Path $Target
-                return
+            if ($null -ne $Conf.RemFiles){
+                $remfiles = $Conf.RemFiles | ForEach-Object {$_.ToLower()}
+                if ($remfiles -contains ([System.IO.Path]::GetFileName($Target).ToLower())) {
+                    MoveTrush -Path $Target
+                    return
+                }
             }
             ## 不要拡張子
-            $remexts = $Conf.RemExts | ForEach-Object {$_.ToLower()}
-            if ($remexts -contains ([System.IO.Path]::GetExtension($Target).ToLower())) {
-                MoveTrush -Path $Target
-                return
+            if ($null -ne $Conf.RemExts){
+                $remexts = $Conf.RemExts | ForEach-Object {$_.ToLower()}
+                if ($remexts -contains ([System.IO.Path]::GetExtension($Target).ToLower())) {
+                    MoveTrush -Path $Target
+                    return
+                }
             }
         }
     } catch {

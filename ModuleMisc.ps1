@@ -80,8 +80,8 @@ function DeepCopyObj {
 #>
 function ConvertFromPSCO {
     param (
-        [Parameter(Mandatory = $true)] [System.Type]    $Type,
-        [Parameter(Mandatory = $true)] [PSCustomObject] $Data
+        [Parameter(Mandatory = $true)]  [System.Type]    $Type,
+        [Parameter(Mandatory = $false)] [PSCustomObject] $Data
     )
     begin {}
     process {
@@ -1349,9 +1349,9 @@ function RunInTaskTray {
 #>
 function ShowToast {
     param (
-        [Parameter(Mandatory = $true)] [string] $Title,
-        [Parameter(Mandatory = $true)] [string] $Message,
-        [Parameter(Mandatory = $true)] [string] $Detail
+        [Parameter(Mandatory = $true)]  [string] $Title,
+        [Parameter(Mandatory = $true)]  [string] $Message,
+        [Parameter(Mandatory = $false)] [string] $Detail
     )
     begin {}
     process {
@@ -1377,7 +1377,7 @@ function ShowToast {
                 $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
                 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($app_id).Show($toast)
             }
-            ShowToastInner __ARG1 __ARG2 __ARG3
+            ShowToastInner "__ARG1" "__ARG2" "__ARG3"
         }
         $enctxt = $blk.ToString()
         $enctxt = $enctxt.Replace("__ARG1", $Title)
