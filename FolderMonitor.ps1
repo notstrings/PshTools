@@ -68,11 +68,13 @@ function local:FolderMonitor() {
     $Conf = LoadConfFile $ConfPath
     # 更新検出
     $Result = ""
-    $Conf.MonitorTargets | ForEach-Object {
-        $MonitorName = $_.MonName
-        $MonitorPath = $_.MonPath
-        if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
-            $Result += CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
+    if ($null -ne $Conf.MonitorTargets) {
+        $Conf.MonitorTargets | ForEach-Object {
+            $MonitorName = $_.MonName
+            $MonitorPath = $_.MonPath
+            if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
+                $Result += CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
+            }
         }
     }
     # 結果表示
