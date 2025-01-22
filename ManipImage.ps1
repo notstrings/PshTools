@@ -3,6 +3,7 @@
 . "$($PSScriptRoot)/ModuleMisc.ps1"
 
 $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
+$ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 # セットアップ
 function local:Setup() {
@@ -15,16 +16,112 @@ function local:Setup() {
     scoop install qpdf
 }
 
+## 設定 #######################################################################
+
+Add-Type -AssemblyName System.ComponentModel
+Add-Type -AssemblyName System.Drawing
+Invoke-Expression -Command @"
+    Enum enmGravityType {
+        NorthWest = 0
+        North     = 1
+        NorthEast = 2
+        West      = 3
+        Center    = 4
+        East      = 5
+        SouthWest = 6
+        South     = 7
+        SouthEast = 8
+    }
+    Enum enmResizeMode {
+        S = 0
+        M = 1
+        L = 2
+    }
+    Enum enmPDFPaperSize {
+        A1 = 0
+        A2 = 1
+        A3 = 2
+        A4 = 3
+        A5 = 4
+    }
+    class ManipImageConf {
+        [enmResizeMode]   `$ResizeMode
+        [bool]            `$AnnotateTitle
+        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
+        [string]          `$AnnotateTitleText
+        [enmGravityType]  `$AnnotateTitlePos
+        [int]             `$AnnotateTitleSize
+        [System.ComponentModel.Description("#RRGGBB")]
+        [string]          `$AnnotateTitleColor
+        [bool]            `$AnnotateDetail
+        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
+        [string]          `$AnnotateDetailText
+        [enmGravityType]  `$AnnotateDetailPos
+        [int]             `$AnnotateDetailSize
+        [System.ComponentModel.Description("#RRGGBB")]
+        [string]          `$AnnotateDetailColor
+        [bool]            `$AnnotateBorder
+        [int]             `$AnnotateBorderSize
+        [System.ComponentModel.Description("#RRGGBB")]
+        [string]          `$AnnotateBorderColor
+        [enmPDFPaperSize] `$PDFPaperSize
+    }
+"@
+
+# 設定初期化
+function local:InitConfFile([string] $Path) {
+    if ((Test-Path -LiteralPath $Path) -eq $false) {
+        $Conf = New-Object ManipImageConf -Property @{
+            ResizeMode = [enmResizeMode]::M
+            AnnotateTitle = $true
+            AnnotateTitleText = "%DN%"
+            AnnotateTitlePos = [enmGravityType]::North
+            AnnotateTitleSize = 50
+            AnnotateTitleColor = "#000000"
+            AnnotateDetail = $true
+            AnnotateDetailText = "%FN%"
+            AnnotateDetailPos = [enmGravityType]::South
+            AnnotateDetailSize = 40
+            AnnotateDetailColor = "#000000"
+            AnnotateBorder = $true
+            AnnotateBorderSize = 8
+            AnnotateBorderColor = "#000000"
+            PDFPaperSize = [enmPDFPaperSize]::a4
+        }
+        SaveConfFile $Path $Conf
+    }
+}
+# 設定書込
+function local:SaveConfFile([string] $Path, [ManipImageConf] $Conf) {
+    $null = New-Item ([System.IO.Path]::GetDirectoryName($Path)) -ItemType Directory -ErrorAction SilentlyContinue
+    $Conf | ConvertTo-Json | Out-File -FilePath $Path
+}
+# 設定読出
+function local:LoadConfFile([string] $Path) {
+    $json = Get-Content -Path $Path | ConvertFrom-Json
+    $Conf = ConvertFromPSCO ([ManipImageConf]) $json
+    return $Conf
+}
+# 設定編集
+function local:EditConfFile([string] $Title, [string] $Path) {
+    $Conf = LoadConfFile $Path
+    $ret = ShowSettingDialog $Title $Conf
+    if ($ret -eq "OK") {
+        SaveConfFile $Path $Conf
+    }
+}
+
 ## 本体 #######################################################################
 
 # ファイル・フォルダ名の処理
 function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
     try {
+        # 設定取得
+        $Conf = LoadConfFile $ConfPath
+        # 変換実施
         $IMPath = "magick.exe"
         $GSPath = "gswin64c.exe"
         $QPPath = "qpdf.exe"
-        # 変換実施
-        # ・クソ長いが分割した所で結局大した意味もない
         switch ($Mode) {
             "PNG変換" {
                 # 入力ファイルをPNGに変換する
@@ -54,7 +151,11 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
             }
             "リサイズ" {
                 # 入力ファイルをリサイズする
-                # ・サイズはどうせほぼ固定だろうからハードコーディング
+                switch ($Conf.ResizeMode) {
+                    "S" { $ResizeMode = "640x640>"   }
+                    "M" { $ResizeMode = "800x800>"   }
+                    "L" { $ResizeMode = "1280x1280>" }
+                }
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -65,7 +166,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
                         $arg = ""
                         $arg += "convert"
-                        $arg += " -resize 800x800>"
+                        $arg += " -resize $ResizeMode"
                         $arg += " ""$srcpath"" ""$dstpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList $arg
                     }
@@ -118,23 +219,44 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $srcpath = $TargetPath
                         $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + $ename)
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-                        $text0 = [System.IO.Path]::GetFileName($dname)
-                        $text1 = [System.IO.Path]::GetFileNameWithoutExtension($srcpath)
+                        $text0 = $Conf.AnnotateTitleText
+                        $text0 = $text0 -replace "%DN%", ([System.IO.Path]::GetFileName($dname))
+                        $text0 = $text0 -replace "%FN%", ([System.IO.Path]::GetFileNameWithoutExtension($srcpath))
+                        $text1 = $Conf.AnnotateDetailText
+                        $text1 = $text1 -replace "%DN%", ([System.IO.Path]::GetFileName($dname))
+                        $text1 = $text1 -replace "%FN%", ([System.IO.Path]::GetFileNameWithoutExtension($srcpath))
                         $arg = ""
                         $arg += "convert"
                         $arg += " ""$srcpath"""
-                        $arg += " -resize 800x800>"                                             # リサイズ
-                        $arg += " ( +clone -alpha opaque -fill white -colorize 100% )"          # 透過背景対策
-                        $arg += " +swap -compose Over -composite"                               # 透過背景対策
-                        $arg += " -gravity north"                                               # 上側テキスト合成
-                        $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize 35"               # 上側テキスト合成
-                        $arg += " ( -background none -fill ""#000000"" label:""$text0"" )"      # 上側テキスト合成
-                        $arg += " -composite"                                                   # 上側テキスト合成
-                        $arg += " -gravity south"                                               # 下側テキスト合成
-                        $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize 25"               # 下側テキスト合成
-                        $arg += " ( -background none -fill ""#000000"" label:""$text1"" )"      # 下側テキスト合成
-                        $arg += " -composite"                                                   # 下側テキスト合成
-                        $arg += " -bordercolor ""#000000"" -border ""8x8"""                     # 枠線付与
+                        $arg += " -resize 1280x1280"                                    # リサイズ※フォントサイズ指定に苦労したくないから固定で適用する
+                        $arg += " ( +clone -alpha opaque -fill white -colorize 100% )"  # 透過背景対策
+                        $arg += " +swap -compose Over -composite"                       # 透過背景対策
+                        if ($Conf.AnnotateTitle -eq $true -and $Conf.AnnotateTitleText -ne "") {
+                            # 縁取りのために二度打ち
+                            $arg += " -gravity $($Conf.AnnotateTitlePos.ToString())"                                                                                        # 上側テキスト合成
+                            $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateTitleSize)"                                                               # 上側テキスト合成
+                            $arg += " ( -background none -stroke ""#FFFFFF""                     -strokewidth 2 -fill ""$($Conf.AnnotateTitleColor)"" label:""$text0"" )"   # 上側テキスト合成
+                            $arg += " -composite"                                                                                                                           # 上側テキスト合成
+                            $arg += " -gravity $($Conf.AnnotateTitlePos.ToString())"                                                                                        # 上側テキスト合成
+                            $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateTitleSize)"                                                               # 上側テキスト合成
+                            $arg += " ( -background none -stroke ""$($Conf.AnnotateTitleColor)"" -strokewidth 0 -fill ""$($Conf.AnnotateTitleColor)"" label:""$text0"" )"   # 上側テキスト合成
+                            $arg += " -composite"                                                                                                                           # 上側テキスト合成
+                        }
+                        if ($Conf.AnnotateDetail -eq $true -and $Conf.AnnotateDetailText -ne "") {
+                            # 縁取りのために二度打ち
+                            $arg += " -gravity $($Conf.AnnotateDetailPos.ToString())"                                                                                       # 下側テキスト合成
+                            $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateDetailSize)"                                                              # 下側テキスト合成
+                            $arg += " ( -background none -stroke ""#FFFFFF""                      -strokewidth 2 -fill ""$($Conf.AnnotateDetailColor)"" label:""$text1"" )" # 下側テキスト合成
+                            $arg += " -composite"                                                                                                                           # 下側テキスト合成
+                            $arg += " -gravity $($Conf.AnnotateDetailPos.ToString())"                                                                                       # 下側テキスト合成
+                            $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateDetailSize)"                                                              # 下側テキスト合成
+                            $arg += " ( -background none -stroke ""$($Conf.AnnotateDetailColor)"" -strokewidth 0 -fill ""$($Conf.AnnotateDetailColor)"" label:""$text1"" )" # 下側テキスト合成
+                            $arg += " -composite"                                                                                                                           # 下側テキスト合成
+                        }
+                        if ($Conf.AnnotateBorder -eq $true) {
+                            $arg += " -bordercolor ""$($Conf.AnnotateBorderColor)"""                        # 枠線色
+                            $arg += " -border ""$($Conf.AnnotateBorderSize)x$($Conf.AnnotateBorderSize)"""  # 枠線
+                        }
                         $arg += " ""$dstpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList $arg
                     }
@@ -189,7 +311,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                     $CombineFiles += " ""$dstpath"""
                 }
                 ## PDF統合
-                $srcpath = $TargetPath
+                # $srcpath = $TargetPath
                 $dstpath = [System.IO.Path]::Combine($dname, "Conv", "Combined.pdf")
                 $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
                 $arg = ""
@@ -200,6 +322,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                 Remove-Item -LiteralPath ([System.IO.Path]::Combine($dname, "Conv", "Temp")) -Recurse -Force
             }
             "PDF平坦化" {
+                # PDF中のスタンプなどを平坦化しAcrobatReaderでは簡単に編集できなくする
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -209,13 +332,14 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + ".pdf")
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
                         $arg = ""
-                        $arg += " --flatten-annotations=all"                    # スタンプなどを平坦化
+                        $arg += " --flatten-annotations=all"
                         $arg += " ""$srcpath"" ""$dstpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$QPPath""" -ArgumentList $arg
                     }
                 }
             }
             "PDF圧縮" {
+                # PDF内部の画像等を圧縮する
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -233,7 +357,8 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                     }
                 }
             }
-            "PDFリサイズA3" {
+            "PDF用紙リサイズ" {
+                # シートサイズが不均等なExcelをPDF出力した場合対策
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -243,33 +368,16 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + ".pdf")
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
                         $arg = ""
-                        $arg += " -sDEVICE=pdfwrite -dCompatibilityLevel=1.4"   # PDF1.4互換出力
-                        $arg += " -sPAPERSIZE=a3 -dFIXEDMEDIA -dPDFFitPage"     # A3を指定
-                        $arg += " -dNOPAUSE -dBATCH -dQUIET"                    # ごにょごにょ
-                        $arg += " -sOutputFile=""$dstpath"" ""$srcpath"""
-                        $null = Start-Process -NoNewWindow -Wait -FilePath """$GSPath""" -ArgumentList $arg
-                    }
-                }
-            }
-            "PDFリサイズA4" {
-                foreach ($TargetPath in $TargetPaths) {
-                    $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
-                    $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
-                    $ename = [System.IO.Path]::GetExtension($TargetPath)
-                    if ($ename.ToLower() -eq ".pdf") {
-                        $srcpath = $TargetPath
-                        $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + ".pdf")
-                        $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-                        $arg = ""
-                        $arg += " -sDEVICE=pdfwrite -dCompatibilityLevel=1.4"   # PDF1.4互換出力
-                        $arg += " -sPAPERSIZE=a4 -dFIXEDMEDIA -dPDFFitPage"     # A4を指定
-                        $arg += " -dNOPAUSE -dBATCH -dQUIET"                    # ごにょごにょ
+                        $arg += " -sDEVICE=pdfwrite -dCompatibilityLevel=1.4"                                           # PDF1.4互換出力
+                        $arg += " -sPAPERSIZE=$($Conf.PDFPaperSize.ToString().ToLower()) -dFIXEDMEDIA -dPDFFitPage"     # 用紙サイズ指定
+                        $arg += " -dNOPAUSE -dBATCH -dQUIET"                                                            # ごにょごにょ
                         $arg += " -sOutputFile=""$dstpath"" ""$srcpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$GSPath""" -ArgumentList $arg
                     }
                 }
             }
             "PDF捨印生成" {
+                # PDF捨印作成用
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -278,14 +386,16 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $srcpath = $TargetPath
                         $dstpath = [System.IO.Path]::Combine($dname, "Conv", $fname + ".pdf")
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-                        # スタンプ生成用にサイズ調整が必要になる
                         $arg = ""
                         $arg += "convert"
-                        $arg += " -resize x400 -density 1024"
+                        $arg += " -resize 400x400 -density 1024"
                         $arg += " ""$srcpath"" ""$dstpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList $arg
                     }
                 }
+            }
+            Default {
+                EditConfFile $Title $ConfPath
             }
         }
     } catch {
@@ -295,17 +405,21 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
 
 ###############################################################################
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.png")
 
 try {
     $null = Write-Host "---$Title---"
+    # 設定初期化
+    InitConfFile $ConfPath
+    # 本体処理
     $ret = ShowFileListDialogWithOption `
             -Title $Title `
             -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdfです`n※PDFは扱いが特殊ですんで一部無視されたりします" `
             -FileList $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf)$" `
-            -Options @("PNG変換", "リサイズ", "トリミング", "傾き補正", "注釈付記", "PDF変換個別",
-                       "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDFリサイズA3", "PDFリサイズA4", "PDF捨印生成")
+            -Options @("PNG変換", "リサイズ", "トリミング", "傾き補正", "注釈付記", 
+                       "PDF変換個別", "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDF用紙リサイズ", "PDF捨印生成", 
+                       "設定編集")
     if ($ret[0] -eq "OK") {
         ManipImage $ret[1] $ret[2]
     }
