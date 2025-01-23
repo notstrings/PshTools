@@ -81,25 +81,27 @@ function local:GetRandomPassword() {
     return -join ((0..15) | ForEach-Object { $text[$rand.Next($text.Length)] })
 }
 
-function local:DivideFile([string]$SrcPath, [int]$PartSizeMB) {
-    $FileData = [System.IO.File]::ReadAllBytes($SrcPath)
-    $FileSize = $FileData.Length
-    $PartSize = $PartSizeMB * 1024 * 1024
-    $PartNum  = 0
-    if ($FileSize -lt $PartSize) {
-        while ($FileSize -gt 0) {
-            $PartNum += 1
-            $dname = [System.IO.Path]::GetDirectoryName($SrcPath)
-            $fname = [System.IO.Path]::GetFileNameWithoutExtension($SrcPath)
-            $PartPath = [System.IO.Path]::Combine($dname, $fname + ".div.$("{0:D3}" -f $PartNum)")
-            $PartSize = [math]::Min($PartSize, $FileSize)
-            $PartData = $FileData[0..($PartSize - 1)]
-            [System.IO.File]::WriteAllBytes($PartPath, $PartData)
-            $FileData = $FileData[$PartSize..($FileSize - 1)]
-            $FileSize -= $PartSize
+function local:DivideFile([string]$SrcPath, [string]$DstPath, [int]$sizeMB) {
+    $cnt  = 0
+    $PartSize = $sizeMB * 1024 * 1024
+    $PartBuff = New-Object byte[] $PartSize
+    $FileStrm = [System.IO.File]::OpenRead($SrcPath)
+    try {
+        while ($FileStrm.Position -lt $FileStrm.Length) {
+            $cnt += 1
+            $PartPath = [System.IO.Path]::Combine($DstPath, "$([System.IO.Path]::GetFileName($SrcPath)).$($cnt.ToString("000"))")
+            $PartStrm = [System.IO.File]::Create($PartPath)
+            try {
+                $PartRead = $FileStrm.Read($PartBuff, 0, $PartSize)
+                $PartStrm.Write($PartBuff, 0, $PartRead)
+            } finally {
+                $PartStrm.Close()
+            }
         }
+    } finally {
+        $FileStrm.Close()
     }
-    return $PartNum
+    return $cnt
 }
 
 function local:ManipArchive($Path) {
@@ -112,48 +114,56 @@ function local:ManipArchive($Path) {
             $dname = [System.IO.Path]::GetDirectoryName($Path)
             $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
             $ename = [System.IO.Path]::GetExtension($Path)
-            $sExtSrcPath = $Path
-            $sExtDstPath = [System.IO.Path]::Combine($dname, $fname)
-            if (isDividedArchive $sExtSrcPath) {
+            $ExtSrcPath = $Path
+            $ExtDstPath = [System.IO.Path]::Combine($dname, $fname)
+            if (isDividedArchive $ExtSrcPath) {
                 if ($ename -ne ".001") {
                     Write-Host "$($Path)は分割圧縮ファイルの先頭ではありません"
                     return
                 }
             }
-            ExtArc7Z -SrcPath $sExtSrcPath -DstPath $sExtDstPath -DelSrc $false
+            ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $false
         } else {
             # 圧縮処理
             $dname = [System.IO.Path]::GetDirectoryName($Path)
             $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-            $sCmpSrcPath = $Path
-            $sCmpDstPath = [System.IO.Path]::Combine($dname, $fname + ".zip")
+            $CmpSrcPath = $Path
+            $CmpDstPath = [System.IO.Path]::Combine($dname, $fname + ".zip")
 
             $ZipPwd = ""
             if ($Conf.Encrypt -eq $true) {
                 $ZipPwd = GetRandomPassword
             }
             switch ($Conf.DivideType) {
-                "None" { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
-                "New"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd -DivideSize $Conf.DivideSize -DelSrc $false }
-                "Old"  { $sCmpDstPath = CmpArc7Z -SrcPath $sCmpSrcPath -DstPath $sCmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
+                "None" { $CmpDstPath = CmpArc7Z -SrcPath $CmpSrcPath -DstPath $CmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
+                "New"  { $CmpDstPath = CmpArc7Z -SrcPath $CmpSrcPath -DstPath $CmpDstPath -ZipPwd $ZipPwd -DivideSize $Conf.DivideSize -DelSrc $false }
+                "Old"  { $CmpDstPath = CmpArc7Z -SrcPath $CmpSrcPath -DstPath $CmpDstPath -ZipPwd $ZipPwd                              -DelSrc $false }
             }
-            $dname = [System.IO.Path]::GetDirectoryName($sCmpDstPath)
-            $fname = [System.IO.Path]::GetFileNameWithoutExtension($sCmpDstPath)
-            $sCmpBatPath = [System.IO.Path]::Combine($dname, $fname + ".bat")
-            $sCmpPwdPath = [System.IO.Path]::Combine($dname, $fname + ".txt")
             if (($Conf.DivideType -eq [enmDivideType]::Old) -and ($Conf.DivideSize -gt 0)) {
-                ## 旧式分割圧縮
-                if (DivideFile $sCmpDstPath $Conf.DivideSize) {
-                    Remove-Item $sCmpDstPath -Force
+                # 旧式分割圧縮
+                $dname = [System.IO.Path]::GetDirectoryName($CmpDstPath)
+                $fname = [System.IO.Path]::GetFileNameWithoutExtension($CmpDstPath)
+                $ename = [System.IO.Path]::GetExtension($CmpDstPath)
+                $CmpDivPath = [System.IO.Path]::Combine($dname, "$($fname + $ename).div")
+                $CmpBatPath = [System.IO.Path]::Combine($CmpDivPath, "$($fname + $ename).bat")
+                $null = New-Item $CmpDivPath -ItemType Directory -ErrorAction SilentlyContinue
+                $DivNum = DivideFile $CmpDstPath $CmpDivPath $Conf.DivideSize
+                if ($DivNum -gt 0) {
+                    Remove-Item $CmpDstPath -Force
                     $sCmd = ""
                     $sCmd += "@echo off`r`n"
-                    $sCmd += "copy /b ""$($fname).div.*"" ""$($fname).zip"""
-                    Set-Content -LiteralPath $sCmpBatPath -Value $sCmd -Encoding "OEM"
+                    $sCmd += "copy /b ""$($fname).*"" ""$($fname + $ename)"""
+                    Set-Content -LiteralPath $CmpBatPath -Value $sCmd -Encoding "OEM"
                 }
             }
             if ($Conf.Encrypt -eq $true) {
+                # 暗号化パスワード
+                $dname = [System.IO.Path]::GetDirectoryName($CmpDstPath)
+                $fname = [System.IO.Path]::GetFileNameWithoutExtension($CmpDstPath)
+                $ename = [System.IO.Path]::GetExtension($CmpDstPath)
+                $CmpPwdPath = [System.IO.Path]::Combine($dname, $fname + ".txt")
                 Set-Clipboard $ZipPwd
-                Set-Content -Path $sCmpPwdPath -Value $ZipPwd -Encoding "OEM"
+                Set-Content -Path $CmpPwdPath -Value $ZipPwd -Encoding "OEM"
             }
         }
     } catch {
@@ -163,7 +173,7 @@ function local:ManipArchive($Path) {
 
 ###############################################################################
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.zip")
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー２")
 
 try {
     $null = Write-Host "---$Title---"
