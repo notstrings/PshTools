@@ -30,8 +30,8 @@ Invoke-Expression -Command @"
         SouthEast = 8
     }
     class DiffImageConf {
-        [bool]            `$FitSize
-        [enmGravityType]  `$Align
+        [bool]           `$FitSize
+        [enmGravityType] `$Align
     }
 "@
 

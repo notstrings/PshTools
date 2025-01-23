@@ -21,7 +21,7 @@ Add-type -AssemblyName System.Windows.Forms
 #>
 function DeepCopyObj {
     param (
-        [Parameter(Mandatory = $true)] [object] $Data
+        [Parameter(Mandatory = $false)] [object] $Data
     )
     begin {}
     process {
@@ -230,7 +230,7 @@ function local:FormatDate([datetime] $Date, [string] $Format) {
 function RestrictTextDate {
     param (
         [parameter(Mandatory=$false)] [string]$Text,
-        [parameter(Mandatory=$true)]  [string]$Format,
+        [parameter(Mandatory=$false)] [string]$Format = "yyyyMMdd",
         [parameter(Mandatory=$false)] [datetime]$RefDate
     )
     begin {}
@@ -335,7 +335,7 @@ function RestrictTextDate {
 #>
 function TryConvertRoma2Kana {
     param (
-        [Parameter(Mandatory = $true)] [string] $Text
+        [Parameter(Mandatory = $false)] [string] $Text
     )
     begin {}
     process {
@@ -429,7 +429,7 @@ function TryConvertRoma2Kana {
 #>
 function TryConvertKana2Roma {
     param (
-        [Parameter(Mandatory = $true)] [string] $Text
+        [Parameter(Mandatory = $false)] [string] $Text
     )
     begin {}
     process {
@@ -518,7 +518,7 @@ function TryConvertKana2Roma {
 #>
 Function RemoveAllBrackets {
     param (
-        [Parameter(Mandatory = $true)] [string] $Text
+        [Parameter(Mandatory = $false)] [string] $Text
     )
     begin {}
     process {
@@ -1489,8 +1489,8 @@ function SendIPMsg {
 # ユニーク名取得
 function GenUniqName {
     param (
-        [string] $Path,
-        [bool]   $isDir
+        [Parameter(Mandatory = $true)] [string] $Path,
+        [Parameter(Mandatory = $true)] [bool]   $isDir
     )
     begin {}
     process {
@@ -1851,7 +1851,7 @@ function DownloadGitHubLatest {
         if ($ast) {
             $dlsrc = $ast.browser_download_url
             $dldst = Join-Path $OutputDirectory $FileName
-            Invoke-WebRequest -Uri $dlsrc -OutFile $dldst
+            $null  = Invoke-WebRequest -Uri $dlsrc -OutFile $dldst
         }
     }
     end {}

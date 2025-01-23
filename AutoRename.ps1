@@ -11,12 +11,12 @@ Add-Type -AssemblyName System.ComponentModel
 Add-Type -AssemblyName System.Drawing
 Invoke-Expression -Command @"
     class AutoRenameConf {
-        [bool] `$RestrictZen
-        [bool] `$RestrictHan
-        [bool] `$RestrictDate
+        [bool]   `$RestrictZen
+        [bool]   `$RestrictHan
+        [bool]   `$RestrictDate
         [string] `$RestrictDateFormat
-        [bool] `$RestrictBlank
-        [bool] `$RemoveBracket
+        [bool]   `$RestrictBlank
+        [bool]   `$RemoveBracket
     }
 "@
 

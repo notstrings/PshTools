@@ -46,6 +46,7 @@ Invoke-Expression -Command @"
     }
     class ManipImageConf {
         [enmResizeMode]   `$ResizeMode
+
         [bool]            `$AnnotateTitle
         [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
         [string]          `$AnnotateTitleText
@@ -53,6 +54,7 @@ Invoke-Expression -Command @"
         [int]             `$AnnotateTitleSize
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateTitleColor
+
         [bool]            `$AnnotateDetail
         [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
         [string]          `$AnnotateDetailText
@@ -60,10 +62,12 @@ Invoke-Expression -Command @"
         [int]             `$AnnotateDetailSize
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateDetailColor
+
         [bool]            `$AnnotateBorder
         [int]             `$AnnotateBorderSize
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateBorderColor
+
         [enmPDFPaperSize] `$PDFPaperSize
     }
 "@
@@ -73,19 +77,23 @@ function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
         $Conf = New-Object ManipImageConf -Property @{
             ResizeMode = [enmResizeMode]::M
+
             AnnotateTitle = $true
             AnnotateTitleText = "%DN%"
             AnnotateTitlePos = [enmGravityType]::North
             AnnotateTitleSize = 50
             AnnotateTitleColor = "#000000"
+
             AnnotateDetail = $true
             AnnotateDetailText = "%FN%"
             AnnotateDetailPos = [enmGravityType]::South
             AnnotateDetailSize = 40
             AnnotateDetailColor = "#000000"
+
             AnnotateBorder = $true
             AnnotateBorderSize = 8
             AnnotateBorderColor = "#000000"
+
             PDFPaperSize = [enmPDFPaperSize]::a4
         }
         SaveConfFile $Path $Conf

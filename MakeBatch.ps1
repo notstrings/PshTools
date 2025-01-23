@@ -15,8 +15,8 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
     $ename = [System.IO.Path]::GetExtension($TargetPath)
-    $relpath = [System.IO.Path]::Combine(".",    $fname + $ename)
-    $dstpath = [System.IO.Path]::Combine($dname, $fname + ".bat")
+    $exepath = [System.IO.Path]::Combine(".",    $fname + $ename)
+    $batpath = [System.IO.Path]::Combine($dname, $fname + ".bat")
     switch ($Mode) {
         "PSH5 CUI" {
             if ($ename.ToLower() -eq ".ps1") {
@@ -24,7 +24,7 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -34,7 +34,7 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -44,7 +44,7 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -54,7 +54,7 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$relpath"" %*" + "`r`n"
+                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
@@ -64,12 +64,12 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
                 $text = $text + "@echo off" + "`r`n"
                 $text = $text + "chcp 65001 > nul" + "`r`n"
                 $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell_ise.exe"" -File ""$relpath"" -NoProfile" + "`r`n"
+                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell_ise.exe"" -File ""$exepath"" -NoProfile" + "`r`n"
                 $text = $text + "popd" + "`r`n"
             }
         }
     }
-    [IO.File]::WriteAllLines($dstpath, $text, $Encoding)
+    [IO.File]::WriteAllLines($batpath, $text, $Encoding)
 }
 
 function local:ConvPshEnc([string] $TargetPath, [string] $Mode, [System.Text.Encoding] $Encoding) {
