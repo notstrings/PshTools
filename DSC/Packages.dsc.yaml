@@ -18,7 +18,7 @@ properties:
         description: Configure PowerToys
       settings:
         AdvancedPaste:
-          Enabled: true
+          Enabled: false
         AlwaysOnTop:
           Enabled: false
         Awake:
@@ -34,31 +34,86 @@ properties:
         FancyZones:
           Enabled: false
         FileLocksmith:
-          Enabled: true
-        ImageResizer:
           Enabled: false
         KeyboardManager:
           Enabled: false
         FindMyMouse:
-          Enabled: true
+          Enabled: false
+        Hosts:
+          Enabled: false
+        ImageResizer:
+          Enabled: false
+        MeasureTool:
+          Enabled: false
         MouseHighlighter:
           Enabled: false
         MouseJump:
           Enabled: false
         MousePointerCrosshairs:
-          Enabled: false
+          Enabled: true
+          ActivationShortcut: "Win+NumPad 0"
+          CrosshairsColor: #FF0000FF
+          CrosshairsOpacity: 15
+          CrosshairsRadius: 50
+          CrosshairsThickness: 2
+          CrosshairsBorderColor: #FFFFFFFF
+          CrosshairsBorderSize: 1
+          CrosshairsAutoHide: true
+          CrosshairsIsFixedLengthEnabled: false
+          CrosshairsFixedLength: 100
+          AutoActivate: false
         MouseWithoutBorders:
-          Enabled: false
-        NewPlus:
           Enabled: false
         Peek:
           Enabled: true
-        PowerRename:
-          Enabled: true
-        PowerLauncher:
-          Enabled: false
         PowerAccent:
           Enabled: false
+        PowerLauncher:
+          Enabled: true
+          OpenPowerLauncher: "Ctrl+Win+R"
+          Plugins:
+            - Name: "Calculator"
+              Disabled: false
+            - Name: "Folder"
+              Disabled: false
+            - Name: "History"
+              Disabled: false
+            - Name: "Windows Search"
+              Disabled: false
+            - Name: "OneNote"
+              Disabled: true
+            - Name: "PowerToys"
+              Disabled: true
+            - Name: "Program"
+              Disabled: false
+            - Name: "Registry Plugin"
+              Disabled: true
+            - Name: "Service"
+              Disabled: true
+            - Name: "Shell"
+              Disabled: true
+            - Name: "Windows System Commands"
+              Disabled: true
+            - Name: "Time and Date"
+              Disabled: true
+            - Name: "Unit Converter"
+              Disabled: true
+            - Name: "URI Handler"
+              Disabled: false
+            - Name: "Value Generator"
+              Disabled: true
+            - Name: "Visual Studio Code Workspaces"
+              Disabled: true
+            - Name: "Web Search"
+              Disabled: false
+            - Name: "Windows settings"
+              Disabled: true
+            - Name: "Windows Terminal"
+              Disabled: true
+            - Name: "Window Walker"
+              Disabled: false
+        PowerOcr:
+          Enabled: true
         PowerPreview:
           EnableSvgPreview: true
           EnableSvgThumbnail: true
@@ -71,17 +126,15 @@ properties:
           EnableStlThumbnail: true
           EnableQoiPreview: true
           EnableQoiThumbnail: true
-        PowerOcr:
+        PowerRename:
+          Enabled: true
+        RegistryPreview:
+          Enabled: false
+        ShortcutGuide:
           Enabled: false
         Workspaces:
           Enabled: false
-        ShortcutGuide:
-          Enabled: true
-        MeasureTool:
-          Enabled: false
-        Hosts:
-          Enabled: true
-        RegistryPreview:
+        NewPlus:
           Enabled: false
 
     # Chrome ※管理権限が必要
