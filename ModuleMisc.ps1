@@ -16,8 +16,7 @@ Add-type -AssemblyName System.Windows.Forms
 .PARAMETER Text
     対象オブジェクト
 .NOTES
-    クラスのメンバ変数ではなくプロパティを対象にしていますので
-    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
+    クラスのメンバ変数ではなくプロパティを対象にしています
 #>
 function DeepCopyObj {
     param (
@@ -75,8 +74,7 @@ function DeepCopyObj {
 .PARAMETER Data
     変換インスタンスのプロパティに対応するPSCustomObject
 .NOTES
-    クラスのメンバ変数ではなくプロパティを対象にしていますので
-    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
+    クラスのメンバ変数ではなくプロパティを対象にしています
 #>
 function ConvertFromPSCO {
     param (
@@ -626,7 +624,7 @@ Function AutoGuessEncodingByteSimple {
 
 <#
 .SYNOPSIS
-    問い合わせダイアログを表示します
+    問合ダイアログを表示します
 .PARAMETER Title
     ダイアログのタイトルを指定します
 .PARAMETER Message
@@ -663,7 +661,7 @@ function AskBox {
 
 <#
 .SYNOPSIS
-    問い合わせダイアログを表示します
+    情報ダイアログを表示します
 .PARAMETER Title
     ダイアログのタイトルを指定します
 .PARAMETER Message
@@ -1395,6 +1393,7 @@ function ShowToast {
     送信元のメールアドレスです
 .PARAMETER To
     送信先のメールアドレスです
+    ※CC/BCCと異なりTOは宗教上の理由で単一指定です
 .PARAMETER CC
     CCに追加するメールアドレスです
 .PARAMETER BCC
