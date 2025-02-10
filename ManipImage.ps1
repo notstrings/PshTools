@@ -45,29 +45,45 @@ Invoke-Expression -Command @"
         A5 = 4
     }
     class ManipImageConf {
+        [System.ComponentModel.Category("Resize")]
+        [System.ComponentModel.Description("S:640/M:800/L:1280")]
         [enmResizeMode]   `$ResizeMode
 
+        [System.ComponentModel.Category("AnnotateTitle")]
         [bool]            `$AnnotateTitle
-        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
+        [System.ComponentModel.Category("AnnotateTitle")]
+        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名")]
         [string]          `$AnnotateTitleText
+        [System.ComponentModel.Category("AnnotateTitle")]
         [enmGravityType]  `$AnnotateTitlePos
+        [System.ComponentModel.Category("AnnotateTitle")]
         [int]             `$AnnotateTitleSize
+        [System.ComponentModel.Category("AnnotateTitle")]
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateTitleColor
 
+        [System.ComponentModel.Category("AnnotateDetail")]
         [bool]            `$AnnotateDetail
-        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名)")]
+        [System.ComponentModel.Category("AnnotateDetail")]
+        [System.ComponentModel.Description("%DN%=ディレクトリ名/%DN%=ファイル名")]
         [string]          `$AnnotateDetailText
+        [System.ComponentModel.Category("AnnotateDetail")]
         [enmGravityType]  `$AnnotateDetailPos
+        [System.ComponentModel.Category("AnnotateDetail")]
         [int]             `$AnnotateDetailSize
+        [System.ComponentModel.Category("AnnotateDetail")]
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateDetailColor
 
+        [System.ComponentModel.Category("AnnotateBorder")]
         [bool]            `$AnnotateBorder
+        [System.ComponentModel.Category("AnnotateBorder")]
         [int]             `$AnnotateBorderSize
+        [System.ComponentModel.Category("AnnotateBorder")]
         [System.ComponentModel.Description("#RRGGBB")]
         [string]          `$AnnotateBorderColor
 
+        [System.ComponentModel.Category("PDFPaperSize")]
         [enmPDFPaperSize] `$PDFPaperSize
     }
 "@

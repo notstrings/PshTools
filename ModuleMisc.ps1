@@ -16,8 +16,7 @@ Add-type -AssemblyName System.Windows.Forms
 .PARAMETER Text
     対象オブジェクト
 .NOTES
-    クラスのメンバ変数ではなくプロパティを対象にしていますので
-    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
+    クラスのメンバ変数ではなくプロパティを対象にしています
 #>
 function DeepCopyObj {
     param (
@@ -75,8 +74,7 @@ function DeepCopyObj {
 .PARAMETER Data
     変換インスタンスのプロパティに対応するPSCustomObject
 .NOTES
-    クラスのメンバ変数ではなくプロパティを対象にしていますので
-    Add-Type -TypeDefinitionでC#のクラス定義を生成した場合は注意が必要です
+    クラスのメンバ変数ではなくプロパティを対象にしています
 #>
 function ConvertFromPSCO {
     param (
@@ -626,7 +624,7 @@ Function AutoGuessEncodingByteSimple {
 
 <#
 .SYNOPSIS
-    問い合わせダイアログを表示します
+    問合ダイアログを表示します
 .PARAMETER Title
     ダイアログのタイトルを指定します
 .PARAMETER Message
@@ -663,7 +661,7 @@ function AskBox {
 
 <#
 .SYNOPSIS
-    問い合わせダイアログを表示します
+    情報ダイアログを表示します
 .PARAMETER Title
     ダイアログのタイトルを指定します
 .PARAMETER Message
@@ -1355,38 +1353,30 @@ function ShowToast {
     )
     begin {}
     process {
-        $blk = {
-            function ShowToastInner($Title, $Message, $Detail) {
-                [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-                [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-                [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-                $app_id = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
-                $content = ""
-                $content += "<?xml version='1.0' encoding='utf-8'?>"
-                $content += "<toast>"
-                $content += "  <visual>"
-                $content += "    <binding template='ToastGeneric'>"
-                $content += "        <text>$Title</text>"
-                $content += "        <text>$Message</text>"
-                $content += "        <text>$Detail</text>"
-                $content += "    </binding>"
-                $content += "  </visual>"
-                $content += "</toast>"
-                $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-                $xml.LoadXml($content)
-                $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
-                [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($app_id).Show($toast)
-            }
-            ShowToastInner "__ARG1" "__ARG2" "__ARG3"
-        }
-        $enctxt = $blk.ToString()
-        $enctxt = $enctxt.Replace("__ARG1", $Title)
-        $enctxt = $enctxt.Replace("__ARG2", $Message)
-        $enctxt = $enctxt.Replace("__ARG3", $Detail)
-        $enccmd = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($enctxt))
-        Start-Process -NoNewWindow "powershell.exe" -ArgumentList "-NoProfile -EncodedCommand $enccmd"
+        $null = powershell {
+            param ($Title, $Message, $Detail)
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+            $app_id = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
+            $content = ""
+            $content += "<?xml version='1.0' encoding='utf-8'?>"
+            $content += "<toast>"
+            $content += "  <visual>"
+            $content += "    <binding template='ToastGeneric'>"
+            $content += "        <text>$Title</text>"
+            $content += "        <text>$Message</text>"
+            $content += "        <text>$Detail</text>"
+            $content += "    </binding>"
+            $content += "  </visual>"
+            $content += "</toast>"
+            $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+            $xml.LoadXml($content)
+            $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
+            [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($app_id).Show($toast)
+        } -args $Title, $Message, $Detail
     }
-end {}
+    end {}
 }
 
 <#
@@ -1403,6 +1393,7 @@ end {}
     送信元のメールアドレスです
 .PARAMETER To
     送信先のメールアドレスです
+    ※CC/BCCと異なりTOは宗教上の理由で単一指定です
 .PARAMETER CC
     CCに追加するメールアドレスです
 .PARAMETER BCC
@@ -1569,8 +1560,10 @@ function MoveItemWithProgress {
             $count = @(Get-ChildItem $SrcPath -Recurse).Count
             Move-Item -LiteralPath $SrcPath -Destination $DstPath -PassThru |
             ForEach-Object {
-                Write-Progress "$fname" -PercentComplete (($index / $count)*100)
-                if ($index -lt $count){ $index += 1 }
+                if ($count -gt 0) {
+                    Write-Progress "$fname" -PercentComplete (($index / $count)*100)
+                    if ($index -lt $count){ $index += 1 }
+                }
             } | Out-Null
             Write-Progress "$fname" -Completed
         }
