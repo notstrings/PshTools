@@ -93,7 +93,7 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
             $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""$TempRHS"""
         }
         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$TempLHS"" ""$TempRHS"" -compose Multiply -gravity $opt2 -composite ""$TempRSL"""
-        $null = Start-Process -NoNewWindow -Wait -FilePath "mspaint.exe" -ArgumentList "$TempRSL"
+        $null = Start-Process "$TempRSL"
     } catch {
         $null = Write-Host "Error:" $_.Exception.Message
     } finally {
