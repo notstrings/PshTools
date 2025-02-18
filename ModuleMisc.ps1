@@ -797,7 +797,7 @@ function local:AddFileList([System.Windows.Forms.ListBox] $ListBox, [string[]] $
 .DESCRIPTION
     タイトル/メッセージ/ファイルフィルター/初期リストを指定して
     ドラッグ＆ドロップで受け取ったファイルを表示するダイアログボックスを作成します
-    ユーザーがOKボタンを押すと選択した結果と選択されたファイルのパスが返されます
+    ユーザーがOKボタンを押すと選択した結果/ファイルリスト/選択中ファイル名が返されます
 .PARAMETER Title
     ダイアログボックスのタイトルに設定する文字列です
 .PARAMETER Message
@@ -890,8 +890,8 @@ function ShowFileListDialog {
         })
         $null = $lbxDD.Add_KeyDown({
             if ($_.KeyCode -eq "Delete") {
-                [array]::Reverse($lbxDD.SelectedIndices) | ForEach-Object {
-                    [void]$lbxDD.Items.RemoveAt($_)
+                if ($lbxDD.SelectedIndex -ge 0){
+                    [void]$lbxDD.Items.RemoveAt($lbxDD.SelectedIndex)
                 }
             }
         })
@@ -903,7 +903,11 @@ function ShowFileListDialog {
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
         $null = $frmMain.ShowDialog()
-        return @($frmMain.DialogResult, $lbxDD.Items)
+        $item = ""
+        if ($lbxDD.SelectedIndex -ge 0){
+            $item = $lbxDD.Items[$lbxDD.SelectedIndex]
+        }
+        return @($frmMain.DialogResult, $lbxDD.Items, $item)
     }
     end {}
 }
@@ -915,7 +919,7 @@ function ShowFileListDialog {
 .DESCRIPTION
     タイトル/メッセージ/ファイルフィルター/初期リストを指定して
     ドラッグ＆ドロップで受け取ったファイルを表示するダイアログボックスを作成します
-    ユーザーがOKボタンを押すと選択した結果と選択されたファイルのパスが返されます
+    ユーザーがOKボタンを押すと選択した結果/ファイルリスト/選択中ファイル名が返されます
     ※オプションの指定が追加されています
 .PARAMETER Title
     ダイアログボックスのタイトルに設定する文字列です
@@ -1035,8 +1039,8 @@ function ShowFileListDialogWithOption {
         })
         $null = $lbxDD.Add_KeyDown({
             if ($_.KeyCode -eq "Delete") {
-                [array]::Reverse($lbxDD.SelectedIndices) | ForEach-Object {
-                    [void]$lbxDD.Items.RemoveAt($_)
+                if ($lbxDD.SelectedIndex -ge 0){
+                    [void]$lbxDD.Items.RemoveAt($lbxDD.SelectedIndex)
                 }
             }
         })
@@ -1048,7 +1052,11 @@ function ShowFileListDialogWithOption {
         $frmMain.AcceptButton = $btnOK
         $frmMain.CancelButton = $btnCancel
         $null = $frmMain.ShowDialog()
-        return @($frmMain.DialogResult, $lbxDD.Items, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
+        $item = ""
+        if ($lbxDD.SelectedIndex -ge 0){
+            $item = $lbxDD.Items[$lbxDD.SelectedIndex]
+        }
+        return @($frmMain.DialogResult, $lbxDD.Items, $item, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
     end {}
 }

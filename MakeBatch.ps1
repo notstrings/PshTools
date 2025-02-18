@@ -93,7 +93,7 @@ try {
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                MkPshBat $elm $ret[2]
+                MkPshBat $elm $ret[3]
             }
         }
     }

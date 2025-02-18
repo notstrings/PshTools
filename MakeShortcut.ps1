@@ -65,7 +65,7 @@ try {
     if ($ret[0] -eq "OK") {
         foreach($elm in $ret[1]) {
             if (Test-Path -LiteralPath $elm) {
-                MkLink $elm $ret[2]
+                MkLink $elm $ret[3]
             }
         }
     }

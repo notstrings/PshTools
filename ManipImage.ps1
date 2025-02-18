@@ -445,7 +445,7 @@ try {
                        "PDF変換個別", "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDF用紙リサイズ", "PDF捨印生成", 
                        "設定編集")
     if ($ret[0] -eq "OK") {
-        ManipImage $ret[1] $ret[2]
+        ManipImage $ret[1] $ret[3]
     }
 } catch {
     $null = Write-Host "---例外発生---"
