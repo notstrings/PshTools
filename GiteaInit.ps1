@@ -116,7 +116,7 @@ function local:SetupGitea([string] $Path) {
 		if ( (IsGitInit $Path) -eq $false){
 			GitInit $Path
 		}
-		GitSetRemote $Path "http://$URL/$ORG/$Repository.git"
+		GitSetRemote $Path "http://$($Conf.GITEAURL)/$($Conf.GITEAORG)/$Repository.git"
     } catch {
         $null = Write-Host "Error:" $_.Exception.Message
     }
