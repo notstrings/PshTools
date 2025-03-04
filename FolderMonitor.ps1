@@ -79,7 +79,7 @@ function local:FolderMonitor() {
     }
     # 結果表示
     if ("" -ne $Result ){
-        SendIPMsg -Message $Result
+        SendRawIPMsg -Message $Result
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {

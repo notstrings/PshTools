@@ -1459,13 +1459,14 @@ function SendMail {
     IP Messengerでメッセージを飛ばす
 .DESCRIPTION
     IP Messengerでメッセージを飛ばす
+.PARAMETER ExePath
+    IPMsg実行ファイルのある場所
 .PARAMETER TargerIP
     送信先IPorホスト名
 .PARAMETER Message
     送信メッセージ(改行は文字の``\n``)
 .NOTES
     依存:winget install FastCopy.IPMsg
-    ※IPMessengerは単一行がファイルパスの場合その行がリンクになる
 #>
 function SendIPMsg {
     param (
@@ -1478,6 +1479,47 @@ function SendIPMsg {
         $Message = $Message.Replace("`r`n","\n")
         $Message = $Message.Replace("`n"  ,"\n")
         Start-Process -NoNewWindow -FilePath $ExePath -ArgumentList "/MSGEX", $TargerIP, $Message -Wait
+    }
+    end {}
+}
+
+<#
+.SYNOPSIS
+    IP Messengerでメッセージを飛ばす
+.DESCRIPTION
+    IP Messengerでメッセージを飛ばす
+.PARAMETER HostName
+    送信先ホスト名
+.PARAMETER UserName
+    ユーザ名
+.PARAMETER GroupName
+    グループ名
+.PARAMETER Message
+    送信メッセージ(改行はそのまま``\n``)
+.NOTES
+    バイナリ依存なしだが送信ログとかは一切無い
+#>
+function SendRawIPMsg {
+    param (
+        [Parameter(Mandatory = $false)] [string] $HostName = "localhost",
+        [Parameter(Mandatory = $false)] [string] $UserName = "Notifier",
+        [Parameter(Mandatory = $false)] [string] $GroupName = "PowerShell",
+        [Parameter(Mandatory = $true)]  [string] $Message
+    )
+    begin {}
+    process {
+        $HostAddr = [System.Net.Dns]::GetHostAddresses($HostName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }
+        $EpochTim = [int][double]::Parse((Get-Date -UFormat %s))
+        $text = "1:" + $EpochTim + ":" + $UserName + ":" + $GroupName + ":32:" + $Message
+        $data = [System.Text.Encoding]::Convert(
+            [System.Text.Encoding]::UTF8,
+            [System.Text.Encoding]::GetEncoding("shift_jis"),
+            [System.Text.Encoding]::UTF8.GetBytes($text)
+        )
+        $ep = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Parse($HostAddr), 2425)
+        $client = New-Object System.Net.Sockets.UdpClient
+        $client.Send($data, $data.Length, $ep)
+        $client.Close()
     }
     end {}
 }
