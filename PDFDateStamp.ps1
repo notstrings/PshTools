@@ -13,28 +13,25 @@
 
 # セットアップ
 function local:Setup() {
-    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     }
     scoop bucket add extras
     scoop install nuget
     scoop install gh
-
-    # セットアップ先
+    # その他のセットアップ
     $ToolDir = [System.IO.Path]::Combine($PSScriptRoot, "tool")
     $null = New-Item $ToolDir -ItemType Directory -ErrorAction SilentlyContinue
-
-    # rsvg-convert
-    $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "rsvg-convert.x86_64.zip")
-    if ((Test-Path $ToolPath01) -eq $false) {
-        gh api -H 'Accept: application/octet-stream' /repos/miyako/console-rsvg-convert/contents/rsvg-convert.x86_64.zip > rsvg-convert.x86_64.zip
-        tar.exe "-zvxf" $ToolPath01 -C $ToolDir
-    }
-
-    # PDFSharp
+    ## PDFSharp
     $ToolPath02 = [System.IO.Path]::Combine($ToolDir, "PDFsharp.1.50.5147")
     if ((Test-Path $ToolPath02) -eq $false) {
         nuget install PdfSharp -Version 1.50.5147 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
+    }
+    ## rsvg-convert
+    $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "rsvg-convert.exe")
+    if ((Test-Path $ToolPath01) -eq $false) {
+        $ArchPath01 = DownloadGitHubLatest -RepOwner "miyako" -RepName "console-rsvg-convert" -Filter "x86" -OutputDirectory $ToolDir
+        tar.exe "-zvxf" $ArchPath01 -C $ToolDir
     }
 }
 

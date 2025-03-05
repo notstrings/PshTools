@@ -1874,8 +1874,8 @@ function CmpArc7Z {
     リポジトリオーナー名
 .PARAMETER RepName
     リポジトリ名
-.PARAMETER FileName
-    取得ファイル名
+.PARAMETER Filter
+    取得ファイル名のフィルタ
 .PARAMETER OutputDirectory
     取得先フォルダ
 #>
@@ -1883,19 +1883,23 @@ function DownloadGitHubLatest {
     param (
         [Parameter(Mandatory = $true)]  [string]$RepOwner,
         [Parameter(Mandatory = $true)]  [string]$RepName,
-        [Parameter(Mandatory = $true)]  [string]$FileName,
+        [Parameter(Mandatory = $false)] [string]$Filter = ".*",
         [Parameter(Mandatory = $false)] [string]$OutputDirectory = $PSScriptRoot
     )
     begin {}
     process {
+        $ret = @()
         $URI = "https://api.github.com/repos/$RepOwner/$RepName/releases/latest"
-        $inf = Invoke-WebRequest -Uri $URI -UseBasicParsing | ConvertFrom-Json
-        $ast = $inf.assets | Where-Object { $_.name -eq $FileName }
-        if ($ast) {
-            $dlsrc = $ast.browser_download_url
-            $dldst = Join-Path $OutputDirectory $FileName
+        $inf = Invoke-RestMethod -Uri $URI -Headers @{ "Accept" = "application/vnd.github.v3+json" }
+        $ast = $inf.assets | Where-Object { $_.name -match $Filter }
+        foreach ($elm in $ast) {
+            $dlsrc = $elm.browser_download_url
+            $dldst = Join-Path $OutputDirectory $elm.name
+            $null  = New-Item $OutputDirectory -ItemType Directory -ErrorAction SilentlyContinue
             $null  = Invoke-WebRequest -Uri $dlsrc -OutFile $dldst
+            $ret  += $dldst
         }
+        return $ret
     }
     end {}
 }

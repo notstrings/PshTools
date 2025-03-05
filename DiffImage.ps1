@@ -6,7 +6,7 @@ $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
 function local:Setup() {
-    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     }
     scoop bucket add extras

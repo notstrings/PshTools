@@ -12,17 +12,15 @@
 
 # セットアップ
 function local:Setup() {
-    if ((Get-Command scoop -ErrorAction SilentlyContinue) -eq $false) {
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     }
     scoop bucket add extras
     scoop install nuget
-
-    # セットアップ先
+    # その他のセットアップ
     $ToolDir = [System.IO.Path]::Combine($PSScriptRoot, "tool")
     $null = New-Item $ToolDir -ItemType Directory -ErrorAction SilentlyContinue
-
-    # PDFSharp
+    ## PDFSharp
     $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "PDFsharp.1.50.5147")
     if ((Test-Path $ToolPath01) -eq $false) {
         nuget install PdfSharp -Version 1.50.5147 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
