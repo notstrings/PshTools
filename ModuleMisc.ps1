@@ -1760,10 +1760,11 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     # ユニーク名取得
     $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     # 圧縮
-    ## -aoa :圧縮先に同名ファイルがある場合上書き
-    ## -r0  :指定ディレクトリとサブディレクトリのみ再帰処理 ※-rは兄弟ディレクトリも含む...初見で分かるわけねぇだろ、ソレ
-    ## -sdel:圧縮後にファイルを削除
-    $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 "
+    ## -aoa   :圧縮先に同名ファイルがある場合上書き
+    ## -r0    :指定ディレクトリとサブディレクトリのみ再帰処理 ※-rは兄弟ディレクトリも含む...初見で分かるわけねぇだろ、ソレ
+    ## -sdel  :圧縮後にファイルを削除
+    ## -mcu=on:UTF8ファイル名で圧縮
+    $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 -mcu=on"
     if ($ZipPwd -ne "" ) {
         $arg += " -p$ZipPwd"
     }
