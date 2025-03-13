@@ -1743,15 +1743,19 @@ function CmpArc {
 ## ############################################################################
 ## 7Zip
 
-function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, [string] $ZipPwd) {
+function local:innerExp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, [string] $ZipPwd, [string] $FileNameEncode) {
     # ユニーク名取得
     $sUniq = GenUniqName $DstPath ([System.IO.Directory]::Exists($DstPath))
     # 展開
-    ## -aoa:展開先に同名ファイルがある場合上書き
-    ## -spe:抽出コマンドのルートフォルダーの重複を除去
+    ## -aoa    :展開先に同名ファイルがある場合上書き
+    ## -spe    :抽出コマンドのルートフォルダーの重複を除去
+    ## -mcp=XXX:無指定の場合はUTFか自動判定しそれ以外はそのまんま扱う7zのデフォ動作/アホなアーカイブでSJISファイル名を強制する必要があるかも
     $arg = " x ""$SrcPath"" -o""$sUniq"" -aoa -spe "
     if ($ZipPwd -ne "") {
         $arg += " -p$ZipPwd"
+    }
+    if ($FileNameEncode -ne "") {
+        $arg += " -mcp=$FileNameEncode"
     }
     $null = Start-Process -NoNewWindow -FilePath """$($ExePath)""" -ArgumentList $arg -Wait
     return $sUniq
@@ -1763,7 +1767,7 @@ function local:innerCmp7Z([string]$ExePath, [string]$DstPath, [string]$SrcPath, 
     ## -aoa   :圧縮先に同名ファイルがある場合上書き
     ## -r0    :指定ディレクトリとサブディレクトリのみ再帰処理 ※-rは兄弟ディレクトリも含む...初見で分かるわけねぇだろ、ソレ
     ## -sdel  :圧縮後にファイルを削除
-    ## -mcu=on:UTF8ファイル名で圧縮
+    ## -mcu=on:UTF8ファイル名で圧縮する/事実上必須オプション...ならデフォにしてくれればいいものを...
     $arg = " a -tzip ""$sUniq"" ""$SrcPath"" -aoa -r0 -mcu=on"
     if ($ZipPwd -ne "" ) {
         $arg += " -p$ZipPwd"
@@ -1806,11 +1810,12 @@ function ExtArc7Z {
         [Parameter(Mandatory = $true)]  [string] $SrcPath,
         [Parameter(Mandatory = $false)] [bool]   $Recursive = $false,
         [Parameter(Mandatory = $false)] [string] $ZipPwd = "",
-        [Parameter(Mandatory = $false)] [bool]   $DelSrc = $true
+        [Parameter(Mandatory = $false)] [bool]   $DelSrc = $true,
+        [Parameter(Mandatory = $false)] [string] $FileNameEncode = ""
     )
     begin {}
     process {
-        $ret = innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath -ZipPwd $ZipPwd
+        $ret = innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath -ZipPwd $ZipPwd -FileNameEncode $FileNameEncode
         if ($Recursive -eq $true){
             Get-ChildItem -LiteralPath $DstPath -File -Recurse |
             Where-Object { @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA") -contains ($_.Extension.ToUpper()) } |
@@ -1818,7 +1823,7 @@ function ExtArc7Z {
                 $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
                 $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
                 $ename = ""
-                $null = ExtArc7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -Recursive $Recursive -ZipPwd $ZipPwd
+                $null = ExtArc7Z -ExePath $ExePath -DstPath ([System.IO.Path]::Combine($dname, $fname + $ename)) -SrcPath ($_.FullName) -Recursive $Recursive -ZipPwd $ZipPwd -FileNameEncode $FileNameEncode
             } | Out-Null
         }
         if ($DelSrc -eq $true) {

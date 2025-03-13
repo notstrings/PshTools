@@ -24,10 +24,16 @@ Invoke-Expression -Command @"
         New  = 1
         Old  = 2
     }
+    Enum enmFileNameEncode {
+        Auto = 0
+        SJIS = 1
+        EUCJP = 2
+    }
     class ManipArchiveConf {
-        [bool]           `$Encrypt
-        [enmDivideType]  `$DivideType
-        [int]            `$DivideSize
+        [bool]              `$Encrypt
+        [enmFileNameEncode] `$FileNameEncode
+        [enmDivideType]     `$DivideType
+        [int]               `$DivideSize
     }
 "@
 
@@ -122,7 +128,11 @@ function local:ManipArchive($Path) {
                     return
                 }
             }
-            ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $false
+            switch ($Conf.FileNameEncode) {
+                "Auto"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $false -FileNameEncode ""      }
+                "SJIS"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $false -FileNameEncode "932"   }
+                "EUCJP" { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $false -FileNameEncode "20932" }
+            }
         } else {
             # 圧縮処理
             $dname = [System.IO.Path]::GetDirectoryName($Path)
