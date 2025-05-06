@@ -1,3 +1,3 @@
 # PshTools
 
-全然説明が追いついてねぇから一度全削除しとこう
+https://deepwiki.com/notstrings/PshTools
