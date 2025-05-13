@@ -32,6 +32,11 @@ Invoke-Expression -Command @"
         South     = 7
         SouthEast = 8
     }
+    Enum enmImgSizeMode {
+        S = 0
+        M = 1
+        L = 2
+    }
     Enum enmResizeMode {
         S = 0
         M = 1
@@ -45,6 +50,10 @@ Invoke-Expression -Command @"
         A5 = 4
     }
     class ManipImageConf {
+        [System.ComponentModel.Category("ImgSize")]
+        [System.ComponentModel.Description("S:72dpi/M:150dpi/L:300dpi")]
+        [enmImgSizeMode]   `$ImgSizeMode
+
         [System.ComponentModel.Category("Resize")]
         [System.ComponentModel.Description("S:640/M:800/L:1280")]
         [enmResizeMode]   `$ResizeMode
@@ -92,6 +101,8 @@ Invoke-Expression -Command @"
 function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
         $Conf = New-Object ManipImageConf -Property @{
+            ImgSizeMode = [enmImgSizeMode]::S
+
             ResizeMode = [enmResizeMode]::M
 
             AnnotateTitle = $true
@@ -149,6 +160,11 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
         switch ($Mode) {
             "PNG変換" {
                 # 入力ファイルをPNGに変換する
+                switch ($Conf.ResizeMode) {
+                    "S" { $ImgSizeMode = 72  }
+                    "M" { $ImgSizeMode = 150 }
+                    "L" { $ImgSizeMode = 300 }
+                }
                 foreach ($TargetPath in $TargetPaths) {
                     $dname = [System.IO.Path]::GetDirectoryName($TargetPath)
                     $fname = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
@@ -167,7 +183,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                         $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
                         $arg = ""
                         $arg += "convert"
-                        $arg += " -density 300 -alpha remove"
+                        $arg += " -density $ImgSizeMode -alpha remove"
                         $arg += " ""$srcpath"" ""$dstpath"""
                         $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList $arg
                     }
