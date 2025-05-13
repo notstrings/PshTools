@@ -31,7 +31,8 @@ Invoke-Expression -Command @"
     }
     class ManipArchiveConf {
         [bool]              `$Encrypt
-        [bool]              `$DeepExtract
+        [bool]              `$DelSrc
+        [bool]              `$Recursive
         [enmFileNameEncode] `$FileNameEncode
         [enmDivideType]     `$DivideType
         [int]               `$DivideSize
@@ -43,7 +44,8 @@ function local:InitConfFile([string] $Path) {
     if ((Test-Path -LiteralPath $Path) -eq $false) {
         $Conf = New-Object ManipArchiveConf -Property @{
             Encrypt = $false
-            DeepExtract = $false
+            DelSrc = $false
+            Recursive = $false
             DivideType = [enmDivideType]::None
             DivideSize = 1
         }
@@ -131,9 +133,9 @@ function local:ManipArchive($Path) {
                 }
             }
             switch ($Conf.FileNameEncode) {
-                "Auto"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DeepExtract -FileNameEncode ""      }
-                "SJIS"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DeepExtract -FileNameEncode "932"   }
-                "EUCJP" { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DeepExtract -FileNameEncode "20932" }
+                "Auto"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DelSrc -Recursive $Conf.Recursive -FileNameEncode ""      }
+                "SJIS"  { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DelSrc -Recursive $Conf.Recursive -FileNameEncode "932"   }
+                "EUCJP" { ExtArc7Z -SrcPath $ExtSrcPath -DstPath $ExtDstPath -DelSrc $Conf.DelSrc -Recursive $Conf.Recursive -FileNameEncode "20932" }
             }
         } else {
             # 圧縮処理
