@@ -64,10 +64,4 @@
 - 拡張・カスタマイズも容易にできるよう、共通関数は ModuleMisc.ps1 に集約されています。
 
 ### 参考
-- README.md
-- 共通関数: ModuleMisc.ps1
-- 各機能スクリプト例:  
-    - PDF日付印: PDFDateStamp.ps1  
-    - 画像操作: ManipImage.ps1  
-    - アーカイブ: ManipArchive.ps1  
-    - フォルダ監視: FolderMonitor.ps1  
+- https://deepwiki.com/notstrings/PshTools
