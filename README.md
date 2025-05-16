@@ -1,6 +1,8 @@
 # PshTools
 
-このプロジェクト「PshTools」は、日常的なファイル操作やドキュメント処理、画像変換、アーカイブ操作などを効率化するためのPowerShellスクリプト集です。主にWindows環境でのバッチ処理やGUI補助ツールとして動作し、Scoop等で導入したCUIツール（ImageMagick, Ghostscript, qpdf, 7zip, PDFsharp等）を活用します。
+日常的なファイル操作やドキュメント処理、画像変換、アーカイブ操作などを効率化するためのPowerShellスクリプト集です。
+基本的に処理対象を同名WindowsバッチにD&Dして使用します。
+内部的にはScoop等で導入したCUIツール（ImageMagick, Ghostscript, qpdf, 7zip, PDFsharp等）を活用しますので、事前準備が必要です。
 
 ## 主な機能
 
