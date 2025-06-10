@@ -2,7 +2,7 @@
 
 日常的なファイル操作やドキュメント処理、画像変換、アーカイブ操作などを効率化するためのPowerShellスクリプト集です。
 基本的に処理対象を同名WindowsバッチにD&Dして使用します。
-内部的にScoop等で導入したCUIツール（ImageMagick, Ghostscript, qpdf, 7zip, PDFsharp等）を活用しますので、使用には事前準備が必要です。
+内部的にはScoop等で導入したCUIツール（ImageMagick, Ghostscript, qpdf, 7zip, PDFsharp等）を活用しますので、使用には事前準備が必要です。
 
 ## 主な機能
 
@@ -52,7 +52,7 @@
 
 2. **初回セットアップ**  
    PDF日付印など一部機能は追加セットアップが必要です。  
-   PDFDateStamp.ps1 の `Setup` 関数を実行してください。
+   それぞれ(例えばPDFDateStamp.ps1) の `Setup` 関数を実行してください。
 
 3. **利用方法**  
    各`.bat` ファイルにファイルやフォルダをドラッグ＆ドロップすることで、対応する処理が実行されます。  
