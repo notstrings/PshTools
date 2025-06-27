@@ -79,7 +79,7 @@ function local:FolderMonitor() {
     }
     # 結果表示
     if ("" -ne $Result ){
-        SendRawIPMsg -Message $Result
+        $null = SendRawIPMsg -Message $Result
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
@@ -128,11 +128,11 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
             }
         } | Out-Null
         # 結果出力
-        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
-        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
-        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.'))\n" } | Out-Null
+        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
+        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
+        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
         if ($Ret -ne ""){
-            $Ret = "---\nMonitorName:$MonitorName\nMonitorPath:$MonitorPath\n" + $Ret
+            $Ret = "---`nMonitorName:$MonitorName\nMonitorPath:$MonitorPath`n" + $Ret
         }
     }
 
