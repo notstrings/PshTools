@@ -14,7 +14,7 @@ function local:DateCopyFile([System.IO.FileInfo] $Target) {
     $cdate = (Get-Date).ToString('yyyyMMdd')
     $dpath = [System.IO.Path]::Combine($dname, $fname + "_" + $cdate + $ename)
     $uniq = GenUniqName $dpath $false
-    Write-Output "F" | xcopy $spath $uniq /F /K
+    cp.exe -p $spath $uniq
 }
 
 function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
@@ -25,7 +25,7 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
     $cdate = (Get-Date).ToString('yyyyMMdd')
     $dpath = [System.IO.Path]::Combine($dname, $fname + "_" + $cdate + $ename)
     $uniq = GenUniqName $dpath $true
-    robocopy $spath $uniq /MIR /FFT /DCOPY:DAT /R:3 /W:5 /NFL /NP /XJ 
+    robocopy.exe $spath $uniq /MIR /FFT /DCOPY:DAT /R:3 /W:5 /NFL /NP /XJ 
 }
 
 ###############################################################################

@@ -14,7 +14,7 @@ function local:InstallOfficeAddIns([System.IO.FileInfo] $Target) {
             $srcpath = [System.IO.Path]::Combine($dname, $fname + $ename)
             $dstpath = "$($env:APPDATA)\Microsoft\Word\STARTUP\$($fname + $ename)"
             $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-            Write-Output "F" | xcopy /Y /F /K $srcpath $dstpath
+            cp.exe $srcpath $dstpath
         }
         # Excel
         ({$_ -eq ".xla" -or $_ -eq ".xlam"}) {
@@ -22,7 +22,7 @@ function local:InstallOfficeAddIns([System.IO.FileInfo] $Target) {
                 $srcpath = [System.IO.Path]::Combine($dname, $fname + $ename)
                 $dstpath = "$($env:APPDATA)\Microsoft\Excel\AddIns\$($fname + $ename)"
                 $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-                Write-Output "F" | xcopy /Y /F /K $srcpath $dstpath
+                cp.exe $srcpath $dstpath
                 $AppXLS = New-Object -ComObject Excel.Application
                 $XLSWKBK = $AppXLS.Workbooks.Add()
                 $XLSADIS = $AppXLS.Addins
@@ -51,7 +51,7 @@ function local:InstallOfficeAddIns([System.IO.FileInfo] $Target) {
             $srcpath = [System.IO.Path]::Combine($dname, $fname + $ename)
             $dstpath = "$($env:APPDATA)\Microsoft\AddIns\$($fname + $ename)"
             $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-            Write-Output "F" | xcopy /Y /F /K $srcpath $dstpath
+            cp.exe $srcpath $dstpath
         }
         # Visio
         ({$_ -eq ".vsd" -or $_ -eq ".vsdm"}) {
@@ -59,7 +59,7 @@ function local:InstallOfficeAddIns([System.IO.FileInfo] $Target) {
             $srcpath = [System.IO.Path]::Combine($dname, $fname + $ename)
             $dstpath = "$($env:APPDATA)\Microsoft\Visio\AddIns\$($fname + $ename)"
             $null = New-Item ([System.IO.Path]::GetDirectoryName($dstpath)) -ItemType Directory -ErrorAction SilentlyContinue
-            Write-Output "F" | xcopy /Y /F /K $srcpath $dstpath
+            cp.exe $srcpath $dstpath
         }
         default {
             Write-Host "未対応のファイル形式: $($Target.FullName)" -ForegroundColor Yellow
