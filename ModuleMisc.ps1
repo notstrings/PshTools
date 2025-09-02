@@ -1818,7 +1818,7 @@ function ExtArc7Z {
         $ret = innerExp7Z -ExePath $ExePath -DstPath $DstPath -SrcPath $SrcPath -ZipPwd $ZipPwd -FileNameEncode $FileNameEncode
         if ($Recursive -eq $true){
             Get-ChildItem -LiteralPath $DstPath -File -Recurse |
-            Where-Object { @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA") -contains ($_.Extension.ToUpper()) } |
+            Where-Object { @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA", "RAR") -contains ($_.Extension.ToUpper()) } |
             ForEach-Object {
                 $dname = [System.IO.Path]::GetDirectoryName($_.FullName)
                 $fname = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)

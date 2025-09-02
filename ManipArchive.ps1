@@ -76,7 +76,7 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 
 # アーカイブファイル判定
 function isArchive($Path) {
-    return (([System.IO.Path]::GetExtension($Path).ToUpper()) -in @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA"))
+    return (([System.IO.Path]::GetExtension($Path).ToUpper()) -in @(".7Z", ".GZ", ".ZIP", ".BZ2", ".TAR", ".LZH", ".LZS", ".LHA", ".GZIP", ".LZMA", "RAR"))
 }
 
 # 分割圧縮ファイル判定
