@@ -21,7 +21,8 @@ function local:ShowMeetingSchedule() {
     $Meetings = `
         (Get-ZoomMeetingsFromuser -UserId $Cnf.UserID -Type scheduled).meetings |
         Where-Object {
-            $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($_.start_time, [System.TimeZoneInfo]::Local))
+            $uTime = [DateTime]::SpecifyKind($_.start_time, [System.DateTimeKind]::Utc)
+            $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($uTime, [System.TimeZoneInfo]::Local))
             $CTime = (Get-Date)
             $CTime -le $STime 
         } |
@@ -29,7 +30,8 @@ function local:ShowMeetingSchedule() {
     Write-Host "=============================="
     Write-Host "今後の予定一覧:"
     foreach ($m in $Meetings) {
-        $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($m.start_time, [System.TimeZoneInfo]::Local))
+        $uTime = [DateTime]::SpecifyKind($m.start_time, [System.DateTimeKind]::Utc)
+        $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($uTime, [System.TimeZoneInfo]::Local))
         Write-Host (" {0} | {1:yyyy-MM-dd HH:mm}({2}分) {3}" -f $m.id, $STime, $m.duration, $m.topic)
     }
     Write-Host "=============================="
@@ -51,7 +53,7 @@ function local:AddMeetingSchedule() {
     # 日付時刻
     do {
         $text = Read-Host "ミーティング予定日時を入力してください (例:2025-01-01 17:00)"
-        if($text -eq "") {
+        if ($text -eq "") {
             return
         }
         try {
@@ -66,7 +68,7 @@ function local:AddMeetingSchedule() {
     # 時間(分)
     do {
         $text = Read-Host "ミーティングの長さ(分)を入力してください"
-        if($text -eq "") {
+        if ($text -eq "") {
             return
         }
         [int]::TryParse($text, [ref]$Duration)
@@ -97,7 +99,7 @@ function local:AddMeetingSchedule() {
     $text = ""
     $text = $text + "ミーティングID: $($Meeting.id)`n"
     $text = $text + "タイトル      : $($Meeting.topic)`n"
-    $text = $text + "開始日時      : $(([System.TimeZoneInfo]::ConvertTimeFromUtc($Meeting.start_time, [System.TimeZoneInfo]::Local)))`n"
+    $text = $text + "開始日時      : $(([System.TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::SpecifyKind($Meeting.start_time, [System.DateTimeKind]::Utc), [System.TimeZoneInfo]::Local)))`n"
     $text = $text + "時間          : $($Meeting.duration)分`n"
     $text = $text + "参加URL       : $($Meeting.join_url)`n"
     $text = $text + "パスワード    : $($Meeting.password)`n"
@@ -116,7 +118,7 @@ function local:RemoveMeetingSchedule() {
 
     # タイトル
     $MeetingID = Read-Host "ミーティングのIDを入力してください"
-    if($MeetingID -eq "") {
+    if ($MeetingID -eq "") {
         return
     }
 
