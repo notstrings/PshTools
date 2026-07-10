@@ -8,6 +8,10 @@ $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 # セットアップ
 function local:Setup() {
 	winget install "Git.Git"
+	winget install "Gitea.Tea"
+	# ココまでやっといてね！
+	# tea login add --name nas0001 --url http://nas0001:3333 --token xxxxxxxxx
+	# tea login default nas00001
 }
 
 ## 設定 #######################################################################
@@ -55,71 +59,29 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 
 ## 本体 #########################################################################
 
-# ローカルリポジトリ存在確認
-function local:IsGitInit([string] $Path) {
-	return Test-Path -LiteralPath "$Path\.git" -PathType Container
-}
-
-# ローカルリポジトリ作成
-function local:GitInit([string] $Path) {
-	Push-Location $Path
-	$null = Start-Process -NoNewWindow -Wait -FilePath "git.exe" -ArgumentList "init"
-	Pop-Location
-}
-
-# リモートリポジトリ設定追加
-function local:GitSetRemote([string] $Path, [string] $URL) {
-	Push-Location $Path
-	$null = Start-Process -NoNewWindow -Wait -FilePath "git.exe" -ArgumentList "remote remove origin"
-	$null = Start-Process -NoNewWindow -Wait -FilePath "git.exe" -ArgumentList "remote add origin $URL"
-	Pop-Location
-}
-
-# Giteaリモートリポジトリ存在確認
-function local:IsGiteaInit([string] $URL, [string] $ORG, [string] $Repository, [string] $Key) {
-	$Ret = $false
-	$rslt = Invoke-RestMethod `
-		-Method Get `
-		-Uri "http://$URL/api/v1/orgs/$ORG/repos?access_token=$Key" `
-		-ContentType 'application/json'
-	foreach ($elm in $rslt) {
-		If ($elm.name -eq $Repository) {
-			$Ret = $true
-		}
-	}
-	return $Ret
-}
-
-# Giteaリモートリポジトリ作成
-function local:GiteaInit([string] $URL, [string] $ORG, [string] $Repository, [string] $Key) {
-	$null = Invoke-RestMethod `
-		-Method Post `
-		-Uri "http://$URL/api/v1/orgs/$ORG/repos?access_token=$Key" `
-		-ContentType 'application/json' `
-		-Body (	[System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json @{Name = "$Repository"} )) )
-}
-
 function local:SetupGitea([string] $Path) {
 	try {
-		# 設定取得
-		$Conf = LoadConfFile $ConfPath
-		# Giteaリポジトリ作成
+		Push-Location $Path
+
+		# リポジトリ名制限
 		$Repository = [System.IO.Path]::GetFileName($Path)
 		if (($Repository -match "[^a-zA-Z0-9-]")) {
-			Write-Host "フォルダ名は英数ハイフンのみ使用可能"
+			Write-Host "リポジトリフォルダ名は英数ハイフンのみ使用可能です"
 			return
 		}
-		if ( (IsGiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY) -eq $false){
-			GiteaInit $Conf.GITEAURL $Conf.GITEAORG $Repository $Conf.GITEAKEY
+
+		$Conf = LoadConfFile $ConfPath
+		tea repos create --owner $Conf.GITEAORG --name $Repository
+		if (-not (Test-Path "$Path\.git")) {
+			git.exe init
 		}
-		# ローカルリポジトリ作成＆関連付け
-		if ( (IsGitInit $Path) -eq $false){
-			GitInit $Path
-		}
-		GitSetRemote $Path "http://$($Conf.GITEAURL)/$($Conf.GITEAORG)/$Repository.git"
-    } catch {
-        $null = Write-Host "Error:" $_.Exception.Message
-    }
+		git.exe remote remove origin
+		git.exe remote add origin "http://$($Conf.GITEAURL)/$($Conf.GITEAORG)/$Repository.git"
+	} catch {
+		$null = Write-Host "Error:" $_.Exception.Message
+	} finally {
+		Pop-Location
+	}
 }
 
 ## 本体 #######################################################################

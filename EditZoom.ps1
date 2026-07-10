@@ -1,4 +1,4 @@
-﻿# =========================================
+# =========================================
 # Zoomミーティングスケジュール作成スクリプト
 
 # --- モジュール確認 ---
@@ -6,6 +6,24 @@ if (-not (Get-Module -ListAvailable -Name PSZoom)) {
     Install-Module -Name PSZoom -Scope CurrentUser -Force -AllowClobber
 }
 Import-Module PSZoom
+
+# --- ヘルパー関数 ---
+function local:ConvertTo-LocalTime($Time) {
+    if ($Time -is [DateTime]) {
+        if ($Time.Kind -eq [System.DateTimeKind]::Utc) {
+            return $Time.ToLocalTime()
+        } elseif ($Time.Kind -eq [System.DateTimeKind]::Local) {
+            return $Time
+        } else {
+            return [DateTime]::SpecifyKind($Time, [System.DateTimeKind]::Utc).ToLocalTime()
+        }
+    }
+    $dt = [DateTime]$Time
+    if ($dt.Kind -eq [System.DateTimeKind]::Unspecified) {
+        return [DateTime]::SpecifyKind($dt, [System.DateTimeKind]::Utc).ToLocalTime()
+    }
+    return $dt.ToLocalTime()
+}
 
 # --- 認証情報 ---
 $sCnfPath = ".\Config\EditZoom.json"
@@ -21,8 +39,7 @@ function local:ShowMeetingSchedule() {
     $Meetings = `
         (Get-ZoomMeetingsFromuser -UserId $Cnf.UserID -Type scheduled).meetings |
         Where-Object {
-            $uTime = [DateTime]::SpecifyKind($_.start_time, [System.DateTimeKind]::Utc)
-            $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($uTime, [System.TimeZoneInfo]::Local))
+            $STime = ConvertTo-LocalTime $_.start_time
             $CTime = (Get-Date)
             $CTime -le $STime 
         } |
@@ -30,8 +47,7 @@ function local:ShowMeetingSchedule() {
     Write-Host "=============================="
     Write-Host "今後の予定一覧:"
     foreach ($m in $Meetings) {
-        $uTime = [DateTime]::SpecifyKind($m.start_time, [System.DateTimeKind]::Utc)
-        $STime = ([System.TimeZoneInfo]::ConvertTimeFromUtc($uTime, [System.TimeZoneInfo]::Local))
+        $STime = ConvertTo-LocalTime $m.start_time
         Write-Host (" {0} | {1:yyyy-MM-dd HH:mm}({2}分) {3}" -f $m.id, $STime, $m.duration, $m.topic)
     }
     Write-Host "=============================="
@@ -99,7 +115,7 @@ function local:AddMeetingSchedule() {
     $text = ""
     $text = $text + "ミーティングID: $($Meeting.id)`n"
     $text = $text + "タイトル      : $($Meeting.topic)`n"
-    $text = $text + "開始日時      : $(([System.TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::SpecifyKind($Meeting.start_time, [System.DateTimeKind]::Utc), [System.TimeZoneInfo]::Local)))`n"
+    $text = $text + "開始日時      : $((ConvertTo-LocalTime $Meeting.start_time))`n"
     $text = $text + "時間          : $($Meeting.duration)分`n"
     $text = $text + "参加URL       : $($Meeting.join_url)`n"
     $text = $text + "パスワード    : $($Meeting.password)`n"
