@@ -125,7 +125,7 @@ function local:ManipArchive($Path) {
             $fname = [System.IO.Path]::GetFileNameWithoutExtension($Path)
             $ename = [System.IO.Path]::GetExtension($Path)
             $ExtSrcPath = $Path
-            $ExtDstPath = [System.IO.Path]::Combine($dname, $fname)
+            $ExtDstPath = ([System.IO.Path]::Combine($dname, $fname)).Trim()
             if (isDividedArchive $ExtSrcPath) {
                 if ($ename -ne ".001") {
                     Write-Host "$($Path)は分割圧縮ファイルの先頭ではありません"
