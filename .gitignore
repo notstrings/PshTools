@@ -3,6 +3,7 @@
 
 # Visual Studio Code
 .vscode/*
+.vs/*
 
 # 設定/一時ファイル
 Config/*
