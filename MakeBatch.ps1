@@ -87,13 +87,13 @@ try {
     $ret = ShowFileListDialogWithOption `
             -Title $Title `
             -Message "対象ファイルをドラッグ＆ドロップしてください" `
-            -FileList $args `
+            -Files $args `
             -FileFilter "\.(ps1)$" `
             -Options @("PSH5 CUI", "PSH7 CUI", "PSH5 GUI", "PSH7 GUI", "PSH5 ISE")
-    if ($ret[0] -eq "OK") {
-        foreach($elm in $ret[1]) {
+    if ($ret.Result) {
+        foreach($elm in $ret.Files) {
             if (Test-Path -LiteralPath $elm) {
-                MkPshBat $elm $ret[3]
+                MkPshBat $elm $ret.Option
             }
         }
     }

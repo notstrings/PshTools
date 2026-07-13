@@ -809,107 +809,126 @@ function local:AddFileList([System.Windows.Forms.ListBox] $ListBox, [string[]] $
 .EXAMPLE
     # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
     $result = ShowFileListDialog -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt")
-    if ($result[0] -eq "OK") {
-        foreach ($file in $result[1]) {
+    if ($result.Result) {
+        foreach ($file in $result.Files) {
             Write-Host $file
         }
     }
 #>
 function ShowFileListDialog {
     param (
-        [Parameter(Mandatory = $true)]  [string]   $Title,
-        [Parameter(Mandatory = $true)]  [string]   $Message,
-        [Parameter(Mandatory = $false)] [string]   $FileFilter  = ".*",
-        [Parameter(Mandatory = $false)] [string[]] $FileList
+        [Parameter(Mandatory = $true)] [string]$Title,
+        [Parameter(Mandatory = $true)] [string]$Message,
+        [Parameter(Mandatory = $false)] [string]$FileFilter = ".*",
+        [Parameter(Mandatory = $false)] [string[]]$Files
     )
-    begin {}
-    process {
-        # フォーム生成
-        $frmMain = New-Object System.Windows.Forms.Form -Property @{
-            Text          = $Title                                                      # タイトル
-            StartPosition = 'CenterScreen'                                              # 表示位置
-            Size          = New-Object System.Drawing.Size(480,320)
-            Padding       = New-Object System.Windows.Forms.Padding(5)
-        }
 
-        $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel -Property @{
-            Dock     = [System.Windows.Forms.DockStyle]::Fill
-            RowCount = 2
-        }
+    Add-Type -AssemblyName PresentationFramework
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
 
-        $pnlBody = New-Object System.Windows.Forms.Panel -Property @{
-            Dock = [System.Windows.Forms.DockStyle]::Fill
-        }
-        $lblDD = New-Object System.Windows.Forms.Label -Property @{
-            Dock      = [System.Windows.Forms.DockStyle]::Top
-            Text      = $Message
-            AutoSize  = $true
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-        }
-        $lbxDD = New-Object System.Windows.Forms.ListBox -Property @{
-            Dock        = [System.Windows.Forms.DockStyle]::Fill
-            AllowDrop   = $true
-        }
-
-        $pnlTail = New-Object System.Windows.Forms.Panel -Property @{
-            Dock = [System.Windows.Forms.DockStyle]::Fill
-        }
-        $btnOK = New-Object System.Windows.Forms.Button -Property @{
-            Dock                    = [System.Windows.Forms.DockStyle]::Right
-            Size                    = New-Object System.Drawing.Size(128, 0) # ボタン巾のみ指定可能
-            Text                    = "OK"
-            UseVisualStyleBackColor = $true
-            DialogResult            = [Windows.Forms.DialogResult]::OK
-        }
-        $btnCancel = New-Object System.Windows.Forms.Button -Property @{
-            Dock                    = [System.Windows.Forms.DockStyle]::Right
-            Size                    = New-Object System.Drawing.Size(128, 0) # ボタン巾のみ指定可能
-            Text                    = "Cancel"
-            UseVisualStyleBackColor = $true
-            DialogResult            = [Windows.Forms.DialogResult]::Cancel
-        }
-
-        $null = $pnlBody.Controls.Add($lbxDD)
-        $null = $pnlBody.Controls.Add($lblDD)
-        $null = $pnlTail.Controls.Add($btnOK)
-        $null = $pnlTail.Controls.Add($btnCancel)
-        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
-        $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
-        $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
-        $null = $frmMain.Controls.Add($tlpMain)
-
-        $null = $frmMain.Add_Load({
-            $frmMain.BringToFront()
-        })
-        $null = $lbxDD.Add_DragEnter({
-            $_.Effect = "All"
-        })
-        $null = $lbxDD.Add_DragDrop({
-            AddFileList $lbxDD $_.Data.GetData("FileDrop") $FileFilter
-        })
-        $null = $lbxDD.Add_KeyDown({
-            if ($_.KeyCode -eq "Delete") {
-                if ($lbxDD.SelectedIndex -ge 0){
-                    [void]$lbxDD.Items.RemoveAt($lbxDD.SelectedIndex)
+    function AddFileList {
+        param(
+            [System.Collections.ObjectModel.ObservableCollection[object]] $bndFiles,
+            [string]$File,
+            [string]$Filter
+        )
+        if (-not (Test-Path $File -PathType Leaf)) { return }
+        if ($File -notmatch $Filter) { return }
+        if (-not ($bndFiles.FullName -contains $File)) {
+            $finf = [System.IO.FileInfo]::new($File)
+            $bndFiles.Add(
+                [PSCustomObject]@{
+                    FullName      = $finf.FullName
+                    Length        = $finf.Length / (1024*1024)
+                    LastWriteTime = $finf.LastWriteTime;
                 }
-            }
-        })
-
-        # フォーム表示
-        if ($null -ne $FileList) {
-            AddFileList $lbxDD $FileList $FileFilter
+            )
         }
-        $frmMain.AcceptButton = $btnOK
-        $frmMain.CancelButton = $btnCancel
-        $null = $frmMain.ShowDialog()
-        $item = ""
-        if ($lbxDD.SelectedIndex -ge 0){
-            $item = $lbxDD.Items[$lbxDD.SelectedIndex]
-        }
-        return @($frmMain.DialogResult, $lbxDD.Items, $item)
     }
-    end {}
+
+    # 画面生成
+    [xml]$xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dialog" Width="480" Height="320" WindowStartupLocation="CenterScreen" ResizeMode="CanResize">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Name="btnOK" Content="OK" Width="128" Height="50"/>
+            <Button Name="btnCancel" Content="Cancel" Width="128" Height="50"/>
+        </StackPanel>
+        <Label Name="lblMessage" DockPanel.Dock="Top"/>
+        <DataGrid Name="grdFiles" ItemsSource="{Binding Files}"
+            AutoGenerateColumns="False" AllowDrop="True" SelectionMode="Single"
+            CanUserAddRows="False" CanUserDeleteRows="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="3*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Size" Binding="{Binding Length, StringFormat={}{0:N2} MB}" Width="80" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Right"/></Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Modified" Binding="{Binding LastWriteTime, StringFormat=yyyy/MM/dd}" Width="75" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Center"/></Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
+"@
+    $reader = New-Object System.Xml.XmlNodeReader $xaml
+    $window = [Windows.Markup.XamlReader]::Load($reader)
+    $lblMessage = $window.FindName("lblMessage")
+    $grdFiles   = $window.FindName("grdFiles")
+    $btnOK      = $window.FindName("btnOK")
+    $btnCancel  = $window.FindName("btnCancel")
+
+    # Window
+    $window.Title = $Title
+    $lblMessage.Content = $Message
+    $bndFiles   = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
+    foreach ($file in $Files) {
+        AddFileList $bndFiles $file $FileFilter
+    }
+    $DataContext = [PSCustomObject]@{
+        Files   = $bndFiles
+        Options = $bndOptions
+    }
+    $window.DataContext = $DataContext
+
+    # DataGrid
+    $grdFiles.Add_DragOver({
+        if ($_.Data.GetDataPresent([Windows.DataFormats]::FileDrop)) {
+            $_.Effects = [Windows.DragDropEffects]::Copy
+        } else {
+            $_.Effects = [Windows.DragDropEffects]::None
+        }
+        $_.Handled = $true
+    })
+    $grdFiles.Add_Drop({
+        foreach ($file in $_.Data.GetData([Windows.DataFormats]::FileDrop)) {
+            AddFileList $bndFiles $file $FileFilter
+        }
+    })
+
+    # OK/Cancel
+    $btnOK.Add_Click({
+        $window.DialogResult = $true
+    })
+    $btnCancel.Add_Click({
+        $window.DialogResult = $false
+    })
+
+    # 表示
+    $window.ShowDialog() | Out-Null
+
+    # 結果
+    return [pscustomobject]@{
+        Result = $window.DialogResult
+        Files  = $bndFiles | ForEach-Object { $_.FullName }
+    }
 }
 
 <#
@@ -934,131 +953,145 @@ function ShowFileListDialog {
 .EXAMPLE
     # ファイルを選択し選択したボタンのラベルとファイルパスを表示します
     $result = ShowFileListDialogWithOption -Title "ファイルを選択してください" -Message "ここにファイルをドラッグ＆ドロップ" -FileFilter "\.txt$" -FileList @("aaa.txt","bbb.txt") -Options @("aaa","bbb")
-    if ($result[0] -eq "OK") {
-        foreach ($file in $result[1]) {
-            Write-Host $file $result[2]
+    if ($result.Result) {
+        foreach ($file in $result.Files) {
+            Write-Host $file $result.Option
         }
     }
 #>
 function ShowFileListDialogWithOption {
     param (
-        [Parameter(Mandatory = $true)]  [string]   $Title,
-        [Parameter(Mandatory = $true)]  [string]   $Message,
-        [Parameter(Mandatory = $false)] [string]   $FileFilter  = ".*",
-        [Parameter(Mandatory = $false)] [string[]] $FileList,
-        [Parameter(Mandatory = $false)] [string[]] $Options
+        [Parameter(Mandatory = $true)] [string]$Title,
+        [Parameter(Mandatory = $true)] [string]$Message,
+        [Parameter(Mandatory = $false)] [string]$FileFilter = ".*",
+        [Parameter(Mandatory = $false)] [string[]]$Files,
+        [Parameter(Mandatory = $false)] [string[]]$Options
     )
-    begin {}
-    process {
-        # フォーム生成
-        $frmMain = New-Object System.Windows.Forms.Form -Property @{
-            Text          = $Title                                                      # タイトル
-            StartPosition = 'CenterScreen'                                              # 表示位置
-            Size          = New-Object System.Drawing.Size(480,320)
-            Padding       = New-Object System.Windows.Forms.Padding(5)
-        }
 
-        $tlpMain = New-Object System.Windows.Forms.TableLayoutPanel -Property @{
-            Dock     = [System.Windows.Forms.DockStyle]::Fill
-            RowCount = 2
-        }
+    Add-Type -AssemblyName PresentationFramework
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
 
-        $pnlBody = New-Object System.Windows.Forms.Panel -Property @{
-            Dock = [System.Windows.Forms.DockStyle]::Fill
-        }
-        $lblDD = New-Object System.Windows.Forms.Label -Property @{
-            Dock      = [System.Windows.Forms.DockStyle]::Top
-            Text      = $Message
-            AutoSize  = $true
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-        }
-        $lbxDD = New-Object System.Windows.Forms.ListBox -Property @{
-            Dock        = [System.Windows.Forms.DockStyle]::Fill
-            AllowDrop   = $true
-        }
-        $grpOpt = New-Object System.Windows.Forms.GroupBox -Property @{
-            Dock     = [System.Windows.Forms.DockStyle]::Right
-            Text     = "Options"
-            AutoSize = $true
-            Padding  = New-Object System.Windows.Forms.Padding(5)
-        }
-        $flpOpt = New-Object System.Windows.Forms.FlowLayoutPanel -Property @{
-            Dock          = [System.Windows.Forms.DockStyle]::Fill
-            AutoSize      = $true
-            FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
-        }
-        $Checked = $true
-        $Options | ForEach-Object {
-            $rdoOpt = New-Object System.Windows.Forms.RadioButton -Property @{
-                Text     = $_
-                Checked  = $Checked
-                AutoSize = $true
-            }
-            $flpOpt.Controls.Add($rdoOpt)
-            $Checked = $false
-        }
-
-        $pnlTail = New-Object System.Windows.Forms.Panel -Property @{
-            Dock = [System.Windows.Forms.DockStyle]::Fill
-        }
-        $btnOK = New-Object System.Windows.Forms.Button -Property @{
-            Dock                    = [System.Windows.Forms.DockStyle]::Right
-            Size                    = New-Object System.Drawing.Size(128, 0) # ボタン巾のみ指定可能
-            Text                    = "OK"
-            UseVisualStyleBackColor = $true
-            DialogResult            = [Windows.Forms.DialogResult]::OK
-        }
-        $btnCancel = New-Object System.Windows.Forms.Button -Property @{
-            Dock                    = [System.Windows.Forms.DockStyle]::Right
-            Size                    = New-Object System.Drawing.Size(128, 0) # ボタン巾のみ指定可能
-            Text                    = "Cancel"
-            UseVisualStyleBackColor = $true
-            DialogResult            = [Windows.Forms.DialogResult]::Cancel
-        }
-
-        $null = $pnlBody.Controls.Add($lbxDD)
-        $null = $pnlBody.Controls.Add($lblDD)
-        $null = $pnlBody.Controls.Add($grpOpt)
-        $null = $grpOpt.Controls.Add($flpOpt)
-        $null = $pnlTail.Controls.Add($btnOK)
-        $null = $pnlTail.Controls.Add($btnCancel)
-        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-        $null = $tlpMain.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 50))) # ボタン高さはコレ
-        $null = $tlpMain.Controls.Add($pnlBody, 0, 0)
-        $null = $tlpMain.Controls.Add($pnlTail, 0, 1)
-        $null = $frmMain.Controls.Add($tlpMain)
-
-        $null = $frmMain.Add_Load({
-            $frmMain.BringToFront()
-        })
-        $null = $lbxDD.Add_DragEnter({
-            $_.Effect = "All"
-        })
-        $null = $lbxDD.Add_DragDrop({
-            AddFileList $lbxDD $_.Data.GetData("FileDrop") $FileFilter
-        })
-        $null = $lbxDD.Add_KeyDown({
-            if ($_.KeyCode -eq "Delete") {
-                if ($lbxDD.SelectedIndex -ge 0){
-                    [void]$lbxDD.Items.RemoveAt($lbxDD.SelectedIndex)
+    function AddFileList {
+        param(
+            [System.Collections.ObjectModel.ObservableCollection[object]] $bndFiles,
+            [string]$File,
+            [string]$Filter
+        )
+        if (-not (Test-Path $File -PathType Leaf)) { return }
+        if ($File -notmatch $Filter) { return }
+        if (-not ($bndFiles.FullName -contains $File)) {
+            $finf = [System.IO.FileInfo]::new($File)
+            $bndFiles.Add(
+                [PSCustomObject]@{
+                    FullName      = $finf.FullName
+                    Length        = $finf.Length / (1024*1024)
+                    LastWriteTime = $finf.LastWriteTime;
                 }
-            }
-        })
-
-        # フォーム表示
-        if ($null -ne $FileList) {
-            $null = AddFileList $lbxDD $FileList $FileFilter
+            )
         }
-        $frmMain.AcceptButton = $btnOK
-        $frmMain.CancelButton = $btnCancel
-        $null = $frmMain.ShowDialog()
-        $item = ""
-        if ($lbxDD.SelectedIndex -ge 0){
-            $item = $lbxDD.Items[$lbxDD.SelectedIndex]
-        }
-        return @($frmMain.DialogResult, $lbxDD.Items, $item, ($flpOpt.Controls | Where-Object {$_.Checked -eq $true} | Select-Object -ExpandProperty Text))
     }
-    end {}
+
+    # 画面生成
+    [xml]$xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dialog" Width="480" Height="320" WindowStartupLocation="CenterScreen" ResizeMode="CanResize">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Name="btnOK" Content="OK" Width="128" Height="50"/>
+            <Button Name="btnCancel" Content="Cancel" Width="128" Height="50"/>
+        </StackPanel>
+        <Label Name="lblMessage" DockPanel.Dock="Top"/>
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Right" MinWidth="100">
+                <Label DockPanel.Dock="Top" Content="Option"/>
+                <ListBox Name="lstOptions" ItemsSource="{Binding Options}" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton Content="{Binding Name}" IsChecked="{Binding IsSelected}" GroupName="Options"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <DataGrid Name="grdFiles" ItemsSource="{Binding Files}"
+                AutoGenerateColumns="False" AllowDrop="True" SelectionMode="Single"
+                CanUserAddRows="False" CanUserDeleteRows="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="3*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Size" Binding="{Binding Length, StringFormat={}{0:N2} MB}" Width="80" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Right"/></Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Modified" Binding="{Binding LastWriteTime, StringFormat=yyyy/MM/dd}" Width="75" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Center"/></Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </DockPanel>
+</Window>
+"@
+    $reader = New-Object System.Xml.XmlNodeReader $xaml
+    $window = [Windows.Markup.XamlReader]::Load($reader)
+    $lblMessage = $window.FindName("lblMessage")
+    $grdFiles   = $window.FindName("grdFiles")
+    $btnOK      = $window.FindName("btnOK")
+    $btnCancel  = $window.FindName("btnCancel")
+
+    # Window
+    $window.Title = $Title
+    $lblMessage.Content = $Message
+    $bndFiles   = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
+    $bndOptions = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
+    foreach ($file in $Files) {
+        AddFileList $bndFiles $file $FileFilter
+    }
+    foreach ($option in $Options) {
+        $bndOptions.Add([PSCustomObject]@{Name = $option; IsSelected = $false;})
+    }
+    $bndOptions[0].IsSelected = $true
+    $DataContext = [PSCustomObject]@{
+        Files   = $bndFiles
+        Options = $bndOptions
+    }
+    $window.DataContext = $DataContext
+
+    # DataGrid
+    $grdFiles.Add_DragOver({
+        if ($_.Data.GetDataPresent([Windows.DataFormats]::FileDrop)) {
+            $_.Effects = [Windows.DragDropEffects]::Copy
+        } else {
+            $_.Effects = [Windows.DragDropEffects]::None
+        }
+        $_.Handled = $true
+    })
+    $grdFiles.Add_Drop({
+        foreach ($file in $_.Data.GetData([Windows.DataFormats]::FileDrop)) {
+            AddFileList $bndFiles $file $FileFilter
+        }
+    })
+
+    # OK/Cancel
+    $btnOK.Add_Click({
+        $window.DialogResult = $true
+    })
+    $btnCancel.Add_Click({
+        $window.DialogResult = $false
+    })
+
+    # 表示
+    $window.ShowDialog() | Out-Null
+
+    # 結果
+    return [pscustomobject]@{
+        Result = $window.DialogResult
+        Files  = $bndFiles | ForEach-Object { $_.FullName }
+        Option = $bndOptions | Where-Object { $_.IsSelected } | Select-Object -ExpandProperty Name
+    }
 }
 
 <#
@@ -1072,8 +1105,8 @@ function ShowFileListDialogWithOption {
 .PARAMETER Setting
     設定対象オブジェクト(クラスインスタンスを想定)
 .EXAMPLE
-    Add-Type -AssemblyName "System.ComponentModel"          # 
-    Add-Type -AssemblyName "System.Drawing"                 # 
+    Add-Type -AssemblyName "System.ComponentModel"          #
+    Add-Type -AssemblyName "System.Drawing"                 #
     Add-Type -AssemblyName "System.Windows.Forms.Design"    # PowerShell5では使えないorz
     Invoke-Expression -Command @"
     class AppSettings {

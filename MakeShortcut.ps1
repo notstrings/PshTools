@@ -59,13 +59,13 @@ try {
     $ret = ShowFileListDialogWithOption `
             -Title $Title `
             -Message "対象ファイル(exe/bat/ps1)をドラッグ＆ドロップしてください" `
-            -FileList $args `
+            -Files $args `
             -FileFilter "\.(exe|bat|ps1)$" `
             -Options @("Current", "SendTo", "StartUp")
-    if ($ret[0] -eq "OK") {
-        foreach($elm in $ret[1]) {
+    if ($ret.Result) {
+        foreach($elm in $ret.Files) {
             if (Test-Path -LiteralPath $elm) {
-                MkLink $elm $ret[3]
+                MkLink $elm $ret.Option
             }
         }
     }

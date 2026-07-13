@@ -455,13 +455,13 @@ try {
     $ret = ShowFileListDialogWithOption `
             -Title $Title `
             -Message "対象画像ファイルをドラッグ＆ドロップしてください`n入力可能形式はbmp/jpg/jpeg/gif/tif/tiff/png/svg/pdf/heicです`n※PDFは扱いが特殊ですんで一部無視されたりします" `
-            -FileList $args `
+            -Files $args `
             -FileFilter "\.(bmp|jpg|jpeg|gif|tif|tiff|png|svg|pdf|heic)$" `
-            -Options @("PNG変換", "リサイズ", "トリミング", "傾き補正", "注釈付記", 
-                       "PDF変換個別", "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDF用紙リサイズ", "PDF捨印生成", 
+            -Options @("PNG変換", "リサイズ", "トリミング", "傾き補正", "注釈付記",
+                       "PDF変換個別", "PDF変換統合", "PDF平坦化", "PDF圧縮", "PDF用紙リサイズ", "PDF捨印生成",
                        "設定編集")
-    if ($ret[0] -eq "OK") {
-        ManipImage $ret[1] $ret[3]
+    if ($ret.Result) {
+        ManipImage $ret.Files $ret.Option
     }
 } catch {
     $null = Write-Host "---例外発生---"
