@@ -41,12 +41,13 @@ function local:MkLink([string] $TargetPath, [string] $Mode) {
             $exepath = [System.IO.Path]::Combine($dname, $fname + $ename)
             $WSH = New-Object -ComObject WScript.Shell
             $lnk = $WSH.CreateShortCut($lnkpath)
-            $lnk.TargetPath       = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
-            $lnk.IconLocation     = "$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe, 0"
+            $lnk.TargetPath       = "$((Get-Command powershell).Source)"
+            $lnk.IconLocation     = "$((Get-Command powershell).Source), 0"
             $lnk.Arguments        = "-ExecutionPolicy RemoteSigned ""$exepath"""
             $lnk.WorkingDirectory = "$dname"
             $null = $lnk.Save()
         }
+
     }
 }
 

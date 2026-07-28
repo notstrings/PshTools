@@ -23,9 +23,9 @@ function local:Setup() {
     $ToolDir = [System.IO.Path]::Combine($PSScriptRoot, "tool")
     $null = New-Item $ToolDir -ItemType Directory -ErrorAction SilentlyContinue
     ## PDFSharp
-    $ToolPath02 = [System.IO.Path]::Combine($ToolDir, "PDFsharp.1.50.5147")
-    if ((Test-Path $ToolPath02) -eq $false) {
-        nuget install PdfSharp -Version 1.50.5147 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
+    $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "PDFsharp-GDI")
+    if ((Test-Path $ToolPath01) -eq $false) {
+        nuget install PDFsharp-GDI -Version 6.1.1 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
     }
     ## rsvg-convert
     $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "rsvg-convert.exe")
@@ -148,7 +148,7 @@ function local:AnnotatePDFStamp {
         [Parameter(Mandatory = $false)] [double] $dStumpPosSZ = 10
     )
     begin {
-        [System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($PSScriptRoot, "tool", "PDFsharp.1.50.5147", "lib", "net20", "PdfSharp.dll")) | Out-Null
+        [System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($PSScriptRoot,"tool","PDFsharp-GDI.6.1.1","lib","net472","PdfSharp-gdi.dll"))
     }
     process {
         # 入力ファイルを開く

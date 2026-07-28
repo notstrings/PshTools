@@ -67,7 +67,7 @@ function local:FolderMonitor() {
     # 設定取得
     $Conf = LoadConfFile $ConfPath
     # 更新検出
-    $Result = ""
+    $Result = @()
     if ($null -ne $Conf.MonitorTargets) {
         $Conf.MonitorTargets | ForEach-Object {
             $MonitorName = $_.MonName
@@ -78,12 +78,14 @@ function local:FolderMonitor() {
         }
     }
     # 結果表示
-    if ("" -ne $Result ){
-        $null = SendRawIPMsg -Message $Result
+    if ($Result.Count -gt 0){
+        # ブロッキングされた所で別に構わない
+        # $null = SendRawIPMsg -Message $Result
+        $Result | Out-GridView -Title "FolderMonitorResult"
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
-    $Ret = ""
+    $Ret = @()
 
     # ワーキングフォルダを確保
     $PrevPath = "$($PSScriptRoot)\Monitor\$($MonitorName)Prev.csv"
@@ -128,12 +130,9 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
             }
         } | Out-Null
         # 結果出力
-        $AddFile | ForEach-Object { $Ret += "ADD:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
-        $DelFile | ForEach-Object { $Ret += "DEL:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
-        $ModFile | ForEach-Object { $Ret += "MOD:$($_.Replace($MonitorPath,'.'))`n" } | Out-Null
-        if ($Ret -ne ""){
-            $Ret = "---`nMonitorName:$MonitorName\nMonitorPath:$MonitorPath`n" + $Ret
-        }
+        $AddFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "ADD"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
+        $DelFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "DEL"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
+        $ModFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "MOD"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
     }
 
     # 現在のフォルダ状況を過去のフォルダ状況とする

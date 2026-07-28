@@ -19,54 +19,44 @@ function local:MakeBatch([string] $TargetPath, [string] $Mode, [System.Text.Enco
     $batpath = [System.IO.Path]::Combine($dname, $fname + ".bat")
     switch ($Mode) {
         "PSH5 CUI" {
-            if ($ename.ToLower() -eq ".ps1") {
-                $text = ""
-                $text = $text + "@echo off" + "`r`n"
-                $text = $text + "chcp 65001 > nul" + "`r`n"
-                $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
-                $text = $text + "popd" + "`r`n"
-            }
+            $text = ""
+            $text = $text + "@echo off" + "`r`n"
+            $text = $text + "chcp 65001 > nul" + "`r`n"
+            $text = $text + "pushd %~dp0" + "`r`n"
+            $text = $text + """$((Get-Command powershell).Source)"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
+            $text = $text + "popd" + "`r`n"
         }
         "PSH7 CUI" {
-            if ($ename.ToLower() -eq ".ps1") {
-                $text = ""
-                $text = $text + "@echo off" + "`r`n"
-                $text = $text + "chcp 65001 > nul" + "`r`n"
-                $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
-                $text = $text + "popd" + "`r`n"
-            }
+            $text = ""
+            $text = $text + "@echo off" + "`r`n"
+            $text = $text + "chcp 65001 > nul" + "`r`n"
+            $text = $text + "pushd %~dp0" + "`r`n"
+            $text = $text + """$((Get-Command pwsh).Source)"" -NoProfile -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
+            $text = $text + "popd" + "`r`n"
         }
         "PSH5 GUI" {
-            if ($ename.ToLower() -eq ".ps1") {
-                $text = ""
-                $text = $text + "@echo off" + "`r`n"
-                $text = $text + "chcp 65001 > nul" + "`r`n"
-                $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
-                $text = $text + "popd" + "`r`n"
-            }
+            $text = ""
+            $text = $text + "@echo off" + "`r`n"
+            $text = $text + "chcp 65001 > nul" + "`r`n"
+            $text = $text + "pushd %~dp0" + "`r`n"
+            $text = $text + """$((Get-Command powershell).Source)"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
+            $text = $text + "popd" + "`r`n"
         }
         "PSH7 GUI" {
-            if ($ename.ToLower() -eq ".ps1") {
-                $text = ""
-                $text = $text + "@echo off" + "`r`n"
-                $text = $text + "chcp 65001 > nul" + "`r`n"
-                $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($env:ProgramFiles)\PowerShell\7\pwsh.exe"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
-                $text = $text + "popd" + "`r`n"
-            }
+            $text = ""
+            $text = $text + "@echo off" + "`r`n"
+            $text = $text + "chcp 65001 > nul" + "`r`n"
+            $text = $text + "pushd %~dp0" + "`r`n"
+            $text = $text + """$((Get-Command pwsh).Source)"" -NoProfile -WindowStyle hidden -ExecutionPolicy RemoteSigned -File ""$exepath"" %*" + "`r`n"
+            $text = $text + "popd" + "`r`n"
         }
         "PSH5 ISE" {
-            if ($ename.ToLower() -eq ".ps1") {
-                $text = ""
-                $text = $text + "@echo off" + "`r`n"
-                $text = $text + "chcp 65001 > nul" + "`r`n"
-                $text = $text + "pushd %~dp0" + "`r`n"
-                $text = $text + """$($ENV:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell_ise.exe"" -File ""$exepath"" -NoProfile" + "`r`n"
-                $text = $text + "popd" + "`r`n"
-            }
+            $text = ""
+            $text = $text + "@echo off" + "`r`n"
+            $text = $text + "chcp 65001 > nul" + "`r`n"
+            $text = $text + "pushd %~dp0" + "`r`n"
+            $text = $text + """$((Get-Command powershell_ise).Source)"" -File ""$exepath"" -NoProfile" + "`r`n"
+            $text = $text + "popd" + "`r`n"
         }
     }
     [IO.File]::WriteAllLines($batpath, $text, $Encoding)

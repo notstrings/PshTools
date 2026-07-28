@@ -86,12 +86,10 @@ function ConvertFromPSCO {
         if ($null -eq $Data) {
             return $null
         }
-        if ($Type.IsPrimitive) {
-            return $Data
+        if ($Type.IsPrimitive -or $Type -eq [string] -or $Type -eq [datetime] -or $Type -eq [decimal]) {
+            return [System.Convert]::ChangeType($Data, $Type)
         } elseif ($Type.IsEnum) {
-            return $Data
-        } elseif (($Type.Name -eq "string") -or ($Type.Name -eq "datetime") -or ($Type.Name -eq "decimal")) {
-            return $Data
+            return [System.Enum]::ToObject($Type, $Data)
         } elseif ($Type.IsArray) {
             $inst = @()
             foreach ($elm in $Data) {
@@ -313,189 +311,6 @@ function RestrictTextDate {
                 }
             }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         }
-        return $Text
-    }
-    end {}
-}
-
-<#
-.SYNOPSIS
-    ローマ字をひらがなにします
-.DESCRIPTION
-    ローマ字をひらがなにしようとしますが
-    ローマ字表記方式は死ぬほど色々あるので完璧ではありません
-    つーか多分日本人でも完璧に書けるヤツ居ねぇんじゃね
-.PARAMETER Text
-    対象文字列
-.EXAMPLE
-    TryConvertRoma2Kana "aiueo"
-    結果:"あいうえお"
-#>
-function TryConvertRoma2Kana {
-    param (
-        [Parameter(Mandatory = $false)] [string] $Text
-    )
-    begin {}
-    process {
-        $RomajiMapA = @{
-            "Â"= "Aー"; "Î"= "Iー"; "Ûー"= "U"; "Ê"= "Eー"; "Ô"= "Oー";
-            "Ā"= "Aー"; "Ī"= "Iー"; "Ūー"= "U"; "Ē"= "Eー"; "Ō"= "Oー";
-            "nn"= "ん";
-            "qa"= "っq"; "qi"= "っq"; "qu"= "っq"; "qe"= "っq"; "qo"= "っq";
-            "kk"= "っk"; "ss"= "っs"; "tt"= "っt"; "qn"= "っn"; "hh"= "っh";
-            "mm"= "っm"; "yy"= "っy"; "rr"= "っr"; "ww"= "っw"; "gg"= "っg";
-            "zz"= "っz"; "dd"= "っd"; "bb"= "っb"; "pp"= "っp"; "tc"= "っc";
-            "ff"= "っf"; "jj"= "っj";
-        }
-        $RomajiMapB = @{
-            "kya"= "きゃ"; "kyi"= "きぃ"; "kyu"= "きゅ"; "kye"= "きぇ"; "kyo"= "きょ";
-            "sha"= "しゃ"; "shi"= "し";   "shu"= "しゅ"; "she"= "しぇ"; "sho"= "しょ";
-            "sya"= "しゃ"; "syi"= "しぃ"; "syu"= "しゅ"; "sye"= "しぇ"; "syo"= "しょ";
-            "cha"= "ちゃ"; "chi"= "ち";   "chu"= "ちゅ"; "che"= "ちぇ"; "cho"= "ちょ";
-            "tya"= "ちゃ"; "tyi"= "ちぃ"; "tyu"= "ちゅ"; "tye"= "ちぇ"; "tyo"= "ちょ";
-            "nya"= "にゃ"; "nyi"= "にぃ"; "nyu"= "にゅ"; "nye"= "にぇ"; "nyo"= "にょ";
-            "hya"= "ひゃ"; "hyi"= "ひぃ"; "hyu"= "ひゅ"; "hye"= "ひぇ"; "hyo"= "ひょ";
-            "mya"= "みゃ"; "myi"= "みぃ"; "myu"= "みゅ"; "mye"= "みぇ"; "myo"= "みょ";
-            "rya"= "りゃ"; "ryi"= "りぃ"; "ryu"= "りゅ"; "rye"= "りぇ"; "ryo"= "りょ";
-            "gya"= "ぎゃ"; "gyi"= "ぎぃ"; "gyu"= "ぎゅ"; "gye"= "ぎぇ"; "gyo"= "ぎょ";
-            "zya"= "じゃ"; "zyi"= "じぃ"; "zyu"= "じゅ"; "zye"= "じぇ"; "zyo"= "じょ";
-            "ja" = "じゃ"; "ji" = "じ";   "ju" = "じゅ"; "je" = "じぇ"; "jo" = "じょ";
-            "dya"= "ぢゃ"; "dyi"= "ぢぃ"; "dyu"= "ぢゅ"; "dye"= "ぢぇ"; "dyo"= "ぢょ";
-            "bya"= "びゃ"; "byi"= "びぃ"; "byu"= "びゅ"; "bye"= "びぇ"; "byo"= "びょ";
-            "pya"= "ぴゃ"; "pyi"= "ぴぃ"; "pyu"= "ぴゅ"; "pye"= "ぴぇ"; "pyo"= "ぴょ";
-            "kwa"= "くぁ"; "kwi"= "くぃ"; "kwu"= "くゅ"; "kwe"= "くぇ"; "kwo"= "くぉ";
-            "swa"= "すぁ"; "swi"= "すぃ"; "swu"= "すゅ"; "swe"= "すぇ"; "swo"= "すぉ";
-            "twa"= "つぁ"; "twi"= "つぃ"; "twu"= "つゅ"; "twe"= "つぇ"; "two"= "つぉ";
-            "nwa"= "ぬぁ"; "nwi"= "ぬぃ"; "nwu"= "ぬゅ"; "nwe"= "ぬぇ"; "nwo"= "ぬぉ";
-            "hwa"= "ふぁ"; "hwi"= "ふぃ"; "hwu"= "ふゅ"; "hwe"= "ふぇ"; "hwo"= "ふぉ";
-            "mwa"= "むぁ"; "mwi"= "むぃ"; "mwu"= "むゅ"; "mwe"= "むぇ"; "mwo"= "むぉ";
-            "rwa"= "るぁ"; "rwi"= "るぃ"; "rwu"= "るゅ"; "rwe"= "るぇ"; "rwo"= "るぉ";
-            "gwa"= "ぐぁ"; "gwi"= "ぐぃ"; "gwu"= "ぐゅ"; "gwe"= "ぐぇ"; "gwo"= "ぐぉ";
-            "zwa"= "ずぁ"; "zwi"= "ずぃ"; "zwu"= "ずゅ"; "zwe"= "ずぇ"; "zwo"= "ずぉ";
-            "bwa"= "ぶぁ"; "bwi"= "ぶぃ"; "bwu"= "ぶゅ"; "bwe"= "ぶぇ"; "bwo"= "ぶぉ";
-            "pwa"= "ぷぁ"; "pwi"= "ぷぃ"; "pwu"= "ぷゅ"; "pwe"= "ぷぇ"; "pwo"= "ぷぉ";
-            "tja"= "てゃ"; "tji"= "てぃ"; "tju"= "てゅ"; "tje"= "てぇ"; "tjo"= "てぉ";
-            "dja"= "でゃ"; "dji"= "でぃ"; "dju"= "でゅ"; "dje"= "でぇ"; "djo"= "でぉ";
-            "tva"= "とぁ"; "tvi"= "とぃ"; "tvu"= "とゅ"; "tve"= "とぇ"; "tvo"= "とぉ";
-            "dva"= "どぁ"; "dvi"= "どぃ"; "dvu"= "どゅ"; "dve"= "どぇ"; "dvo"= "どぉ";
-            "va" = "ゔぁ"; "vi" = "ゔぃ"; "vu" = "ゔ";   "ve" = "ゔぇ"; "vo" = "ゔぉ";
-            "a" = "あ"; "i" = "い"; "u" = "う"; "e" = "え"; "o" = "お";
-            "ka"= "か"; "ki"= "き"; "ku"= "く"; "ke"= "け"; "ko"= "こ";
-            "sa"= "さ"; "si"= "し"; "su"= "す"; "se"= "せ"; "so"= "そ";
-            "ta"= "た"; "ti"= "ち"; "tu"= "つ"; "te"= "て"; "to"= "と";
-            "na"= "な"; "ni"= "に"; "nu"= "ぬ"; "ne"= "ね"; "no"= "の";
-            "ha"= "は"; "hi"= "ひ"; "hu"= "ふ"; "he"= "へ"; "ho"= "ほ";
-            "ma"= "ま"; "mi"= "み"; "mu"= "む"; "me"= "め"; "mo"= "も";
-            "ya"= "や"; "yi"= "ゐ"; "yu"= "ゆ"; "ye"= "ゑ"; "yo"= "よ";
-            "ra"= "ら"; "ri"= "り"; "ru"= "る"; "re"= "れ"; "ro"= "ろ";
-            "wa"= "わ"; "wi"= "ゐ"; "wu"= "ぅ"; "we"= "ゑ"; "wo"= "を";
-            "ga"= "が"; "gi"= "ぎ"; "gu"= "ぐ"; "ge"= "げ"; "go"= "ご";
-            "za"= "ざ"; "zi"= "じ"; "zu"= "ず"; "ze"= "ぜ"; "zo"= "ぞ";
-            "da"= "だ"; "di"= "ぢ"; "du"= "づ"; "de"= "で"; "do"= "ど";
-            "ba"= "ば"; "bi"= "び"; "bu"= "ぶ"; "be"= "べ"; "bo"= "ぼ";
-            "pa"= "ぱ"; "pi"= "ぴ"; "pu"= "ぷ"; "pe"= "ぺ"; "po"= "ぽ";
-            "xa"= "ぁ"; "xi"= "ぃ"; "xu"= "ぅ"; "xe"= "ぇ"; "xo"= "ぉ";
-            "n"= "ん"
-        }
-        $keys = $RomajiMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
-        foreach ($key in $keys) {
-            $value = $RomajiMapA[$key]
-            $Text = $Text -replace $key, $value
-        }
-        $keys = $RomajiMapB.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
-        foreach ($key in $keys) {
-            $value = $RomajiMapB[$key]
-            $Text = $Text -replace $key, $value
-        }
-        return $Text
-    }
-    end {}
-}
-
-<#
-.SYNOPSIS
-    ひらがなをローマ字にします
-.DESCRIPTION
-    ひらがなをローマ字にしようとしますが
-    強引に逆変換しただけなので正式なものではありません
-    ※ただし「すうぃーつ」とかいう元々日本語には無い綴りも許容します
-.PARAMETER Text
-    対象文字列
-.EXAMPLE
-    TryConvertKana2Roma "あいうえお"
-    結果:"aiueo"
-#>
-function TryConvertKana2Roma {
-    param (
-        [Parameter(Mandatory = $false)] [string] $Text
-    )
-    begin {}
-    process {
-        $KanaMapA = @{
-            "ん"= "nn";
-            "っ"= "tt";
-        }
-        $KanaMapB = @{
-            "きゃ"= "kya"; "きぃ"= "kyi"; "きゅ"= "kyu"; "きぇ"= "kye"; "きょ"= "kyo";
-            "しゃ"= "sya"; "しぃ"= "syi"; "しゅ"= "syu"; "しぇ"= "sye"; "しょ"= "syo";
-            "ちゃ"= "cha"; "ちぃ"= "tyi"; "ちゅ"= "chu"; "ちぇ"= "che"; "ちょ"= "cho";
-            "にゃ"= "nya"; "にぃ"= "nyi"; "にゅ"= "nyu"; "にぇ"= "nye"; "にょ"= "nyo";
-            "ひゃ"= "hya"; "ひぃ"= "hyi"; "ひゅ"= "hyu"; "ひぇ"= "hye"; "ひょ"= "hyo";
-            "みゃ"= "mya"; "みぃ"= "myi"; "みゅ"= "myu"; "みぇ"= "mye"; "みょ"= "myo";
-            "りゃ"= "rya"; "りぃ"= "ryi"; "りゅ"= "ryu"; "りぇ"= "rye"; "りょ"= "ryo";
-            "ぎゃ"= "gya"; "ぎぃ"= "gyi"; "ぎゅ"= "gyu"; "ぎぇ"= "gye"; "ぎょ"= "gyo";
-            "じゃ"= "ja";  "じぃ"= "zyi"; "じゅ"= "ju";  "じぇ"= "je";  "じょ"= "jo";
-            "ぢゃ"= "dya"; "ぢぃ"= "dyi"; "ぢゅ"= "dyu"; "ぢぇ"= "dye"; "ぢょ"= "dyo";
-            "びゃ"= "bya"; "びぃ"= "byi"; "びゅ"= "byu"; "びぇ"= "bye"; "びょ"= "byo";
-            "ぴゃ"= "pya"; "ぴぃ"= "pyi"; "ぴゅ"= "pyu"; "ぴぇ"= "pye"; "ぴょ"= "pyo";
-            "くぁ"= "kwa"; "くぃ"= "kwi"; "くゅ"= "kwu"; "くぇ"= "kwe"; "くぉ"= "kwo";
-            "すぁ"= "swa"; "すぃ"= "swi"; "すゅ"= "swu"; "すぇ"= "swe"; "すぉ"= "swo";
-            "つぁ"= "twa"; "つぃ"= "twi"; "つゅ"= "twu"; "つぇ"= "twe"; "つぉ"= "two";
-            "ぬぁ"= "nwa"; "ぬぃ"= "nwi"; "ぬゅ"= "nwu"; "ぬぇ"= "nwe"; "ぬぉ"= "nwo";
-            "ふぁ"= "hwa"; "ふぃ"= "hwi"; "ふゅ"= "hwu"; "ふぇ"= "hwe"; "ふぉ"= "hwo";
-            "むぁ"= "mwa"; "むぃ"= "mwi"; "むゅ"= "mwu"; "むぇ"= "mwe"; "むぉ"= "mwo";
-            "るぁ"= "rwa"; "るぃ"= "rwi"; "るゅ"= "rwu"; "るぇ"= "rwe"; "るぉ"= "rwo";
-            "ぐぁ"= "gwa"; "ぐぃ"= "gwi"; "ぐゅ"= "gwu"; "ぐぇ"= "gwe"; "ぐぉ"= "gwo";
-            "ずぁ"= "zwa"; "ずぃ"= "zwi"; "ずゅ"= "zwu"; "ずぇ"= "zwe"; "ずぉ"= "zwo";
-            "ぶぁ"= "bwa"; "ぶぃ"= "bwi"; "ぶゅ"= "bwu"; "ぶぇ"= "bwe"; "ぶぉ"= "bwo";
-            "ぷぁ"= "pwa"; "ぷぃ"= "pwi"; "ぷゅ"= "pwu"; "ぷぇ"= "pwe"; "ぷぉ"= "pwo";
-            "てゃ"= "tja"; "てぃ"= "tji"; "てゅ"= "tju"; "てぇ"= "tje"; "てぉ"= "tjo";
-            "でゃ"= "dja"; "でぃ"= "dji"; "でゅ"= "dju"; "でぇ"= "dje"; "でぉ"= "djo";
-            "とぁ"= "tva"; "とぃ"= "tvi"; "とゅ"= "tvu"; "とぇ"= "tve"; "とぉ"= "tvo";
-            "どぁ"= "dva"; "どぃ"= "dvi"; "どゅ"= "dvu"; "どぇ"= "dve"; "どぉ"= "dvo";
-            "ゔぁ"= "va";  "ゔぃ"= "vi";  "ゔ"= "vu";    "ゔぇ"= "ve";  "ゔぉ"= "vo";
-            "あ"= "a";  "い"= "i";  "う"= "u";  "え"= "e";  "お"= "o";
-            "か"= "ka"; "き"= "ki"; "く"= "ku"; "け"= "ke"; "こ"= "ko";
-            "さ"= "sa"; "し"= "si"; "す"= "su"; "せ"= "se"; "そ"= "so";
-            "た"= "ta"; "ち"= "ti"; "つ"= "tu"; "て"= "te"; "と"= "to";
-            "な"= "na"; "に"= "ni"; "ぬ"= "nu"; "ね"= "ne"; "の"= "no";
-            "は"= "ha"; "ひ"= "hi"; "ふ"= "hu"; "へ"= "he"; "ほ"= "ho";
-            "ま"= "ma"; "み"= "mi"; "む"= "mu"; "め"= "me"; "も"= "mo";
-            "や"= "ya";             "ゆ"= "yu";             "よ"= "yo";
-            "ら"= "ra"; "り"= "ri"; "る"= "ru"; "れ"= "re"; "ろ"= "ro";
-            "わ"= "wa"; "ゐ"= "wi";             "ゑ"= "we"; "を"= "wo";
-            "が"= "ga"; "ぎ"= "gi"; "ぐ"= "gu"; "げ"= "ge"; "ご"= "go";
-            "ざ"= "za"; "じ"= "zi"; "ず"= "zu"; "ぜ"= "ze"; "ぞ"= "zo";
-            "だ"= "da"; "ぢ"= "di"; "づ"= "du"; "で"= "de"; "ど"= "do";
-            "ば"= "ba"; "び"= "bi"; "ぶ"= "bu"; "べ"= "be"; "ぼ"= "bo";
-            "ぱ"= "pa"; "ぴ"= "pi"; "ぷ"= "pu"; "ぺ"= "pe"; "ぽ"= "po";
-            "ぁ"= "xa"; "ぃ"= "xi"; "ぅ"= "xu"; "ぇ"= "xe"; "ぉ"= "xo";
-        }
-        $keys = $KanaMapA.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
-        foreach ($key in $keys) {
-            $value = $KanaMapA[$key]
-            $Text = $Text -replace $key, $value
-        }
-        $keys = $KanaMapB.Keys | Sort-Object @{Expression={$_.Length}; Ascending=$false}
-        foreach ($key in $keys) {
-            $value = $KanaMapB[$key]
-            $Text = $Text -replace $key, $value
-        }
-        $Text = $Text -replace "Aー", "Â"
-        $Text = $Text -replace "Iー", "Î"
-        $Text = $Text -replace "Uー", "U"
-        $Text = $Text -replace "Eー", "Ê"
-        $Text = $Text -replace "Oー", "Ô"
         return $Text
     }
     end {}
@@ -770,27 +585,6 @@ function ShowFolderDialog {
     end {}
 }
 
-# FileListDialog用ファイルリスト生成
-function local:AddFileList([System.Windows.Forms.ListBox] $ListBox, [string[]] $FilePaths, [string] $FileFilter) {
-    foreach ($FilePath in $FilePaths) {
-        if (Test-Path -LiteralPath $FilePath) {
-            if ([System.IO.Directory]::Exists($FilePath)) {
-                $ChildFilePaths = @()
-                @(Get-ChildItem -LiteralPath $FilePath -File -Recurse) | ForEach-Object {
-                    $ChildFilePaths += $_.FullName
-                }
-                AddFileList $ListBox $ChildFilePaths $FileFilter
-            } else {
-                if ([System.IO.Path]::GetFileName($FilePath) -match $FileFilter) {
-                    if ($ListBox.Items -notcontains $FilePath) {
-                        [void]$ListBox.Items.Add($FilePath)
-                    }
-                }
-            }
-        }
-    }
-}
-
 <#
 .SYNOPSIS
     ドラッグ＆ドロップで受け取ったファイルを選択するためのダイアログを表示します
@@ -826,24 +620,30 @@ function ShowFileListDialog {
     Add-Type -AssemblyName PresentationFramework
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
-
-    function AddFileList {
+    function FileListDialogAddPath {
         param(
             [System.Collections.ObjectModel.ObservableCollection[object]] $bndFiles,
-            [string]$File,
+            [string]$Path,
             [string]$Filter
         )
-        if (-not (Test-Path $File -PathType Leaf)) { return }
-        if ($File -notmatch $Filter) { return }
-        if (-not ($bndFiles.FullName -contains $File)) {
-            $finf = [System.IO.FileInfo]::new($File)
-            $bndFiles.Add(
-                [PSCustomObject]@{
-                    FullName      = $finf.FullName
-                    Length        = $finf.Length / (1024*1024)
-                    LastWriteTime = $finf.LastWriteTime;
+        if ([System.IO.Directory]::Exists($Path)) {
+            @(Get-ChildItem -LiteralPath $Path -File -Recurse) | ForEach-Object {
+                FileListDialogAddPath $bndFiles $_.FullName $FileFilter
+            }
+        }
+        if ([System.IO.File]::Exists($Path)) {
+            if ($Path -match $Filter) {
+                if (-not ($bndFiles.FullName -contains $Path)) {
+                    $finf = [System.IO.FileInfo]::new($Path)
+                    $bndFiles.Add(
+                        [PSCustomObject]@{
+                            FullName      = $finf.FullName
+                            Length        = $finf.Length / (1024*1024)
+                            LastWriteTime = $finf.LastWriteTime;
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 
@@ -890,7 +690,7 @@ function ShowFileListDialog {
     $lblMessage.Content = $Message
     $bndFiles   = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
     foreach ($file in $Files) {
-        AddFileList $bndFiles $file $FileFilter
+        FileListDialogAddPath $bndFiles $file $FileFilter
     }
     $DataContext = [PSCustomObject]@{
         Files   = $bndFiles
@@ -909,7 +709,7 @@ function ShowFileListDialog {
     })
     $grdFiles.Add_Drop({
         foreach ($file in $_.Data.GetData([Windows.DataFormats]::FileDrop)) {
-            AddFileList $bndFiles $file $FileFilter
+            FileListDialogAddPath $bndFiles $file $FileFilter
         }
     })
 
@@ -971,24 +771,30 @@ function ShowFileListDialogWithOption {
     Add-Type -AssemblyName PresentationFramework
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
-
-    function AddFileList {
+    function FileListDialogAddPath {
         param(
             [System.Collections.ObjectModel.ObservableCollection[object]] $bndFiles,
-            [string]$File,
+            [string]$Path,
             [string]$Filter
         )
-        if (-not (Test-Path $File -PathType Leaf)) { return }
-        if ($File -notmatch $Filter) { return }
-        if (-not ($bndFiles.FullName -contains $File)) {
-            $finf = [System.IO.FileInfo]::new($File)
-            $bndFiles.Add(
-                [PSCustomObject]@{
-                    FullName      = $finf.FullName
-                    Length        = $finf.Length / (1024*1024)
-                    LastWriteTime = $finf.LastWriteTime;
+        if ([System.IO.Directory]::Exists($Path)) {
+            @(Get-ChildItem -LiteralPath $Path -File -Recurse) | ForEach-Object {
+                FileListDialogAddPath $bndFiles $_.FullName $FileFilter
+            }
+        }
+        if ([System.IO.File]::Exists($Path)) {
+            if ($Path -match $Filter) {
+                if (-not ($bndFiles.FullName -contains $Path)) {
+                    $finf = [System.IO.FileInfo]::new($Path)
+                    $bndFiles.Add(
+                        [PSCustomObject]@{
+                            FullName      = $finf.FullName
+                            Length        = $finf.Length / (1024*1024)
+                            LastWriteTime = $finf.LastWriteTime;
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 
@@ -1048,7 +854,7 @@ function ShowFileListDialogWithOption {
     $bndFiles   = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
     $bndOptions = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
     foreach ($file in $Files) {
-        AddFileList $bndFiles $file $FileFilter
+        FileListDialogAddPath $bndFiles $file $FileFilter
     }
     foreach ($option in $Options) {
         $bndOptions.Add([PSCustomObject]@{Name = $option; IsSelected = $false;})
@@ -1071,7 +877,7 @@ function ShowFileListDialogWithOption {
     })
     $grdFiles.Add_Drop({
         foreach ($file in $_.Data.GetData([Windows.DataFormats]::FileDrop)) {
-            AddFileList $bndFiles $file $FileFilter
+            FileListDialogAddPath $bndFiles $file $FileFilter
         }
     })
 
@@ -1143,8 +949,10 @@ function ShowFileListDialogWithOption {
 #>
 function ShowSettingDialog {
     param (
-        [Parameter(Mandatory = $true)] [string]        $Title,
-        [Parameter(Mandatory = $true)] [System.Object] $Setting
+        [Parameter(Mandatory = $true)]  [string]        $Title,
+        [Parameter(Mandatory = $true)]  [System.Object] $Setting,
+        [Parameter(Mandatory = $false)] [boolean]       $ToolbarVisible = $false,
+        [Parameter(Mandatory = $false)] [boolean]       $HelpVisible = $false
     )
     begin {}
     process {
@@ -1167,6 +975,8 @@ function ShowSettingDialog {
         $grdProp = New-Object System.Windows.Forms.PropertyGrid -Property @{
             Dock           = [System.Windows.Forms.DockStyle]::Fill
             SelectedObject = $Setting
+            ToolbarVisible = $ToolbarVisible
+            HelpVisible    = $HelpVisible
         }
 
         $pnlTail = New-Object System.Windows.Forms.Panel -Property @{
@@ -1969,40 +1779,6 @@ function GoogleTranslate {
         $Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=$($SrcLang)&tl=$($DstLang)&dt=t&q=$Text"
         $Res = Invoke-RestMethod -Uri $Uri -Method Get
         return $Res[0].SyncRoot | ForEach-Object { $_[0] }
-    }
-    end {}
-}
-
-<#
-.SYNOPSIS
-    ひらがなを漢字にします
-.DESCRIPTION
-    ひらがなをGoogleTranslate(※IMEの方)で漢字にします
-    変換候補は全部最初のものになるため精度はあまり良くありません
-.PARAMETER Text
-    対象文字列
-.EXAMPLE
-    TryConvertKana2Kanji "きょうは"
-    結果:"今日は"
-#>
-function GoogleIME {
-    param (
-        [Parameter(Mandatory = $true)] [string] $Text
-    )
-    begin {}
-    process {
-        $ret = ""
-        $url = "http://www.google.com/transliterate?langpair=ja-Hira|ja&text={0}" -f ([System.Web.HttpUtility]::UrlEncode($Text))
-        $res = [System.Net.HttpWebRequest]::Create($url).GetResponse()
-        $rdr = New-Object System.IO.StreamReader($res.GetResponseStream())
-        $content = $rdr.ReadToEnd()
-        if ($content -ne "") {
-            $jsonResponse = $content | ConvertFrom-Json
-            foreach ($elm in $jsonResponse) {
-                $ret += $elm[1][0]
-            }
-        }
-        return $ret
     }
     end {}
 }

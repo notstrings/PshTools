@@ -21,9 +21,9 @@ function local:Setup() {
     $ToolDir = [System.IO.Path]::Combine($PSScriptRoot, "tool")
     $null = New-Item $ToolDir -ItemType Directory -ErrorAction SilentlyContinue
     ## PDFSharp
-    $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "PDFsharp.1.50.5147")
+    $ToolPath01 = [System.IO.Path]::Combine($ToolDir, "PDFsharp-GDI")
     if ((Test-Path $ToolPath01) -eq $false) {
-        nuget install PdfSharp -Version 1.50.5147 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
+        nuget install PDFsharp-GDI -Version 6.1.1 -OutputDirectory $ToolDir -Source 'https://api.nuget.org/v3/index.json'
     }
 }
 
@@ -68,7 +68,7 @@ function local:AnnotatePDFText {
         [Parameter(Mandatory = $false)] [double] $dAnnTextPosY = 0
     )
     begin {
-        [System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($PSScriptRoot, "tool", "PDFsharp.1.50.5147", "lib", "net20", "PdfSharp.dll")) | Out-Null
+        [System.Reflection.Assembly]::LoadFrom([System.IO.Path]::Combine($PSScriptRoot,"tool","PDFsharp-GDI.6.1.1","lib","net472","PdfSharp-gdi.dll"))
     }
     process {
         # 入力ファイルを開く

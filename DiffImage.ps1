@@ -71,39 +71,41 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     try {
         # 設定取得
         $Conf = LoadConfFile $ConfPath
+        # フォルダ確認
+        if ($LHS.DirectoryName -ne $RHS.DirectoryName) {
+            throw "同じフォルダ内の画像を2枚選択してください"
+        }
         # 本体処理
         $IMPath = "magick.exe"
-        $LSrcPath = $LHS.FullName
-        $RSrcPath = $RHS.FullName
-        $TempPath = [System.IO.Path]::Combine($env:TEMP, "PSHTools_" + [System.Guid]::NewGuid().Guid)
-        $null = New-Item $TempPath -ItemType Directory -ErrorAction SilentlyContinue
-        $TempLHS = [System.IO.Path]::Combine($TempPath, "tempLHS.png")
-        $TempRHS = [System.IO.Path]::Combine($TempPath, "tempRHS.png")
-        $TempRSL = [System.IO.Path]::Combine($TempPath, "diff.png")
+        $SrcLHSPath = $LHS.FullName
+        $SrcRHSPath = $RHS.FullName
+        $DstBasePath = [System.IO.Path]::Combine($LHS.DirectoryName, "Diff")
+        $DstLHSPath = [System.IO.Path]::Combine($DstBasePath, $LHS.BaseName + ".png")
+        $DstRHSPath = [System.IO.Path]::Combine($DstBasePath, $RHS.BaseName + ".png")
+        $DstRSLPath = [System.IO.Path]::Combine($DstBasePath, "diff_" + $LHS.BaseName + "x" + $RHS.BaseName + ".png")
+        $null = New-Item $DstBasePath -ItemType Directory -ErrorAction SilentlyContinue
         $opt1 = ""
         if ($Conf.FitSize -eq $true) {
             $opt1 += "-resize 800x800 "
         }
         $opt2 = $Conf.Align.ToString()
         if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""$TempLHS"""
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""$TempRHS"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$SrcLHSPath"" $opt1 -type GrayScale +level-colors Red,White  ""$DstLHSPath"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$SrcRHSPath"" $opt1 -type GrayScale +level-colors Blue,White ""$DstRHSPath"""
         } else {
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$RSrcPath"" $opt1 -type GrayScale +level-colors Red,White  ""$TempLHS"""
-            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$LSrcPath"" $opt1 -type GrayScale +level-colors Blue,White ""$TempRHS"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$SrcRHSPath"" $opt1 -type GrayScale +level-colors Red,White  ""$DstLHSPath"""
+            $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$SrcLHSPath"" $opt1 -type GrayScale +level-colors Blue,White ""$DstRHSPath"""
         }
-        $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$TempLHS"" ""$TempRHS"" -compose Multiply -gravity $opt2 -composite ""$TempRSL"""
-        $null = Start-Process "$TempRSL"
+        $null = Start-Process -NoNewWindow -Wait -FilePath """$IMPath""" -ArgumentList "convert ""$DstLHSPath"" ""$DstRHSPath"" -compose Multiply -gravity $opt2 -composite ""$DstRSLPath"""
+        $null = Start-Process "$DstRSLPath"
     } catch {
         $null = Write-Host "Error:" $_.Exception.Message
-    } finally {
-        $null = Remove-Item -Path $TempPath -Force -Recurse
     }
 }
 
 ###############################################################################
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.png", "$($ENV:USERPROFILE)\Desktop\新しいフォルダー\bbb.png")
+# $args = @("$($ENV:USERPROFILE)\Desktop\aaa\0000.png", "$($ENV:USERPROFILE)\Desktop\aaa\0001.png")
 
 try {
     $null = Write-Host "---$Title---"

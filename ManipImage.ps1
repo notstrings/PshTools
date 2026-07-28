@@ -275,7 +275,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                             # 縁取りのために二度打ち
                             $arg += " -gravity $($Conf.AnnotateTitlePos.ToString())"                                                                                        # 上側テキスト合成
                             $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateTitleSize)"                                                               # 上側テキスト合成
-                            $arg += " ( -background none -stroke ""#FFFFFF""                     -strokewidth 2 -fill ""$($Conf.AnnotateTitleColor)"" label:""$text0"" )"   # 上側テキスト合成
+                            $arg += " ( -background none -stroke ""#FFFFFF""                   -strokewidth 2 -fill ""$($Conf.AnnotateTitleColor)"" label:""$text0"" )"   # 上側テキスト合成
                             $arg += " -composite"                                                                                                                           # 上側テキスト合成
                             $arg += " -gravity $($Conf.AnnotateTitlePos.ToString())"                                                                                        # 上側テキスト合成
                             $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateTitleSize)"                                                               # 上側テキスト合成
@@ -286,7 +286,7 @@ function local:ManipImage([string[]] $TargetPaths, [string] $Mode) {
                             # 縁取りのために二度打ち
                             $arg += " -gravity $($Conf.AnnotateDetailPos.ToString())"                                                                                       # 下側テキスト合成
                             $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateDetailSize)"                                                              # 下側テキスト合成
-                            $arg += " ( -background none -stroke ""#FFFFFF""                      -strokewidth 2 -fill ""$($Conf.AnnotateDetailColor)"" label:""$text1"" )" # 下側テキスト合成
+                            $arg += " ( -background none -stroke ""#FFFFFF""                   -strokewidth 2 -fill ""$($Conf.AnnotateDetailColor)"" label:""$text1"" )" # 下側テキスト合成
                             $arg += " -composite"                                                                                                                           # 下側テキスト合成
                             $arg += " -gravity $($Conf.AnnotateDetailPos.ToString())"                                                                                       # 下側テキスト合成
                             $arg += " -font ""MS-Mincho-&-MS-PMincho"" -pointsize $($Conf.AnnotateDetailSize)"                                                              # 下側テキスト合成
