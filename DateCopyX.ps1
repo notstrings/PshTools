@@ -12,6 +12,7 @@ function local:DateCopyFile([System.IO.FileInfo] $Target) {
     $fname = [System.IO.Path]::GetFileNameWithoutExtension($spath)
     $ename = [System.IO.Path]::GetExtension($spath)
     $fname = [regex]::Replace($fname, "_?20\d\d\d\d\d\d_?", "")
+    $fname = [regex]::Replace($fname, "\(\d+\)$", "")
     $dpath = [System.IO.Path]::Combine($dname, $fname + $ename)
     $uniq = GenUniqName $dpath $false
     cp.exe -p $spath $uniq
@@ -23,6 +24,7 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
     $fname = [System.IO.Path]::GetFileName($spath)
     $ename = ""
     $fname = [regex]::Replace($fname, "_?20\d\d\d\d\d\d_?", " ")
+    $fname = [regex]::Replace($fname, "\(\d+\)$", "")
     $dpath = [System.IO.Path]::Combine($dname, $fname + $ename)
     $uniq = GenUniqName $dpath $true
     robocopy.exe $spath $uniq /MIR /FFT /DCOPY:DAT /R:3 /W:5 /NFL /NP /XJ
