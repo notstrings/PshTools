@@ -118,6 +118,14 @@ function CombineCLaunchINI($SrcINI, $DstINI) {
                 $name = $page[$btn]["Name"]
                 if( $List.ContainsKey($name) ) {
                     # 置換辞書でのリプレース
+                    # ・アイテム位置は適用元のまま保持
+                    if ($List[$name].Contains("Position")) {
+                        $List[$name]["Position"] = $page[$btn]["Position"]
+                    }
+                    if ($List[$name].Contains("ViewMode1Pos") -and $List[$name].Contains("ViewMode2Pos")) {
+                        $List[$name]["ViewMode1Pos"] = $page[$btn]["ViewMode1Pos"]
+                        $List[$name]["ViewMode2Pos"] = $page[$btn]["ViewMode2Pos"]
+                    }
                     $page[$btn] = $List[$name]
                     $List.Remove($name)
                     $cont = $true
@@ -146,26 +154,31 @@ function CombineCLaunchINI($SrcINI, $DstINI) {
         foreach ($name in $List.Keys) {
             $bkey = "Btn$($bidx.ToString("000"))"
             $DstINI["Body"][$pidx][$bkey] = $List[$name]
+            $DstINI["Body"][$pidx][$bkey]["ViewMode1Pos"] = "$($bidx % 5),$([int]($bidx / 5))"
+            $DstINI["Body"][$pidx][$bkey]["ViewMode2Pos"] = "$($bidx % 5),$([int]($bidx / 5))"
             $bidx = $bidx + 1
         }
         $DstINI["Body"][$pidx][$pname]["Count"] = $bidx
         $DstINI["Head"]["Pages"]["Count"] = $pidx + 1
     }
 
-    # 環境変数へのリプレース
+    # データ整理
     foreach ($page in $DstINI["Body"]) {
         foreach ($btn in $page.Keys | Where-Object { $_ -like "Btn*" }) {
+            # 環境変数へのリプレース
             $page[$btn]["File"]      = ReplaceENV $page[$btn]["File"]
             $page[$btn]["Directory"] = ReplaceENV $page[$btn]["Directory"]
             if ($page[$btn].Contains("IconFile")){
                 $page[$btn]["IconFile"] = ReplaceENV $page[$btn]["IconFile"]
             }
+            # ビューモード切替で行方不明しないように位置を合わせる
+            $page[$btn]["ViewMode2Pos"] = $page[$btn]["ViewMode1Pos"]
         }
     }
 
 }
 
-# CLaunch用デザイン設定の再構築※超適当ｗ
+# CLaunch用デザイン設定の再構築※全ページをページデフォルトに統一
 function RebuildCLDesignINI([string] $Path, [int]$PageCount) {
     $Ini = [ordered]@{}
     # 読込
@@ -204,7 +217,7 @@ function RebuildCLDesignINI([string] $Path, [int]$PageCount) {
 # ランチャを停止
 Stop-Process -Name "CLaunch" -Force -ErrorAction SilentlyContinue
 
-# ランチャ設定
+# ランチャ設定合成
 if (-not (Test-Path "C:\usr\srze\bin\cl64\Data\CLaunch.ini")) {
     Copy-Item "C:\usr\srze\bin\cl64\Data\CLaunch.org" "C:\usr\srze\bin\cl64\Data\CLaunch.ini"
 } else {
@@ -216,7 +229,7 @@ if (-not (Test-Path "C:\usr\srze\bin\cl64\Data\CLaunch.ini")) {
     WriteCLaunchINI $DstPath $DstINI
 }
 
-# デザイン設定
+# デザイン設定再構築
 if (Test-Path "C:\usr\srze\bin\cl64\Data\Design.ini") {
     RebuildCLDesignINI "C:\usr\srze\bin\cl64\Data\Design.ini" $DstINI["Head"]["Pages"]["Count"]
 }
