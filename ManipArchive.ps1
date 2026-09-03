@@ -116,8 +116,6 @@ function local:DivideFile([string]$SrcPath, [string]$DstPath, [int]$sizeMB) {
 
 function local:ManipArchive($Path) {
     try {
-        # 設定取得
-        $Conf = LoadConfFile $ConfPath
         # 本体処理
         if ((isArchive $Path) -or (isDividedArchive $Path)) {
             # 展開処理
@@ -199,6 +197,7 @@ try {
         exit
     }
 	# 処理実行
+    $Conf = LoadConfFile $ConfPath
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             ManipArchive $arg

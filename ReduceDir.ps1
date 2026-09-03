@@ -73,8 +73,6 @@ function local:ReduceDir([System.IO.DirectoryInfo] $Target) {
 # 整理
 function local:Reduce([string]$Target, [bool]$isDir) {
     try {
-        # 設定取得
-        $Conf = LoadConfFile $ConfPath
         # 本体処理
         if ($isDir) {
             # フォルダ
@@ -150,6 +148,7 @@ try {
         exit
     }
 	# 処理実行
+    $Conf = LoadConfFile $ConfPath
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {

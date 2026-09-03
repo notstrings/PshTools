@@ -59,8 +59,6 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 ## 本体 #######################################################################
 
 function local:ReduceDupFile([string[]] $Targets) {
-    # 設定取得
-    $Conf = LoadConfFile $ConfPath
     # 本体処理
     $Hash = @{}
     foreach ($Target in $Targets) {
@@ -102,7 +100,7 @@ function local:RemoveDupFile([hashtable] $Hash, [enmReduceMode] $ReduceMode) {
     switch ($ReduceMode) {
         "New" {
             $Hash.Values | ForEach-Object {
-                $_ | 
+                $_ |
                 Sort-Object -Property LastWriteTime -Descending |
                 Select-Object -Skip 1 | ForEach-Object {
                     MoveTrush -Path $_.FullName
@@ -111,7 +109,7 @@ function local:RemoveDupFile([hashtable] $Hash, [enmReduceMode] $ReduceMode) {
         }
         "Old" {
             $Hash.Values | ForEach-Object {
-                $_ | 
+                $_ |
                 Sort-Object -Property LastWriteTime |
                 Select-Object -Skip 1 | ForEach-Object {
                     MoveTrush -Path $_.FullName
@@ -120,7 +118,7 @@ function local:RemoveDupFile([hashtable] $Hash, [enmReduceMode] $ReduceMode) {
         }
         "Small" {
             $Hash.Values | ForEach-Object {
-                $_ | 
+                $_ |
                 Sort-Object -Property Length |
                 Select-Object -Skip 1 | ForEach-Object {
                     MoveTrush -Path $_.FullName
@@ -129,7 +127,7 @@ function local:RemoveDupFile([hashtable] $Hash, [enmReduceMode] $ReduceMode) {
         }
         "Large" {
             $Hash.Values | ForEach-Object {
-                $_ | 
+                $_ |
                 Sort-Object -Property Length -Descending |
                 Select-Object -Skip 1 | ForEach-Object {
                     MoveTrush -Path $_.FullName
@@ -153,6 +151,7 @@ try {
         exit
     }
 	# 処理実行
+    $Conf = LoadConfFile $ConfPath
     ReduceDupFile $args
 } catch {
     $null = Write-Host "---例外発生---"

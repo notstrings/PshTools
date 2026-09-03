@@ -75,8 +75,6 @@ function local:AutoRenameDir([System.IO.DirectoryInfo] $Target) {
 # ファイル・フォルダ名の処理
 function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $isDir) {
     try {
-        # 設定取得
-        $Conf = LoadConfFile $ConfPath
         # 修正前名称
         $srcpath = $TargetPath
         # 修正後名称
@@ -135,6 +133,7 @@ try {
         exit
     }
 	# 処理実行
+    $Conf = LoadConfFile $ConfPath
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {

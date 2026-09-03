@@ -69,8 +69,6 @@ function local:EditConfFile([string] $Title, [string] $Path) {
 
 function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
     try {
-        # 設定取得
-        $Conf = LoadConfFile $ConfPath
         # フォルダ確認
         if ($LHS.DirectoryName -ne $RHS.DirectoryName) {
             throw "同じフォルダ内の画像を2枚選択してください"
@@ -121,6 +119,7 @@ try {
     $exist = $exist -and (Test-Path -LiteralPath $args[0])
     $exist = $exist -and (Test-Path -LiteralPath $args[1])
     if ($exist) {
+        $Conf = LoadConfFile $ConfPath
         DiffImage (Get-Item $args[0]) (Get-Item $args[1])
     }
 } catch {

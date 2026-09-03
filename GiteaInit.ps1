@@ -70,7 +70,6 @@ function local:SetupGitea([string] $Path) {
 			return
 		}
 
-		$Conf = LoadConfFile $ConfPath
 		tea repos create --owner $Conf.GITEAORG --name $Repository
 		if (-not (Test-Path "$Path\.git")) {
 			git.exe init
@@ -98,6 +97,7 @@ try {
         exit
     }
 	# 処理実行
+	$Conf = LoadConfFile $ConfPath
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
