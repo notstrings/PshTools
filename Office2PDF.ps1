@@ -138,7 +138,8 @@ try {
     }
 	# 処理実行
     foreach ($arg in $args) {
-        if (Test-Path -LiteralPath $arg) {
+        # フォルダ再起は止まらなくなるので未実装
+        if ([System.IO.File]::Exists($arg)) {
             Office2PDF (Get-Item $arg)
         }
     }
