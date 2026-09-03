@@ -9,8 +9,6 @@ function local:DiffWord([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         $AppDOC = New-Object -ComObject Word.Application
         $AppDOC.Visible = $true
         $AppDOC.DisplayAlerts = 0 # wdAlertsNone
-        $DocLHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
-        $DocRHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
         if ($LHS.LastWriteTime -le $RHS.LastWriteTime) {
             $DocLHS = $AppDOC.Documents.Open($LHS.FullName, $false, $true)
             $DocRHS = $AppDOC.Documents.Open($RHS.FullName, $false, $true)
