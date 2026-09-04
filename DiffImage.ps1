@@ -77,10 +77,14 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
         $IMPath = "magick.exe"
         $SrcLHSPath = $LHS.FullName
         $SrcRHSPath = $RHS.FullName
-        $DstBasePath = [System.IO.Path]::Combine($LHS.DirectoryName, "Diff")
-        $DstLHSPath = [System.IO.Path]::Combine($DstBasePath, $LHS.BaseName + ".png")
-        $DstRHSPath = [System.IO.Path]::Combine($DstBasePath, $RHS.BaseName + ".png")
-        $DstRSLPath = [System.IO.Path]::Combine($DstBasePath, "diff_" + $LHS.BaseName + "x" + $RHS.BaseName + ".png")
+        $DstBasePath = [System.IO.Path]::Combine("$($ENV:USERPROFILE)\Desktop", "Diff")
+        $DstLHSPath = [System.IO.Path]::Combine($DstBasePath, "lhs_" + $LHS.BaseName + ".png")
+        $DstRHSPath = [System.IO.Path]::Combine($DstBasePath, "rhs_" + $RHS.BaseName + ".png")
+        $DstRSLPath = [System.IO.Path]::Combine($DstBasePath, "diff_" + $LHS.BaseName + "_" + $RHS.BaseName + ".png")
+        $null = Write-Host "---"
+        $null = Write-Host "lhs : $LHS"
+        $null = Write-Host "rhs : $RHS"
+        $null = Write-Host "rsl : $DstRSLPath"
         $null = New-Item $DstBasePath -ItemType Directory -ErrorAction SilentlyContinue
         $opt1 = ""
         if ($Conf.FitSize -eq $true) {
@@ -103,7 +107,7 @@ function local:DiffImage([System.IO.FileInfo] $LHS, [System.IO.FileInfo] $RHS) {
 
 ###############################################################################
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\aaa\0000.png", "$($ENV:USERPROFILE)\Desktop\aaa\0001.png")
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa\aaa.png", "$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa\bbb.png")
 
 try {
     $null = Write-Host "---$Title---"

@@ -5,11 +5,6 @@
 $Title    = [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath)
 $ConfPath = "$($PSScriptRoot)\Config\$($Title).json"
 
-# セットアップ
-function local:Setup() {
-	winget install "FastCopy.IPMsg"
-}
-
 ## 設定 #######################################################################
 
 Add-Type -AssemblyName System.ComponentModel
@@ -73,15 +68,14 @@ function local:FolderMonitor() {
             $MonitorName = $_.MonName
             $MonitorPath = $_.MonPath
             if ( ("" -ne $MonitorPath) -and (Test-Path -LiteralPath $MonitorPath)) {
-                $Result += CheckFolderUpdate $MonitorName $MonitorPath $MonitorInterval
+                $Result += CheckFolderUpdate $MonitorName $MonitorPath
             }
         }
     }
     # 結果表示
     if ($Result.Count -gt 0){
-        # ブロッキングされた所で別に構わない
-        # $null = SendRawIPMsg -Message $Result
-        $Result | Out-GridView -Title "FolderMonitorResult"
+        # ここでブロッキングされても変更は次の処理で見つかる
+        ShowUpdateFileList -Title "フォルダ監視結果" -Message "以下のファイルが追加/削除/変更されました。" -Results $Result
     }
 }
 function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
@@ -130,9 +124,9 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
             }
         } | Out-Null
         # 結果出力
-        $AddFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "ADD"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
-        $DelFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "DEL"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
-        $ModFile | ForEach-Object { $Ret += [PSCustomObject]@{Category = $MonitorName; Type = "MOD"; Name=$($_.Replace($MonitorPath,'.')) } } | Out-Null
+        $AddFile | ForEach-Object { $Ret += [PSCustomObject]@{MonitorName = $MonitorName; MonitorPath = $MonitorPath; Type = "ADD"; Path=$_ } } | Out-Null
+        $DelFile | ForEach-Object { $Ret += [PSCustomObject]@{MonitorName = $MonitorName; MonitorPath = $MonitorPath; Type = "DEL"; Path=$_ } } | Out-Null
+        $ModFile | ForEach-Object { $Ret += [PSCustomObject]@{MonitorName = $MonitorName; MonitorPath = $MonitorPath; Type = "MOD"; Path=$_ } } | Out-Null
     }
 
     # 現在のフォルダ状況を過去のフォルダ状況とする
@@ -140,15 +134,88 @@ function local:CheckFolderUpdate([string] $MonitorName, [string] $MonitorPath) {
 
     return $Ret
 }
-# FolderMonitor
+function local:ShowUpdateFileList(
+    [Parameter(Mandatory = $true)] [string]$Title,
+    [Parameter(Mandatory = $true)] [string]$Message,
+    [Parameter(Mandatory = $false)] [object[]]$Results
+)
+{
+    Add-Type -AssemblyName PresentationFramework
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
+
+    # 画面生成
+    [xml]$xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dialog" Width="480" Height="320" WindowStartupLocation="CenterScreen" ResizeMode="CanResize">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Name="btnOK" Content="OK" Width="128" Height="50"/>
+        </StackPanel>
+        <Label Name="lblMessage" DockPanel.Dock="Top"/>
+        <DockPanel>
+            <DataGrid Name="grdFiles" ItemsSource="{Binding Files}"
+                AutoGenerateColumns="False" AllowDrop="False" SelectionMode="Single"
+                CanUserAddRows="False" CanUserDeleteRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Monitor" Binding="{Binding MonitorName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Path}" Width="3*" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </DockPanel>
+</Window>
+"@
+    $reader = New-Object System.Xml.XmlNodeReader $xaml
+    $window = [Windows.Markup.XamlReader]::Load($reader)
+    $lblMessage = $window.FindName("lblMessage")
+    $grdFiles   = $window.FindName("grdFiles")
+    $btnOK      = $window.FindName("btnOK")
+
+    # Window
+    $window.Title = $Title
+    $lblMessage.Content = $Message
+    $bndFiles = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
+    foreach ($Result in $Results) {
+        $bndFiles.Add($Result)
+    }
+    $DataContext = [PSCustomObject]@{
+        Files = $bndFiles
+    }
+    $window.DataContext = $DataContext
+
+    # DataGrid
+    $grdFiles.Add_MouseDoubleClick({
+        $Result = $grdFiles.SelectedItem
+        if ($null -eq $Result) {
+            return
+        }
+        $Path = $Result.Path
+        while( (Test-Path -LiteralPath $Path) -eq $false ) {
+            $Path = [System.IO.Path]::GetDirectoryName($Path)
+            if ([string]::IsNullOrEmpty($Path)) {
+                return
+            }
+        }
+        Start-Process explorer.exe -ArgumentList "/select,`"$Path`""
+    })
+
+    # OK
+    $btnOK.Add_Click({
+        $window.DialogResult = $true
+    })
+
+    # 表示
+    $window.ShowDialog() | Out-Null
+}
 
 ###############################################################################
 
 try {
     $null = Write-Host "---$Title---"
-    # 設定初期化
     InitConfFile $ConfPath
-	# 処理実行
     $Conf = LoadConfFile $ConfPath
     RunInTaskTray $Title 0x0000ff { EditConfFile $Title $ConfPath } { FolderMonitor } $Conf.Interval
 } catch {
