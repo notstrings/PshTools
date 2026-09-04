@@ -17,7 +17,7 @@ function local:DateCopyFile([System.IO.FileInfo] $Target) {
     $null = Write-Host "---"
     $null = Write-Host "src : $spath"
     $null = Write-Host "dst : $uniq"
-    cp.exe -p $spath $uniq
+    copy $spath $uniq
 }
 
 function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
