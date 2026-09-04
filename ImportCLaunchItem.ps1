@@ -120,11 +120,14 @@ function CombineCLaunchINI($SrcINI, $DstINI) {
                     # 置換辞書でのリプレース
                     # ・アイテム位置は適用元のまま保持
                     if ($List[$name].Contains("Position")) {
-                        $List[$name]["Position"] = $page[$btn]["Position"]
+                        $List[$name]["Position"] = $page[$btn]["Position"] # Ver.4.20以前
                     }
                     if ($List[$name].Contains("ViewMode1Pos") -and $List[$name].Contains("ViewMode2Pos")) {
-                        $List[$name]["ViewMode1Pos"] = $page[$btn]["ViewMode1Pos"]
-                        $List[$name]["ViewMode2Pos"] = $page[$btn]["ViewMode2Pos"]
+                        $List[$name]["ViewMode1Pos"] = $page[$btn]["ViewMode1Pos"] # Ver.4.20以降
+                        $List[$name]["ViewMode2Pos"] = $page[$btn]["ViewMode2Pos"] # Ver.4.20以降
+                    }
+                    if ($List[$name].Contains("Position") -and $List[$name].Contains("ViewMode1Pos") -and $List[$name].Contains("ViewMode2Pos")) {
+                        $List[$name].Remove("Position")
                     }
                     $page[$btn] = $List[$name]
                     $List.Remove($name)
@@ -154,24 +157,82 @@ function CombineCLaunchINI($SrcINI, $DstINI) {
         foreach ($name in $List.Keys) {
             $bkey = "Btn$($bidx.ToString("000"))"
             $DstINI["Body"][$pidx][$bkey] = $List[$name]
-            $DstINI["Body"][$pidx][$bkey]["ViewMode1Pos"] = "$($bidx % 5),$([int]($bidx / 5))"
-            $DstINI["Body"][$pidx][$bkey]["ViewMode2Pos"] = "$($bidx % 5),$([int]($bidx / 5))"
+            $DstINI["Body"][$pidx][$bkey]["ViewMode1Pos"] = "$($bidx % 10),$([int]($bidx / 10))"
+            $DstINI["Body"][$pidx][$bkey]["ViewMode2Pos"] = "$($bidx % 10),$([int]($bidx / 10))"
             $bidx = $bidx + 1
         }
         $DstINI["Body"][$pidx][$pname]["Count"] = $bidx
         $DstINI["Head"]["Pages"]["Count"] = $pidx + 1
     }
+}
 
-    # データ整理
-    foreach ($page in $DstINI["Body"]) {
+function RebuildCLaunchINI($Ini) {
+
+    # ランチャアイテムのパス類に環境変数を使用させる
+    foreach ($page in $Ini["Body"]) {
         foreach ($btn in $page.Keys | Where-Object { $_ -like "Btn*" }) {
-            # 環境変数へのリプレース
             $page[$btn]["File"]      = ReplaceENV $page[$btn]["File"]
             $page[$btn]["Directory"] = ReplaceENV $page[$btn]["Directory"]
             if ($page[$btn].Contains("IconFile")){
                 $page[$btn]["IconFile"] = ReplaceENV $page[$btn]["IconFile"]
             }
-            # ビューモード切替で行方不明しないように位置を合わせる
+        }
+    }
+
+    # ランチャアイテムの座標重複登録への対策
+    foreach ($page in $Ini["Body"]) {
+        # グリッド範囲取得
+        $GridUsed = @{}
+        $GridMaxX = 0
+        $GridMaxY = 0
+        foreach ($btn in $page.Keys | Where-Object { $_ -like "Btn*" }) {
+            $pos = $page[$btn]["ViewMode1Pos"]
+            if ([string]::IsNullOrWhiteSpace($pos)) {
+                $pos = "0,0"
+            }
+            $GridUsed[$pos] = $true
+        }
+        foreach ($elm in $GridUsed.Keys) {
+            $x = [int]($elm.Split(",")[0])
+            $y = [int]($elm.Split(",")[1])
+            if ($x -gt $GridMaxX) { $GridMaxX = $x }
+            if ($y -gt $GridMaxY) { $GridMaxY = $y } # 未使用/対称性のために保持
+        }
+        $GridMaxX = $GridMaxX + 1
+        $GridMaxY = $GridMaxY + 1
+        # 重複座標修正
+        $UsedCrnt = @{}
+        foreach ($btn in $page.Keys | Where-Object { $_ -like "Btn*" }) {
+            $pos = $page[$btn]["ViewMode1Pos"]
+            if ([string]::IsNullOrWhiteSpace($pos)) {
+                $pos = "0,0"
+            }
+            if (-not $UsedCrnt.ContainsKey($pos)) {
+                $UsedCrnt[$pos] = $true
+                continue
+            }
+
+            # 最初の空き座標を探す
+            $idx = 0
+            do {
+                $x = $idx % $GridMaxX
+                $y = [int]($idx / $GridMaxX)
+                $newPos = "$x,$y"
+                $idx++
+            } while ($GridUsed.ContainsKey($newPos))
+
+            # 新しい位置を設定
+            $page[$btn]["ViewMode1Pos"] = $newPos
+
+            # 使用済みに追加
+            $UsedCrnt[$newPos] = $true
+            $GridUsed[$newPos] = $true
+        }
+    }
+
+    # モード2座標は行方不明しがちなのでモード1座標を統一
+    foreach ($page in $Ini["Body"]) {
+        foreach ($btn in $page.Keys | Where-Object { $_ -like "Btn*" }) {
             $page[$btn]["ViewMode2Pos"] = $page[$btn]["ViewMode1Pos"]
         }
     }
@@ -226,12 +287,18 @@ if (-not (Test-Path "C:\usr\srze\bin\cl64\Data\CLaunch.ini")) {
     $SrcINI = ReadCLaunchINI $SrcPath
     $DstINI = ReadCLaunchINI $DstPath
     CombineCLaunchINI $SrcINI $DstINI
+    RebuildCLaunchINI $DstINI
     WriteCLaunchINI $DstPath $DstINI
 }
 
 # デザイン設定再構築
 if (Test-Path "C:\usr\srze\bin\cl64\Data\Design.ini") {
     RebuildCLDesignINI "C:\usr\srze\bin\cl64\Data\Design.ini" $DstINI["Head"]["Pages"]["Count"]
+}
+
+# アイコンキャッシュ削除
+if (Test-Path "C:\usr\srze\bin\cl64\Data\ClIcons.bin") {
+    Remove-Item "C:\usr\srze\bin\cl64\Data\ClIcons.bin"
 }
 
 # ランチャを再起動
