@@ -22,12 +22,12 @@ function local:ShowMeetingSchedule() {
         (Get-ZoomMeetingsFromuser -UserId $Cnf.UserID -Type scheduled).meetings |
         Where-Object {
             $STime = Str2Time $_.start_time
-            $CTime = (Get-Date).Date
+            $CTime = (Get-Date -Day 1).Date.AddMonths(-1)
             $CTime -le $STime
         } |
         Sort-Object start_time
     Write-Host "=============================="
-    Write-Host "今後の予定一覧:"
+    Write-Host "直近の予定一覧:"
     foreach ($m in $Meetings) {
         Write-Host (" {0} | {1:yyyy-MM-dd HH:mm}({2}分) {3}" -f $m.id, (Str2Time $m.start_time), $m.duration, $m.topic)
     }
@@ -133,6 +133,49 @@ function local:RemoveMeetingSchedule() {
     Remove-ZoomMeeting -meeting_id $MeetingID
 }
 
+# 議事録取得
+function local:GetMeetingSummary() {
+    # --- 入力 ---
+    $MeetingID = Read-Host "議事録を取得するミーティングIDを入力してください"
+    if ($MeetingID -eq "") {
+        return
+    }
+
+    # --- 認証 ---
+    Connect-PSZoom `
+        -AccountID $Cnf.AccountID `
+        -ClientID $Cnf.ClientID `
+        -ClientSecret $Cnf.ClientSecret
+
+    # --- 過去ミーティング情報取得 ---
+    $PastMeeting = Invoke-ZoomRestMethod `
+        -Method GET `
+        -Uri "https://api.zoom.us/v2/past_meetings/$MeetingID"
+
+    if (-not $PastMeeting.has_meeting_summary) {
+        Write-Host "このミーティングにはAI Companionの議事録がありません。"
+        return
+    }
+
+    # --- 議事取得 ---
+    $EncodedUuid = [System.Uri]::EscapeDataString($PastMeeting.uuid)
+    $Summary = Invoke-ZoomRestMethod `
+        -Method GET `
+        -Uri "https://api.zoom.us/v2/meetings/$EncodedUuid/meeting_summary"
+
+    # --- 議事保存 ---
+    $Summary.summary_content |
+        Set-Content -Path "$($ENV:USERPROFILE)\Desktop\$($Summary.meeting_topic).txt" -Encoding UTF8
+
+    # --- 結果表示 ---
+    Write-Host "=============================="
+    Write-Host "議事録取得完了！"
+    Write-Host "タイトル : $($PastMeeting.topic)"
+    Write-Host "開始日時 : $(Str2Time $PastMeeting.start_time)"
+    Write-Host "保存先   : $($ENV:USERPROFILE)\Desktop\$($Summary.meeting_topic).txt"
+    Write-Host "=============================="
+}
+
 function local:Str2Time($Time) {
     $Time = [DateTime]$Time
     if ($Time.Kind -eq [System.DateTimeKind]::Local) {
@@ -144,13 +187,14 @@ function local:Str2Time($Time) {
     }
 }
 
+
 # 本体
 while ($true) {
     switch (
         $Host.UI.PromptForChoice(
             "Zoomミーティングスケジュール編集",
             "コマンドを選択してください",
-            @("Exit(&E)", "予定表示(&V)", "予定作成(&A)", "予定削除(&D)"),
+            @("Exit(&E)", "予定表示(&V)", "予定作成(&A)", "予定削除(&D)", "議事録取得(&S)"),
             0
         )
     ) {
@@ -158,5 +202,6 @@ while ($true) {
         1 { ShowMeetingSchedule }
         2 { AddMeetingSchedule }
         3 { RemoveMeetingSchedule }
+        4 { GetMeetingSummary }
     }
 }
