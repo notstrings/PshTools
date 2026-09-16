@@ -194,17 +194,6 @@ function RestrictTextHan() {
     end {}
 }
 
-# 和暦(gg)が含まれているとおかしくなる対策
-function local:FormatDate([datetime] $Date, [string] $Format) {
-    $info = New-Object CultureInfo("ja-jp", $true)
-    $info.DateTimeFormat.Calendar = New-Object System.Globalization.JapaneseCalendar
-    if ($Format.Contains("g")) {
-        $Date.ToString($Format, $info)
-    } else {
-        $Date.ToString($Format)
-    }
-}
-
 <#
 .SYNOPSIS
     ファイル・フォルダ名の日付部分を正規化します
@@ -237,74 +226,93 @@ function RestrictTextDate {
         ## YYYY-MM-DD or YYYY.MM.DD
         $Text = [regex]::Replace($Text, "(?<![0-9]+)(19|20)(\d\d)([.-])([1-9]|0[1-9]|1[0-2])(\3)([1-9]|0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
             param($match)
-            $name = $match.Value.ToUpper()
-            $name = $name.Replace(".","-")
-            $date = [DateTime]::ParseExact($name, "yyyy-M-d", $null)
-            if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
+            $src = $match.Value.ToUpper()
+            $src = $src.Replace(".","-")
+            [DateTime]$date = [DateTime]::MinValue
+            $result = [DateTime]::TryParseExact($src, "yyyy-M-d", [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$date)
+            if($result){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## YYYY年MM月DD日
         $Text = [regex]::Replace($Text, "(?<![0-9]+)(19|20)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
             param($match)
-            $name = $match.Value.ToUpper()
-            $date = [DateTime]::ParseExact($name, "yyyy年M月d日", $null)
-            if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
+            $src = $match.Value.ToUpper()
+            [DateTime]$date = [DateTime]::MinValue
+            $result = [DateTime]::TryParseExact($src, "yyyy年M月d日", [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$date)
+            if($result){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## 和暦YY-MM-DD or 和暦YY.MM.DD
         $Text = [regex]::Replace($Text, "(令和|\bR|平成|\bH|昭和|\bS|明治|\bM|大正|\bT)(\d{1,2})([.-])([1-9]|0[1-9]|1[0-2])(\3)([1-9]|0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
             param($match)
-            $name = $match.Value.ToUpper()
-            $name = $name.Replace(".","-")
-            $name = $name.Replace("R","令和")
-            $name = $name.Replace("H","平成")
-            $name = $name.Replace("S","昭和")
-            $name = $name.Replace("M","明治")
-            $name = $name.Replace("T","大正")
-            $date = [DateTime]::ParseExact($name, "gy-M-d", $info)
-            if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
+            $src = $match.Value.ToUpper()
+            $src = $src.Replace(".","-")
+            $src = $src.Replace("R","令和")
+            $src = $src.Replace("H","平成")
+            $src = $src.Replace("S","昭和")
+            $src = $src.Replace("M","明治")
+            $src = $src.Replace("T","大正")
+            [DateTime]$date = [DateTime]::MinValue
+            $result = [DateTime]::TryParseExact($src, "gy-M-d", $info, [System.Globalization.DateTimeStyles]::None, [ref]$date)
+            if($result){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         ## 和暦YY年MM月DD日
         $Text = [regex]::Replace($Text, "(令和|\bR|平成|\bH|昭和|\bS|明治|\bM|大正|\bT)(\d{1,2}|元)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
             param($match)
-            $name = $match.Value.ToUpper()
-            $name = $name.Replace("R","令和")
-            $name = $name.Replace("H","平成")
-            $name = $name.Replace("S","昭和")
-            $name = $name.Replace("M","明治")
-            $name = $name.Replace("T","大正")
-            $date = [DateTime]::ParseExact($name, "gy年M月d日", $info)
-            if($date){ return (FormatDate $date $Format) }else{ return $match.Value }
+            $src = $match.Value.ToUpper()
+            $src = $src.Replace("R","令和")
+            $src = $src.Replace("H","平成")
+            $src = $src.Replace("S","昭和")
+            $src = $src.Replace("M","明治")
+            $src = $src.Replace("T","大正")
+            [DateTime]$date = [DateTime]::MinValue
+            $result = [DateTime]::TryParseExact($src, "gy年M月d日", $info, [System.Globalization.DateTimeStyles]::None, [ref]$date)
+            if($result){ return (FormatDate $date $Format) }else{ return $match.Value }
         }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-        # 年号省略の場合は表記年度と参照年度が一致する場合だけ処理
+        # 年号省略の場合は表記年次と参照年次が一致する場合だけ処理
         if ($RefDate -ne $null) {
-            ## YY-MM-DD or YY.MM.DD
-            $Text = [regex]::Replace($Text, "(?<![0-9]+)(\d\d)([.-])(0[1-9]|1[0-2])(\2)(0[1-9]|[12][0-9]|3[01])(?![0-9]+)",{
+            ## YYMMDD
+            $Text = [regex]::Replace($Text, "(?<!\d)(\d\d)(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])(?!\d)",{
                 param($match)
-                $name = $match.Value.ToUpper()
-                $name = $name.Replace(".","-")
-                $nameyy = ($RefDate.Year).ToString().Substring(0,2) + $name
-                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy-M-d", $null)
-                $namegg = $RefDate.ToString("ggg", $info) + $name
-                $dategg = [DateTime]::ParseExact($namegg, "gggy-M-d", $info)
-                if( ($dateyy) -and ($RefDate.Year -eq $dateyy.Year) ){
+                $src = $match.Value.ToUpper()
+                [DateTime]$date = [DateTime]::MinValue
+                $result = [DateTime]::TryParseExact($src, "yyMMdd", [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$date)
+                if( ($result) -and ($RefDate.Year -eq $date.Year) ){
+                    return (FormatDate $date $Format)
+                }else{
+                    return $match.Value
+                }
+            }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            ## YY-MM-DD or YY.MM.DD
+            $Text = [regex]::Replace($Text, "(?<!\d)(\d\d)([.-])(0[1-9]|1[0-2])(\2)(0[1-9]|[12]\d|3[01])(?!\d)",{
+                param($match)
+                $src = $match.Value.ToUpper()
+                $src = $src.Replace(".","-")
+                [DateTime]$dateyy = [DateTime]::MinValue
+                [DateTime]$dategg = [DateTime]::MinValue
+                $srcyy = ($RefDate.Year).ToString().Substring(0,2) + $src
+                $srcgg = $RefDate.ToString("ggg", $info) + $src
+                $resultyy = [DateTime]::TryParseExact($srcyy, "yyyy-M-d", [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$dateyy)
+                $resultgg = [DateTime]::TryParseExact($srcgg, "gggy-M-d", $info, [System.Globalization.DateTimeStyles]::None, [ref]$dategg)
+                if( ($resultyy) -and ($RefDate.Year -eq $dateyy.Year) ){
                     return (FormatDate $dateyy $Format)
-                }elseif( ($dategg) -and ($RefDate.Year -eq $dategg.Year) ){
+                }elseif( ($resultgg) -and ($RefDate.Year -eq $dategg.Year) ){
                     return (FormatDate $dategg $Format)
                 }else{
                     return $match.Value
                 }
             }, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
             ## YY年MM月DD日
-            $Text = [regex]::Replace($Text, "(?<![0-9]+)(\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
+            $Text = [regex]::Replace($Text, "(?<!\d)(\d|\d\d)年([1-9]|0[1-9]|1[0-2])月([1-9]|0[1-9]|[12][0-9]|3[01])日",{
                 param($match)
-                $name = $match.Value.ToUpper()
-                $name = $name.Replace(".","-")
-                $nameyy = ($RefDate.Year).ToString().Substring(0,2) + $name
-                $dateyy = [DateTime]::ParseExact($nameyy, "yyyy年M月d日", $null)
-                $namegg = $RefDate.ToString("ggg", $info) + $name
-                $dategg = [DateTime]::ParseExact($namegg, "gy年M月d日", $info)
-                if( ($dateyy) -and ($RefDate.Year -eq $dateyy.Year) ){
+                $src = $match.Value.ToUpper()
+                [DateTime]$dateyy = [DateTime]::MinValue
+                [DateTime]$dategg = [DateTime]::MinValue
+                $srcyy = ($RefDate.Year).ToString().Substring(0,2) + $src
+                $srcgg = $RefDate.ToString("ggg", $info) + $src
+                $resultyy = [DateTime]::TryParseExact($srcyy, "yyyy年M月d日", [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$dateyy)
+                $resultgg = [DateTime]::TryParseExact($srcgg, "gy年M月d日", $info, [System.Globalization.DateTimeStyles]::None, [ref]$dategg)
+                if( ($resultyy) -and ($RefDate.Year -eq $dateyy.Year) ){
                     return (FormatDate $dateyy $Format)
-                }elseif( ($dategg) -and ($RefDate.Year -eq $dategg.Year) ){
+                }elseif( ($resultgg) -and ($RefDate.Year -eq $dategg.Year) ){
                     return (FormatDate $dategg $Format)
                 }else{
                     return $match.Value
@@ -314,6 +322,15 @@ function RestrictTextDate {
         return $Text
     }
     end {}
+}
+function local:FormatDate([datetime] $Date, [string] $Format) {
+    $info = New-Object CultureInfo("ja-jp", $true)
+    $info.DateTimeFormat.Calendar = New-Object System.Globalization.JapaneseCalendar
+    if ($Format.Contains("g")) {
+        $Date.ToString($Format, $info)
+    } else {
+        $Date.ToString($Format)
+    }
 }
 
 <#
