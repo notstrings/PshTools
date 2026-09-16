@@ -121,7 +121,7 @@ function local:AutoRename([string] $TargetPath, [datetime] $TargetDate, [bool] $
 
 ###############################################################################
 
-$args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー")
 
 try {
     $null = Write-Host "---$Title---"
