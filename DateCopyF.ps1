@@ -36,7 +36,7 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
 
 ###############################################################################
 
-$args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.docx")
+# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.docx")
 
 try {
     $null = Write-Host "---$Title---"
