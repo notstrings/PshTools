@@ -196,7 +196,7 @@ function RestrictTextHan() {
 
 <#
 .SYNOPSIS
-    ファイル・フォルダ名の日付部分を正規化します
+    指定文字の日付部分を正規化します
 .DESCRIPTION
     入力された文字列中の日付部分を指定されたフォーマットに正規化します。西暦/和暦/2桁年数に対応しています。
 .PARAMETER Text
@@ -206,11 +206,12 @@ function RestrictTextHan() {
 .PARAMETER RefDate
     参考日時 (省略可能)
 .EXAMPLE
-    RestrictDate "2023年12月25日_報告書.docx" "yyyyMMdd"
-    結果:"20231225_報告書.docx"
+    RestrictDate "2023年12月25日_報告書" "yyyyMMdd"
+    結果:"20231225_報告書"
 .NOTES
     * 変換可能な日付形式はYYYY-MM-DD/YYYY.MM.DD/YYYY年MM月DD日/和暦YY-MM-DD/和暦YY.MM.DD/和暦YY年MM月DD日です
     * 年号省略の場合は表記年度と参照年度が一致する場合だけ処理します
+    * Windowsの日本語カレンダー情報を使用して和暦を判定するため例えば「令和元年」に１月１日は含まれません
 #>
 function RestrictTextDate {
     param (
