@@ -36,7 +36,7 @@ function local:DateCopyDir([System.IO.DirectoryInfo] $Target) {
 
 ###############################################################################
 
-# $args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.docx")
+$args = @("$($ENV:USERPROFILE)\Desktop\新しいフォルダー\aaa.docx")
 
 try {
     $null = Write-Host "---$Title---"
@@ -48,9 +48,9 @@ try {
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                DateCopyDir  (Get-Item $arg)
+                DateCopyDir  (Get-Item -LiteralPath $arg)
             } else {
-                DateCopyFile (Get-Item $arg)
+                DateCopyFile (Get-Item -LiteralPath $arg)
             }
         }
     }
