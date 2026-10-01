@@ -130,7 +130,7 @@ try {
 
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
-            InstallOfficeAddIns (Get-Item $arg)
+            InstallOfficeAddIns (Get-Item -LiteralPath $arg)
         }
     }
 } catch {

@@ -137,9 +137,9 @@ try {
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                AutoRenameDir  (Get-Item $arg)
+                AutoRenameDir  (Get-Item -LiteralPath $arg)
             } else {
-                AutoRenameFile (Get-Item $arg)
+                AutoRenameFile (Get-Item -LiteralPath $arg)
             }
         }
     }

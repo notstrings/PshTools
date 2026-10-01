@@ -140,7 +140,7 @@ try {
     foreach ($arg in $args) {
         # フォルダ再起は止まらなくなるので未実装
         if ([System.IO.File]::Exists($arg)) {
-            Office2PDF (Get-Item $arg)
+            Office2PDF (Get-Item -LiteralPath $arg)
         }
     }
 } catch {

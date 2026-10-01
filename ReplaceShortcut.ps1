@@ -165,9 +165,9 @@ try {
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                CleanupShortcutDir (Get-Item $arg)
+                CleanupShortcutDir (Get-Item -LiteralPath $arg)
             } else {
-                CleanupShortcutFile (Get-Item $arg)
+                CleanupShortcutFile (Get-Item -LiteralPath $arg)
             }
         }
     }

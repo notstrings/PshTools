@@ -64,7 +64,7 @@ try {
     $exist = $exist -and (Test-Path -LiteralPath $args[0])
     $exist = $exist -and (Test-Path -LiteralPath $args[1])
     if ($exist) {
-        DiffWord (Get-Item $args[0]) (Get-Item $args[1])
+        DiffWord (Get-Item -LiteralPath $args[0]) (Get-Item -LiteralPath $args[1])
     }
 } catch {
     $null = Write-Host "---例外発生---"

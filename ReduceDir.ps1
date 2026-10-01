@@ -152,7 +152,7 @@ try {
     foreach ($arg in $args) {
         if (Test-Path -LiteralPath $arg) {
             if ([System.IO.Directory]::Exists($arg)) {
-                ReduceDir (Get-Item $arg)
+                ReduceDir (Get-Item -LiteralPath $arg)
             }
         }
     }

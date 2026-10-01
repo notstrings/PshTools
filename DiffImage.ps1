@@ -124,7 +124,7 @@ try {
     $exist = $exist -and (Test-Path -LiteralPath $args[1])
     if ($exist) {
         $Conf = LoadConfFile $ConfPath
-        DiffImage (Get-Item $args[0]) (Get-Item $args[1])
+        DiffImage (Get-Item -LiteralPath $args[0]) (Get-Item -LiteralPath $args[1])
     }
 } catch {
     $null = Write-Host "---例外発生---"
